@@ -1,0 +1,2595 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>BlankSpace</title>
+  <style>
+    /* v4.8 — Fixed textbox loading + EXIF + metadata toggle + YouTube import + save/load + Google Maps + Apple-style background */
+    :root{
+      --bg:#0f1220; --panel:#161a2b; --text:#e8ecff; --muted:#aab2d5;
+      --chip:rgba(255,255,255,.06); --radius:18px; --shadow:0 10px 30px rgba(0,0,0,.45);
+      --accent:#8b5cf6; --danger:#ef4444; --group:#3b82f6;
+      --handle-bg: rgba(255,255,255,.12); --handle-border: rgba(255,255,255,.55);
+      --handle-bg-strong: rgba(255,255,255,.2);
+      --node-border: rgba(255,255,255,.18);
+      
+      /* Apple-style background variables */
+      --bg-hue: 220;          /* 200–260 = blue/purple Apple vibe */
+      --bg-sat: 28%;          /* overall saturation */
+      --bg-light: 12%;        /* base lightness (darker for dark theme) */
+      --tile: 4098px;          /* 256/512/1024 */
+      --grid-gap: 24px;       /* spacing of the micro dot grid */
+      --grain-strength: 0.15; /* 0–0.15 suggested */
+      --glow-opacity: 0.55;   /* intensity of aurora layer */
+    }
+    :root.light{
+      --bg:#f7f8fc; --panel:#ffffff; --text:#0e132f; --muted:#5b627e;
+      --chip:rgba(0,0,0,.06); --shadow:0 10px 25px rgba(0,0,0,.12);
+      --handle-bg: rgba(0,0,0,.12); --handle-border: rgba(0,0,0,.55);
+      --handle-bg-strong: rgba(0,0,0,.2);
+      --node-border: rgba(0,0,0,.15);
+      
+      /* Light theme background adjustments */
+      --bg-light: 98%;        /* lighter for light theme */
+    }
+    *{box-sizing:border-box}
+    html,body,#root{height:100%}
+    body{
+      margin:0;color:var(--text);font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;overflow:hidden;
+      
+      /* Apple-style seamless background */
+      background-image:
+        /* 1) Micro dot grid (ultra‑subtle) */
+        radial-gradient(rgba(255,255,255,.03) 1px, transparent 1.5px),
+        /* 2) Fine diagonal fiber */
+        repeating-linear-gradient(135deg, rgba(255,255,255,.02) 0 2px, transparent 2px 4px),
+        /* 3) Aurora / glow tile (SVG with seamless turbulence) - dark theme */
+        url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512'%3E%3Cdefs%3E%3ClinearGradient id='wash' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='hsl(220, 30%25, 15%25)'/%3E%3Cstop offset='100%25' stop-color='hsl(220, 30%25, 8%25)'/%3E%3C/linearGradient%3E%3Cfilter id='aurora' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006' numOctaves='2' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0.8 0 0.2 0 0  0 0.8 0.2 0 0  0.2 0 1.2 0 0  0 0 0 .3 0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='gamma' amplitude='1.15' exponent='1.2'/%3E%3CfeFuncG type='gamma' amplitude='1.10' exponent='1.1'/%3E%3CfeFuncB type='gamma' amplitude='1.25' exponent='1.3'/%3E%3C/feComponentTransfer%3E%3CfeGaussianBlur stdDeviation='22'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23wash)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23aurora)' opacity='0.4'/%3E%3C/svg%3E"),
+        /* 4) Soft base wash (CSS gradient) */
+        linear-gradient(
+          180deg,
+          hsl(var(--bg-hue) var(--bg-sat) calc(var(--bg-light) + 2%)),
+          hsl(var(--bg-hue) var(--bg-sat) calc(var(--bg-light) - 4%))
+        );
+
+      background-size:
+        var(--grid-gap) var(--grid-gap),            /* dot grid size */
+        var(--tile) var(--tile),                    /* diagonal fiber repeats on tile */
+        var(--tile) var(--tile),                    /* aurora SVG tile */
+        cover;                                      /* base wash fills */
+
+      background-position: 0 0, 0 0, 0 0, 0 0;
+      background-repeat: repeat, repeat, repeat, no-repeat;
+      background-attachment: fixed;
+      
+      /* Extra polish for Apple‑ish depth */
+      -webkit-font-smoothing: antialiased;
+      backface-visibility: hidden;
+    }
+    
+    /* Light theme background override */
+    :root.light body{
+      background-image:
+        /* 1) Micro dot grid (ultra‑subtle) */
+        radial-gradient(rgba(0,0,0,.04) 1px, transparent 1.5px),
+        /* 2) Fine diagonal fiber */
+        repeating-linear-gradient(135deg, rgba(0,0,0,.03) 0 2px, transparent 2px 4px),
+        /* 3) Aurora / glow tile (SVG with seamless turbulence) - light theme */
+        url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512'%3E%3Cdefs%3E%3ClinearGradient id='wash' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='hsl(220, 30%25, 99%25)'/%3E%3Cstop offset='100%25' stop-color='hsl(220, 30%25, 95%25)'/%3E%3C/linearGradient%3E%3Cfilter id='aurora' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.006' numOctaves='2' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .75 0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='gamma' amplitude='1.15' exponent='1.2'/%3E%3CfeFuncG type='gamma' amplitude='1.10' exponent='1.1'/%3E%3CfeFuncB type='gamma' amplitude='1.25' exponent='1.3'/%3E%3C/feComponentTransfer%3E%3CfeGaussianBlur stdDeviation='22'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23wash)'/%3E%3Crect width='100%25' height='100%25' filter='url(%23aurora)' opacity='0.66'/%3E%3C/svg%3E"),
+        /* 4) Soft base wash (CSS gradient) */
+        linear-gradient(
+          180deg,
+          hsl(var(--bg-hue) var(--bg-sat) calc(var(--bg-light) + 0%)),
+          hsl(var(--bg-hue) var(--bg-sat) calc(var(--bg-light) - 3%))
+        );
+    }
+    .topbar{
+      position:fixed; inset:0 0 auto 0; height:64px; display:flex; align-items:center; justify-content:space-between;
+      padding:0 16px; background:linear-gradient(180deg, rgba(0,0,0,.3), rgba(0,0,0,0)); z-index:1000; pointer-events:none;
+    }
+    .topbar .actions button, .topbar select{pointer-events:auto}
+    .brand{display:flex; gap:12px; align-items:center}
+    .logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#74ebd5,#ACB6E5)}
+    .title{font-weight:700}
+    .subtitle{font-size:12px; color:var(--muted)}
+    .actions{display:flex; gap:8px}
+    button{
+      background:var(--panel); color:var(--text); border:1px solid rgba(255,255,255,.08);
+      border-radius:10px; padding:8px 12px; box-shadow:var(--shadow); cursor:pointer;
+    }
+    button:hover{filter:brightness(1.1)}
+    button:active{transform:translateY(1px)}
+    button.danger{background:rgba(239,68,68,.15); border-color:rgba(239,68,68,.35)}
+    select{background:var(--panel); color:var(--text); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:8px 12px}
+
+    /* URL Import Panel */
+    .url-panel{
+      position:fixed; top:80px; left:16px; width:320px; background:var(--panel); border:1px solid rgba(255,255,255,.08);
+      border-radius:12px; padding:16px; box-shadow:var(--shadow); z-index:1500; pointer-events:auto;
+      backdrop-filter: blur(10px);
+    }
+    .url-panel h3{margin:0 0 12px; font-size:14px; font-weight:600}
+    .url-panel input{
+      width:100%; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+      border-radius:8px; padding:8px 12px; color:var(--text); font-size:14px; margin-bottom:8px;
+    }
+    .url-panel input:focus{outline:none; border-color:var(--accent)}
+    .url-panel .url-buttons{display:flex; gap:8px}
+    .url-panel button{padding:6px 12px; font-size:12px}
+    .url-panel .url-types{
+      font-size:11px; color:var(--muted); margin-bottom:8px; line-height:1.4;
+    }
+
+    /* Save/Load Panel */
+    .save-panel{
+      position:fixed; top:80px; right:16px; width:320px; background:var(--panel); border:1px solid rgba(255,255,255,.08);
+      border-radius:12px; padding:16px; box-shadow:var(--shadow); z-index:1500; pointer-events:auto;
+      backdrop-filter: blur(10px);
+    }
+    .save-panel h3{margin:0 0 12px; font-size:14px; font-weight:600}
+    .save-panel .save-buttons{display:flex; gap:8px; margin-bottom:12px}
+    .save-panel .save-list{max-height:150px; overflow-y:auto}
+    .save-item{
+      display:flex; justify-content:space-between; align-items:center; padding:8px;
+      background:rgba(255,255,255,.04); border-radius:6px; margin-bottom:6px; font-size:12px;
+    }
+    .save-item button{padding:4px 8px; font-size:11px}
+
+    /* Google Maps Modal */
+    .map-modal {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 400px; background: var(--panel); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px; padding: 24px; box-shadow: var(--shadow); z-index: 2000;
+      backdrop-filter: blur(20px);
+    }
+    .map-modal h3 {
+      margin: 0 0 16px; font-size: 18px; font-weight: 600; text-align: center;
+    }
+    .map-modal .input-group {
+      margin-bottom: 16px;
+    }
+    .map-modal label {
+      display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500;
+    }
+    .map-modal input {
+      width: 100%; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 14px;
+    }
+    .map-modal input:focus {
+      outline: none; border-color: var(--accent);
+    }
+    .map-modal .modal-buttons {
+      display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;
+    }
+    .map-modal button {
+      padding: 8px 16px; font-size: 14px;
+    }
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1999;
+      backdrop-filter: blur(4px);
+    }
+
+    #viewport{position:absolute; inset:0; overflow:hidden; cursor:grab}
+    #viewport.dragging{cursor:grabbing}
+    #board{position:absolute; inset:auto; transform-origin:0 0; outline:none}
+
+    .node{
+      position:absolute; border-radius:20px; background:var(--panel); box-shadow:var(--shadow);
+      border:1px solid var(--node-border); overflow:visible; user-select:none; cursor:grab;
+    }
+    .node:active{cursor:grabbing}
+    .node.selected{outline:2px solid var(--accent)}
+    .node .content{width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.02)}
+    .node .toolbar{position:absolute; top:6px; right:6px; display:flex; gap:6px; z-index:5}
+    .node .toolbar button{padding:4px 8px; font-size:12px}
+
+    /* Node title styling - minimal like groups */
+    .node .title{
+      position:absolute; top:-14px; left:16px; padding:2px 8px; background:var(--panel); 
+      border-radius:999px; border:1px solid rgba(255,255,255,.08); font-size:12px;
+      max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+      cursor:pointer; transition:all 0.2s ease;
+    }
+    .node .title:hover{
+      background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.15);
+    }
+    .node .title.editing{
+      background:rgba(255,255,255,.1); border-color:var(--accent); outline:1px solid var(--accent);
+      cursor:text;
+    }
+
+    .node.image img{width:100%; height:100%; object-fit:contain; background:#000}
+    .node.video video{width:100%; height:100%; background:#000}
+    .node.pdf iframe, .node.pdf embed{width:100%; height:100%; background:#fff}
+    .node.youtube iframe{width:100%; height:100%; border:none; border-radius:16px}
+    .node.map iframe{width:100%; height:100%; border:none; border-radius:16px}
+    .node.website iframe{width:100%; height:100%; border:none; border-radius:16px}
+
+    .textbox{
+      position:absolute; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); color:var(--text);
+      border-radius:12px; padding:12px; min-width:240px; min-height:140px; cursor:grab; z-index: 1600;
+      box-shadow:0 6px 20px rgba(0,0,0,.35), 0 0 0 2px rgba(255,255,255,.06);
+      white-space:pre-wrap; word-break:break-word; text-align:left;
+      transition: all 0.2s ease;
+      font-size: 18px;
+      line-height: 1.5;
+      resize: both;
+      overflow: auto;
+    }
+    .textbox:hover{
+      border-color: rgba(255,255,255,.18);
+      box-shadow:0 8px 24px rgba(0,0,0,.4), 0 0 0 2px rgba(255,255,255,.08);
+    }
+    .textbox:focus{
+      outline:none; 
+      cursor: text !important;
+      border-color: var(--accent);
+      box-shadow:0 8px 24px rgba(0,0,0,.45), 0 0 0 2px var(--accent);
+    }
+    .textbox.selected{
+      border-color: var(--accent);
+      box-shadow:0 8px 24px rgba(0,0,0,.45), 0 0 0 2px var(--accent);
+    }
+    .textbox .tb-resizer{
+      position:absolute; width:12px; height:12px; right:-6px; bottom:-6px; 
+      background:var(--handle-bg); border:2px solid var(--handle-border); 
+      border-radius:50%; cursor:nwse-resize; z-index: 10;
+      transition: all 0.2s ease;
+      opacity: 0.6;
+    }
+    .textbox:hover .tb-resizer, .textbox.selected .tb-resizer{
+      opacity: 1;
+      background:var(--handle-bg-strong);
+    }
+    .textbox .tb-resizer:hover{
+      transform: scale(1.2);
+    }
+
+    /* Metadata textbox: vertical orientation (narrow column) */
+    .textbox.metadata{
+      width:280px;
+    }
+    .textbox .section-title{
+      font-weight:700; font-size:18px; opacity:.9; margin:6px 0 4px;
+    }
+    .textbox .kv{display:grid; grid-template-columns:92px 1fr; gap:4px 8px; font-size:12px; color:var(--muted)}
+    .textbox .kv div:nth-child(odd){opacity:.9}
+    .textbox .kv div:nth-child(even){color:var(--text)}
+
+    .group{
+      position:absolute; border:2px dashed var(--group); border-radius:24px; background:rgba(59,130,246,.06);
+    }
+    .group .title{
+      position:absolute; top:-14px; left:16px; padding:2px 8px; background:var(--panel); border-radius:999px; border:1px solid rgba(255,255,255,.08); font-size:12px;
+      cursor:pointer; transition:all 0.2s ease;
+    }
+    .group .title:hover{
+      background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.15);
+    }
+    .group .title.editing{
+      background:rgba(255,255,255,.1); border-color:var(--accent); outline:1px solid var(--accent);
+      cursor:text;
+    }
+    .group.selected{outline:2px solid var(--accent)}
+    .group .resizer{position:absolute; width:12px; height:12px; right:-6px; bottom:-6px; background:var(--handle-bg); border:2px solid var(--handle-border); border-radius:50%; cursor:nwse-resize}
+
+    .marquee{position:absolute; border:1px dashed rgba(255,255,255,.6); background:rgba(255,255,255,.1); pointer-events:none}
+
+    .menu{position:absolute; display:none; flex-direction:column; background:var(--panel); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:6px; z-index:2000}
+    .menu.open{display:flex}
+    .menu button{background:transparent; border:none; text-align:left; padding:8px 12px; border-radius:8px}
+    .menu button:hover{background:rgba(255,255,255,.06)}
+    .menu hr{border:none; border-top:1px solid rgba(255,255,255,.08); margin:6px 0}
+
+    .scale-bar{
+      position:fixed; left:12px; bottom:12px; display:flex; align-items:center; gap:10px; z-index:1500;
+      background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.1); padding:6px 10px; border-radius:999px; backdrop-filter: blur(6px);
+    }
+    /* Drag and drop overlay */
+    .drop-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(139, 92, 246, 0.1);
+      border: 3px dashed var(--accent);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      backdrop-filter: blur(4px);
+    }
+    .drop-overlay.active {
+      display: flex;
+    }
+    .drop-message {
+      background: var(--panel);
+      padding: 24px 32px;
+      border-radius: 16px;
+      border: 1px solid var(--accent);
+      box-shadow: var(--shadow);
+      text-align: center;
+      pointer-events: none;
+    }
+    .drop-message h3 {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .drop-message p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+
+<style>
+/* X (Twitter) node visual parity */
+.node.twitter .tweet-host{
+  position:relative; z-index:1; border-radius:16px;
+  background:#000;
+}
+</style>
+<style>
+
+/* === Responsive & Touch UI === */
+:root{ --fab-size: 48px; }
+
+/* Make viewport own gestures */
+#viewport { touch-action: none; }
+
+/* Topbar tweaks */
+@media (max-width: 900px){
+  .topbar{ height:56px; padding:0 12px; gap:8px; }
+  .brand .subtitle{ display:none; }
+  .actions{ gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .actions button, .actions select{ padding:6px 10px; font-size:12px; }
+}
+@media (max-width: 640px){
+  .brand .title{ font-size:14px; }
+  .actions button span{ display:none; } /* keep compact buttons if any icon text added later */
+  .actions button, .actions select{ padding:6px 8px; font-size:12px; }
+}
+
+/* Panels become bottom sheets on mobile */
+@media (max-width: 900px){
+  .url-panel, .save-panel{
+    left: 50% !important; right: auto; top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0));
+    transform: translateX(-50%);
+    width: min(92vw, 640px);
+    max-height: 40vh; overflow:auto;
+  }
+  .url-panel h3, .save-panel h3{ text-align:center; }
+  .save-panel .save-buttons{ flex-wrap: wrap; }
+}
+
+/* Larger tap targets on touch devices */
+@media (pointer: coarse){
+  button{ padding:10px 14px; }
+  .node .toolbar button{ padding:8px 10px; font-size:13px; }
+  .node .title{ padding:6px 10px; }
+  [title="Resize"]{ width:22px; height:22px; right:-11px; bottom:-11px; }
+}
+
+/* Floating FABs to toggle panels on small screens */
+.fab{
+  position: fixed; bottom: calc(12px + env(safe-area-inset-bottom, 0)); right: 12px;
+  width: var(--fab-size); height: var(--fab-size); border-radius: 999px;
+  display:flex; align-items:center; justify-content:center;
+  background: var(--panel); color: var(--text);
+  border:1px solid rgba(255,255,255,.12); box-shadow: var(--shadow);
+  z-index: 1800; cursor: pointer;
+}
+.fab + .fab{ right: calc(12px + var(--fab-size) + 10px); }
+.fab:active{ transform: translateY(1px); }
+.fab svg{ width:24px; height:24px; display:block; }
+@media (min-width: 901px){
+  .fab{ display:none; }
+}
+
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <div class="title">Blank Space</div>
+        <div class="subtitle">Infinite node-based workflow board powered by GPT5</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="btnUploadImage">Upload Image</button>
+      <button id="btnUploadVideo">Upload Video</button>
+      <button id="btnUploadPDF">Upload Document</button>
+      <select id="theme">
+        <option value="dark" selected>Dark</option>
+        <option value="light">Light</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- URL Import Panel -->
+  <div class="url-panel">
+    <h3>Import from URL</h3>
+    <div class="url-types">
+      Supports: YouTube (videos & Shorts), Instagram (posts & Reels), X/Twitter (posts), images (JPG, PNG, GIF), and websites
+    </div>
+    <input type="text" id="urlInput" placeholder="Paste URL here..." />
+    <div class="url-buttons">
+      <button id="btnImportUrl">Import</button>
+      <button id="btnClearUrl">Clear</button>
+    </div>
+  </div>
+
+  <!-- Save/Load Panel -->
+  <div class="save-panel">
+    <h3>Save & Load</h3>
+    <div class="save-buttons">
+      <button id="btnSave">Save Board</button>
+      <button id="btnExport">Export JSON</button>
+      <button id="btnImport">Import JSON</button>
+    </div>
+    <div class="save-list" id="saveList"></div>
+  </div>
+
+  <div id="root">
+    <div id="viewport">
+      <div id="board" class="board grid" tabindex="0"></div>
+    </div>
+    <div class="scale-bar">
+      <span id="zoomPct">100%</span>
+      <div class="ruler"><div class="tick"></div></div>
+    </div>
+  </div>
+
+  <!-- Hidden inputs for uploads -->
+  <input id="fileImage" type="file" accept="image/*" multiple style="display:none"/>
+  <input id="fileVideo" type="file" accept="video/*" multiple style="display:none"/>
+  <input id="filePDF" type="file" accept="application/pdf" multiple style="display:none"/>
+  <input id="fileImport" type="file" accept=".json" style="display:none"/>
+
+  <!-- Google Maps Modal -->
+  <div id="mapModal" class="modal-overlay" style="display:none;">
+    <div class="map-modal">
+      <h3>Add Google Map Route</h3>
+      <div class="input-group">
+        <label for="mapStart">Start Point:</label>
+        <input type="text" id="mapStart" placeholder="Enter starting location..." />
+      </div>
+      <div class="input-group">
+        <label for="mapDestination">Destination:</label>
+        <input type="text" id="mapDestination" placeholder="Enter destination..." />
+      </div>
+      <div class="modal-buttons">
+        <button id="mapCancel">Cancel</button>
+        <button id="mapCreate" style="background: var(--accent);">Create Map</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drop overlay for drag and drop -->
+  <div id="dropOverlay" class="drop-overlay">
+    <div class="drop-message">
+      <h3>Drop files to add to board</h3>
+      <p>Images, videos, and PDFs supported</p>
+    </div>
+  </div>
+
+  <!-- Context menus -->
+  <menu id="canvasMenu" class="menu">
+    <button data-action="upload-image">Upload Image…</button>
+    <button data-action="upload-video">Upload Video…</button>
+    <button data-action="upload-pdf">Upload Document…</button>
+    <hr/>
+    <button data-action="add-google-map">Add Google Map</button>
+    <hr/>
+    <button data-action="create-group">Create Group</button>
+    <button data-action="create-textbox">Create Text Box</button>
+  </menu>
+
+  <menu id="nodeMenu" class="menu">
+    <button data-action="open">Open / Play</button>
+    <hr/>
+    <button data-action="toggle-metadata">Show metadata</button>
+    <hr/>
+    <button data-action="duplicate">Duplicate</button>
+    <hr/>
+    <button data-action="delete" class="danger">Delete</button>
+  </menu>
+
+  <menu id="textboxMenu" class="menu">
+    <button data-action="duplicate">Duplicate</button>
+    <hr/>
+    <button data-action="delete" class="danger">Delete</button>
+  </menu>
+
+  <script>
+    console.log('Script starting...');
+    
+    // v4.8 — Fixed textbox loading with proper state management
+    const state = {
+      zoom: 1,
+      origin: {x: 0, y: 0},
+      nodes: [],
+      groups: [],
+      textboxes: [],
+      selection: new Set(),
+      nextId: 1,
+      isPanning: false,
+      panStart: {x:0,y:0},
+      originStart: {x:0,y:0}
+    };
+
+    const board = document.getElementById('board');
+    const viewport = document.getElementById('viewport');
+    const canvasMenu = document.getElementById('canvasMenu');
+    const nodeMenu = document.getElementById('nodeMenu');
+    const textboxMenu = document.getElementById('textboxMenu');
+
+    console.log('Elements found:', {board, viewport, canvasMenu, nodeMenu, textboxMenu});
+
+    function init(){
+      console.log('Initializing...');
+      resizeBoard();
+      bindGlobal();
+      bindUrlPanel();
+      bindSavePanel();
+      bindMapModal();
+      setupDragAndDrop();
+      createGroup({x:200, y:200});
+      applyTransform();
+      loadSavedBoards();
+      console.log('Initialization complete');
+    }
+
+    function resizeBoard(){
+      board.style.width = `50000px`;
+      board.style.height = `50000px`;
+    }
+
+    function applyTransform(){
+      board.style.transform = `translate(${state.origin.x}px, ${state.origin.y}px) scale(${state.zoom})`;
+      document.getElementById('zoomPct').textContent = `${Math.round(state.zoom*100)}%`;
+    }
+
+    function bindGlobal(){
+      console.log('Binding global events...');
+      
+      const themeSel = document.getElementById('theme');
+      themeSel.addEventListener('change', ()=> {
+        if(themeSel.value==='light') document.documentElement.classList.add('light');
+        else document.documentElement.classList.remove('light');
+      });
+
+      // Upload triggers
+      document.getElementById('btnUploadImage').addEventListener('click', ()=> {
+        console.log('Upload image clicked');
+        document.getElementById('fileImage').click();
+      });
+      document.getElementById('btnUploadVideo').addEventListener('click', ()=> {
+        console.log('Upload video clicked');
+        document.getElementById('fileVideo').click();
+      });
+      document.getElementById('btnUploadPDF').addEventListener('click', ()=> {
+        console.log('Upload PDF clicked');
+        document.getElementById('filePDF').click();
+      });
+      
+      document.getElementById('fileImage').addEventListener('change', (e)=> handleFiles(e.target.files));
+      document.getElementById('fileVideo').addEventListener('change', (e)=> handleFiles(e.target.files));
+      document.getElementById('filePDF').addEventListener('change',  (e)=> handleFiles(e.target.files));
+
+      // Wheel zoom
+      viewport.addEventListener('wheel', (e)=>{
+        // Prevent board zoom when scrolling inside text inputs/boxes
+        const inTextbox = e.target.closest('.textbox');
+        const isEditable = e.target.closest('[contenteditable="true"]');
+        const isFormInput = e.target.closest('input, textarea');
+        if (inTextbox || isEditable || isFormInput) {
+          return; // let the element handle its own scrolling
+        }
+        e.preventDefault();
+
+        const delta = -e.deltaY;
+        const zoomFactor = Math.exp(delta*0.001);
+        const prev = state.zoom;
+        const next = Math.min(4, Math.max(0.2, prev*zoomFactor));
+        if(next===prev) return;
+        const rect = viewport.getBoundingClientRect();
+        const cx = e.clientX - rect.left;
+        const cy = e.clientY - rect.top;
+        const ox = (cx - state.origin.x) / prev;
+        const oy = (cy - state.origin.y) / prev;
+        state.origin.x = cx - ox*next;
+        state.origin.y = cy - oy*next;
+        state.zoom = next;
+        applyTransform();
+      }, {passive:false});
+
+      // Left-drag on empty canvas pans OR deselects
+      viewport.addEventListener('mousedown', (e)=>{
+        if(e.button === 1) { // Middle mouse button - pan only
+          e.preventDefault();
+          startPanning(e);
+          return;
+        }
+        
+        if(e.button!==0) return; // Only handle left mouse button for selection/pan
+        if (e.target.closest('.textbox')) return;
+        if(canvasMenu.classList.contains('open') || nodeMenu.classList.contains('open') || textboxMenu.classList.contains('open')) return;
+        
+        // Check if clicking on empty space (not on any node, group, or textbox)
+        const clickedOnContent = e.target.closest('.node, .group, .textbox');
+        
+        if(!clickedOnContent) {
+          // Clicking on empty space
+          if(e.shiftKey) { 
+            beginMarquee(e); 
+            return; 
+          }
+          
+          // Clear selection on empty space click
+          clearSelection();
+          
+          // Only start panning if we're not just deselecting
+          startPanning(e);
+        }
+      });
+      
+      // Handle middle mouse button wheel clicks for panning
+      viewport.addEventListener('auxclick', (e) => {
+        if(e.button === 1) { // Middle mouse button
+          e.preventDefault();
+          startPanning(e);
+        }
+      });
+
+      // Context menus
+      viewport.addEventListener('contextmenu', (e)=>{
+        console.log('Context menu triggered');
+        e.preventDefault();
+        
+        const textbox = e.target.closest('.textbox');
+        if(textbox && !textbox.classList.contains('metadata')){
+          console.log('Opening textbox menu');
+          const textboxObj = getTextboxByElement(textbox);
+          if(textboxObj) {
+            openTextboxMenu(e.clientX, e.clientY, textboxObj);
+            return;
+          }
+        }
+        
+        const targetNode = e.target.closest('.node');
+        if(targetNode){
+          console.log('Opening node menu');
+          const id = targetNode.dataset.id;
+          openNodeMenu(e.clientX, e.clientY, getNodeById(id));
+        }else{
+          console.log('Opening canvas menu');
+          openCanvasMenu(e.clientX, e.clientY);
+        }
+      });
+
+      // Delete key
+      window.addEventListener('keydown', (e)=>{
+        const active = document.activeElement;
+        if(active && active.classList && active.classList.contains('textbox')) return;
+        if(active && active.tagName === 'INPUT') return;
+        if(e.key==='Delete' || e.key==='Backspace'){
+          const ids = Array.from(state.selection);
+          ids.forEach(id=>{
+            const n = getNodeById(id); if(n) { n.el.remove(); state.nodes = state.nodes.filter(x=>x!==n); }
+            const g = getGroupById(id); if(g) { g.el.remove(); state.groups = state.groups.filter(x=>x!==g); }
+            const t = getTextboxById(id); if(t) { t.element.remove(); state.textboxes = state.textboxes.filter(x=>x!==t); }
+          });
+          clearSelection();
+        }
+      });
+
+      window.addEventListener('resize', applyTransform);
+    }
+
+    function startPanning(e) {
+      state.isPanning = true;
+      state.panStart = {x:e.clientX, y:e.clientY};
+      state.originStart = {...state.origin};
+      viewport.classList.add('dragging');
+      
+      function move(ev){
+        if(!state.isPanning) return;
+        state.origin.x = state.originStart.x + (ev.clientX - state.panStart.x);
+        state.origin.y = state.originStart.y + (ev.clientY - state.panStart.y);
+        applyTransform();
+      }
+      function up(){
+        state.isPanning=false;
+        viewport.classList.remove('dragging');
+        window.removeEventListener('mousemove', move);
+        window.removeEventListener('mouseup', up);
+      }
+      window.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', up);
+    }
+
+    function bindUrlPanel(){
+      console.log('Binding URL panel...');
+      const urlInput = document.getElementById('urlInput');
+      const btnImport = document.getElementById('btnImportUrl');
+      const btnClear = document.getElementById('btnClearUrl');
+
+      btnImport.addEventListener('click', ()=>{
+        console.log('Import button clicked');
+        const url = urlInput.value.trim();
+        if(url){
+          importFromUrl(url);
+          urlInput.value = '';
+        } else {
+          alert('Please enter a URL');
+        }
+      });
+
+      btnClear.addEventListener('click', ()=>{
+        console.log('Clear button clicked');
+        urlInput.value = '';
+      });
+    }
+
+    function bindSavePanel(){
+      console.log('Binding save panel...');
+      document.getElementById('btnSave').addEventListener('click', saveBoard);
+      document.getElementById('btnExport').addEventListener('click', exportBoard);
+      document.getElementById('btnImport').addEventListener('click', ()=> document.getElementById('fileImport').click());
+      document.getElementById('fileImport').addEventListener('change', importBoard);
+    }
+
+    function bindMapModal(){
+      console.log('Binding map modal...');
+      const modal = document.getElementById('mapModal');
+      const startInput = document.getElementById('mapStart');
+      const destInput = document.getElementById('mapDestination');
+      const cancelBtn = document.getElementById('mapCancel');
+      const createBtn = document.getElementById('mapCreate');
+
+      cancelBtn.addEventListener('click', closeMapModal);
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeMapModal();
+      });
+
+      createBtn.addEventListener('click', () => {
+        const start = startInput.value.trim();
+        const destination = destInput.value.trim();
+        
+        if (!start || !destination) {
+          alert('Please enter both start point and destination');
+          return;
+        }
+        
+        createGoogleMapNode(start, destination);
+        closeMapModal();
+      });
+
+      // Handle Enter key
+      [startInput, destInput].forEach(input => {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            if (input === startInput && !destInput.value.trim()) {
+              destInput.focus();
+            } else {
+              createBtn.click();
+            }
+          }
+          if (e.key === 'Escape') {
+            closeMapModal();
+          }
+        });
+      });
+    }
+
+    function setupDragAndDrop() {
+      const dropOverlay = document.getElementById('dropOverlay');
+      
+      // Prevent default drag behaviors
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        document.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      // Highlight drop area
+      ['dragenter', 'dragover'].forEach(eventName => {
+        document.addEventListener(eventName, highlight, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        document.addEventListener(eventName, unhighlight, false);
+      });
+      
+      function highlight() {
+        dropOverlay.classList.add('active');
+      }
+      
+      function unhighlight() {
+        dropOverlay.classList.remove('active');
+      }
+      
+      // Handle dropped files
+      document.addEventListener('drop', handleDrop, false);
+      
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+          const rect = viewport.getBoundingClientRect();
+          const dropPos = screenToWorld(e.clientX, e.clientY);
+          handleFiles(files, dropPos);
+        }
+      }
+    }
+
+    function openMapModal() {
+      console.log('Opening map modal...');
+      const modal = document.getElementById('mapModal');
+      const startInput = document.getElementById('mapStart');
+      const destInput = document.getElementById('mapDestination');
+      
+      // Clear previous values
+      startInput.value = '';
+      destInput.value = '';
+      
+      modal.style.display = 'block';
+      setTimeout(() => startInput.focus(), 100);
+    }
+
+    function closeMapModal() {
+      console.log('Closing map modal...');
+      document.getElementById('mapModal').style.display = 'none';
+    }
+
+    function createGoogleMapNode(start, destination) {
+      console.log('Creating Google Map node:', { start, destination });
+      
+      const encodedStart = encodeURIComponent(start);
+      const encodedDest = encodeURIComponent(destination);
+      
+      const workingMapUrl = `https://maps.google.com/maps?q=${encodedStart}+to+${encodedDest}&output=embed`;
+      
+      const rect = viewport.getBoundingClientRect();
+      const pos = screenToWorld(rect.left + rect.width/2, rect.top + rect.height/2);
+      
+      const size = { w: 560, h: 400 };
+      const meta = {
+        start: start,
+        destination: destination,
+        mapType: 'directions',
+        embedUrl: workingMapUrl,
+        fullUrl: `https://www.google.com/maps/dir/${encodedStart}/${encodedDest}`
+      };
+      
+      return createNode('map', workingMapUrl, size, pos, meta);
+    }
+
+    function importFromUrl(url){
+      console.log('Importing from URL:', url);
+      
+      const rect = viewport.getBoundingClientRect();
+      const pos = screenToWorld(rect.left + rect.width/2, rect.top + rect.height/2);
+      
+      // Detect URL type and handle accordingly
+      const urlType = detectUrlType(url);
+      
+      switch(urlType) {
+        case 'twitter':
+          createTwitterNode(url, pos);
+          break;
+
+        case 'instagram':
+          createInstagramNode(url, pos);
+          break;
+
+        case 'youtube':
+        case 'youtube-shorts':
+          const videoId = extractYouTubeId(url);
+          if(videoId) {
+            createYouTubeNode(videoId, pos, urlType === 'youtube-shorts');
+          } else {
+            alert('Invalid YouTube URL');
+          }
+          break;
+          
+        case 'image':
+          createImageFromUrl(url, pos);
+          break;
+          
+        case 'website':
+          createWebsiteNode(url, pos);
+          break;
+          
+        default:
+          alert('Unsupported URL type. Please use YouTube, image URLs (JPG, PNG, GIF), or website URLs.');
+      }
+    }
+
+    function detectUrlType(url) {
+      
+      
+      // X (Twitter) posts
+      if (/(?:^https?:\/\/)?(?:(?:www\.)?(?:x|twitter)\.com|mobile\.twitter\.com)\/[^\/]+\/status\/(\d+)/i.test(url)) {
+        return 'twitter';
+      }
+    // Instagram posts & Reels (also supports windows.instagram.com)
+      if (/(?:^https?:\/\/)?(?:www\.|m\.|windows\.)?instagram\.com\/(?:reel|reels|p|tv)\//i.test(url)) {
+        return 'instagram';
+      }
+    // YouTube regular videos
+      if(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)/i.test(url)) {
+        return 'youtube';
+      }
+      
+      // YouTube Shorts
+      if(/youtube\.com\/shorts\//i.test(url)) {
+        return 'youtube-shorts';
+      }
+      
+      // Image URLs
+      if(/\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i.test(url)) {
+        return 'image';
+      }
+      
+      // Website URLs (anything with http/https that's not above)
+      if(/^https?:\/\//i.test(url)) {
+        return 'website';
+      }
+      
+      return 'unknown';
+    }
+
+    function extractYouTubeId(url){
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+        /youtube\.com\/v\/([^&\n?#]+)/,
+        /youtube\.com\/shorts\/([^&\n?#]+)/
+      ];
+      for(const pattern of patterns){
+        const match = url.match(pattern);
+        if(match) return match[1];
+      }
+      return null;
+    }
+
+    function createYouTubeNode(videoId, at, isShorts = false){
+      const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      const size = isShorts ? {w: 315, h: 560} : {w: 560, h: 315};
+      const meta = {
+        videoId: videoId,
+        platform: 'youtube',
+        embedUrl: embedUrl,
+        isShorts: isShorts
+      };
+      return createNode('youtube', embedUrl, size, at, meta);
+    }
+
+    function createImageFromUrl(url, at) {
+      console.log('Creating image from URL:', url);
+      
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = function() {
+        const naturalW = img.naturalWidth;
+        const naturalH = img.naturalHeight;
+        const size = calculateOptimalImageSize(naturalW, naturalH);
+        
+        const meta = {
+          originalUrl: url,
+          dimensions: {w: naturalW, h: naturalH},
+          source: 'url'
+        };
+        
+        createNode('image', url, size, at, meta);
+      };
+      
+      img.onerror = function() {
+        alert('Failed to load image from URL. The image may not be accessible or may have CORS restrictions.');
+      };
+      
+      img.src = url;
+    }
+
+    function createWebsiteNode(url, at) {
+      console.log('Creating website node:', url);
+      
+      if (!url.match(/^https?:\/\//i)) {
+        url = 'https://' + url;
+      }
+      
+      const size = { w: 800, h: 600 };
+      const meta = {
+        originalUrl: url,
+        website: true,
+        domain: extractDomain(url)
+      };
+      
+      return createNode('website', url, size, at, meta);
+    }
+
+    function extractDomain(url) {
+      try {
+        return new URL(url).hostname;
+      } catch (e) {
+        return 'Unknown';
+      }
+    }
+
+    // Fixed textbox creation with proper state management
+    function createFloatingTextbox(at){
+      console.log('Creating textbox at:', at);
+      const id = 't'+(state.nextId++);
+      const el = document.createElement('div');
+      el.className = 'textbox';
+      el.contentEditable = 'true';
+      el.spellcheck = false;
+      el.dataset.id = id;
+      el.style.left = at.x + 'px';
+      el.style.top = at.y + 'px';
+      el.style.width = '280px';
+      el.style.height = '160px';
+      
+      const textboxObj = {
+        id: id,
+        element: el,
+        hasPlaceholder: true,
+        isEditing: false
+      };
+      
+      state.textboxes.push(textboxObj);
+      
+      // Set initial placeholder
+      setPlaceholderText(textboxObj);
+      setupTextboxEvents(textboxObj);
+
+      board.appendChild(el);
+      return textboxObj;
+    }
+
+    function setPlaceholderText(textboxObj) {
+      const el = textboxObj.element;
+      el.innerHTML = '<span style="color: var(--muted); opacity: 0.7;">Click to start typing...</span>';
+      textboxObj.hasPlaceholder = true;
+      textboxObj.isEditing = false;
+    }
+
+    function clearPlaceholderText(textboxObj) {
+      if (textboxObj.hasPlaceholder) {
+        textboxObj.element.innerHTML = '';
+        textboxObj.hasPlaceholder = false;
+      }
+    }
+
+    function setupTextboxEvents(textboxObj) {
+      const el = textboxObj.element;
+      
+      el.addEventListener('focus', ()=>{
+        clearPlaceholderText(textboxObj);
+        textboxObj.isEditing = true;
+        el.style.cursor = 'text';
+      });
+      
+      el.addEventListener('blur', ()=>{
+        const textContent = el.textContent || '';
+        const htmlContent = el.innerHTML || '';
+        
+        if(textContent.trim() === '' || htmlContent.trim() === '') {
+          setPlaceholderText(textboxObj);
+        }
+        textboxObj.isEditing = false;
+        el.style.cursor = 'grab';
+      });
+
+      // Selection and dragging
+      el.addEventListener('mousedown', (e)=>{
+        if(e.target.classList.contains('tb-resizer')) return;
+        
+        const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+        if(additive) {
+          toggleSelect(textboxObj.id);
+        } else {
+          selectId(textboxObj.id);
+        }
+        
+        const isClickToEdit = !textboxObj.isEditing && (textboxObj.hasPlaceholder || !el.contains(document.activeElement));
+        
+        if(isClickToEdit){
+          setTimeout(() => {
+            el.focus();
+            clearPlaceholderText(textboxObj);
+            textboxObj.isEditing = true;
+          }, 10);
+          return;
+        }
+        
+        if(!textboxObj.isEditing) {
+          startTextboxDrag(e, textboxObj);
+        }
+        
+        e.stopPropagation();
+      });
+
+      // Add resizer
+      const rh = document.createElement('div'); 
+      rh.className = 'tb-resizer'; 
+      rh.title = 'Drag to resize';
+      el.appendChild(rh);
+      
+      rh.addEventListener('mousedown', (e)=>{
+        e.stopPropagation();
+        
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startWidth = el.offsetWidth;
+        const startHeight = el.offsetHeight;
+        
+        function mousemove(ev){
+          const dx = (ev.clientX - startX) / state.zoom;
+          const dy = (ev.clientY - startY) / state.zoom;
+          const newWidth = Math.max(200, startWidth + dx);
+          const newHeight = Math.max(120, startHeight + dy);
+          
+          el.style.width = newWidth + 'px';
+          el.style.height = newHeight + 'px';
+        }
+        
+        function mouseup(){
+          window.removeEventListener('mousemove', mousemove);
+          window.removeEventListener('mouseup', mouseup);
+        }
+        
+        window.addEventListener('mousemove', mousemove);
+        window.addEventListener('mouseup', mouseup);
+      });
+    }
+
+    function startTextboxDrag(e, textboxObj) {
+      const el = textboxObj.element;
+      const selectedTextboxes = Array.from(state.selection)
+        .map(id => getTextboxById(id))
+        .filter(t => t && t !== null);
+      
+      if(selectedTextboxes.length === 0) {
+        selectedTextboxes.push(textboxObj);
+      }
+      
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startPositions = {};
+      
+      selectedTextboxes.forEach(t => {
+        startPositions[t.id] = {
+          x: parseFloat(t.element.style.left),
+          y: parseFloat(t.element.style.top)
+        };
+      });
+      
+      el.style.cursor = 'grabbing';
+      
+      function mousemove(ev){
+        const dx = (ev.clientX - startX) / state.zoom;
+        const dy = (ev.clientY - startY) / state.zoom;
+        
+        selectedTextboxes.forEach(t => {
+          const start = startPositions[t.id];
+          t.element.style.left = (start.x + dx) + 'px';
+          t.element.style.top = (start.y + dy) + 'px';
+        });
+      }
+      
+      function mouseup(){
+        el.style.cursor = 'grab';
+        window.removeEventListener('mousemove', mousemove);
+        window.removeEventListener('mouseup', mouseup);
+      }
+      
+      window.addEventListener('mousemove', mousemove);
+      window.addEventListener('mouseup', mouseup);
+    }
+
+    // Menu functions
+    let canvasContextPoint = {x:0,y:0};
+    
+    function openCanvasMenu(x,y){
+      console.log('Opening canvas menu at', x, y);
+      closeMenus();
+      canvasMenu.style.left = x+'px'; 
+      canvasMenu.style.top = y+'px';
+      canvasMenu.classList.add('open');
+      canvasContextPoint = screenToWorld(x,y);
+      
+      canvasMenu.onmousedown = (e)=>e.stopPropagation();
+      canvasMenu.onclick = (e)=>{
+        const act = e.target.dataset.action; 
+        if(!act) return;
+        console.log('Canvas menu action:', act);
+        closeMenus();
+        if(act==='upload-image') document.getElementById('fileImage').click();
+        if(act==='upload-video') document.getElementById('fileVideo').click();
+        if(act==='upload-pdf') document.getElementById('filePDF').click();
+        if(act==='add-google-map') openMapModal();
+        if(act==='create-group') createGroup(canvasContextPoint);
+        if(act==='create-textbox') createFloatingTextbox(canvasContextPoint);
+      };
+    }
+    
+    function openNodeMenu(x,y,node){
+      console.log('Opening node menu at', x, y);
+      closeMenus();
+      nodeMenu.style.left = x+'px'; 
+      nodeMenu.style.top = y+'px';
+      nodeMenu.classList.add('open');
+      
+      const toggleBtn = nodeMenu.querySelector('button[data-action="toggle-metadata"]');
+      if(node.kind==='image'){
+        toggleBtn.style.display='block';
+        toggleBtn.textContent = node.metaShown ? 'Close metadata' : 'Show metadata';
+      }else{
+        toggleBtn.style.display='none';
+      }
+      
+      nodeMenu.onmousedown = (e)=>e.stopPropagation();
+      nodeMenu.onclick = (e)=>{
+        const act = e.target.dataset.action; 
+        if(!act) return;
+        console.log('Node menu action:', act);
+        closeMenus();
+        if(act==='delete'){ deleteNode(node); }
+        if(act==='duplicate'){ duplicateNode(node); }
+        if(act==='toggle-metadata'){
+          if(node.metaShown){
+            if(node.metaTextbox){ node.metaTextbox.remove(); node.metaTextbox = null; }
+            node.metaShown=false;
+          }else{
+            node.metaTextbox = createMetadataTextbox(node);
+            node.metaShown=true;
+          }
+        }
+        if(act==='open'){
+          if(node.kind==='image') window.open(node.assetUrl, '_blank');
+          else if(node.kind==='video'){ const v = node.el.querySelector('video'); v && v.play(); }
+          else if(node.kind==='pdf') window.open(node.assetUrl, '_blank');
+          else if(node.kind==='youtube') window.open(`https://www.youtube.com/watch?v=${node.meta.videoId}`, '_blank');
+          else if(node.kind==='map') {
+            const fullUrl = node.meta.fullUrl || `https://www.google.com/maps/dir/${encodeURIComponent(node.meta.start || '')}/${encodeURIComponent(node.meta.destination || '')}`;
+            window.open(fullUrl, '_blank');
+          }
+          else if(node.kind==='website') {
+            const originalUrl = node.meta.originalUrl || node.assetUrl;
+            window.open(originalUrl, '_blank');
+          }
+        }
+      };
+    }
+
+    function openTextboxMenu(x, y, textboxObj){
+      console.log('Opening textbox menu at', x, y);
+      closeMenus();
+      textboxMenu.style.left = x + 'px';
+      textboxMenu.style.top = y + 'px';
+      textboxMenu.classList.add('open');
+      
+      textboxMenu.onmousedown = (e) => e.stopPropagation();
+      textboxMenu.onclick = (e) => {
+        const act = e.target.dataset.action;
+        if(!act) return;
+        console.log('Textbox menu action:', act);
+        closeMenus();
+        if(act === 'delete') {
+          removeTextbox(textboxObj);
+        }
+        if(act === 'duplicate') {
+          duplicateTextbox(textboxObj);
+        }
+      };
+    }
+    
+    function closeMenus(){ 
+      canvasMenu.classList.remove('open'); 
+      nodeMenu.classList.remove('open'); 
+      textboxMenu.classList.remove('open'); 
+    }
+
+    function removeTextbox(textboxObj) {
+      textboxObj.element.remove();
+      state.textboxes = state.textboxes.filter(t => t !== textboxObj);
+      state.selection.delete(textboxObj.id);
+    }
+
+    function duplicateTextbox(textboxObj) {
+      const originalEl = textboxObj.element;
+      const newPos = {
+        x: parseFloat(originalEl.style.left) + 20,
+        y: parseFloat(originalEl.style.top) + 20
+      };
+      
+      const newTextbox = createFloatingTextbox(newPos);
+      newTextbox.element.style.width = originalEl.style.width;
+      newTextbox.element.style.height = originalEl.style.height;
+      
+      // Copy content properly, handling placeholder text
+      if (!textboxObj.hasPlaceholder) {
+        newTextbox.element.innerHTML = originalEl.innerHTML;
+        newTextbox.hasPlaceholder = false;
+      }
+      newTextbox.element.blur();
+      
+      return newTextbox;
+    }
+
+    // Node creation
+    function createNode(kind, assetUrl, size, at, extraMeta){
+      const id = 'n'+(state.nextId++);
+      const node = { 
+        id, kind, x: at.x, y: at.y, w: size.w, h: size.h, assetUrl, textboxes:[], 
+        meta: extraMeta||{}, metaShown:false, metaTextbox: null,
+        title: generateNodeTitle(kind, extraMeta)
+      };
+      state.nodes.push(node);
+
+      const el = document.createElement('div');
+      el.className = `node ${kind}`;
+      el.dataset.id = id;
+      el.style.left = node.x+'px'; el.style.top = node.y+'px';
+      el.style.width = node.w+'px'; el.style.height = node.h+'px';
+
+      const title = document.createElement('div'); 
+      title.className='title'; 
+      title.textContent = node.title; 
+      el.appendChild(title);
+
+      const content = document.createElement('div'); 
+      content.className='content'; 
+      content.setAttribute('draggable','false'); 
+      el.appendChild(content);
+      
+      if(kind==='image'){ 
+        const img = document.createElement('img'); 
+        img.src = assetUrl; 
+        img.draggable=false; 
+        content.appendChild(img); 
+      }
+      else if(kind==='video'){ 
+        const vid = document.createElement('video'); 
+        vid.src = assetUrl; 
+        vid.controls = true; 
+        vid.draggable=false; 
+        content.appendChild(vid); 
+      }
+      else if(kind==='pdf'){ 
+        const emb = document.createElement('embed'); 
+        emb.src = assetUrl; 
+        emb.type='application/pdf'; 
+        emb.draggable=false; 
+        content.appendChild(emb); 
+      }
+      else if(kind==='youtube'){
+        const iframe = document.createElement('iframe');
+        iframe.src = assetUrl;
+        iframe.frameBorder = '0';
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+        iframe.draggable = false;
+        content.appendChild(iframe);
+      }
+      else if(kind==='map'){
+        const iframe = document.createElement('iframe');
+        iframe.src = assetUrl;
+        iframe.frameBorder = '0';
+        iframe.allowFullscreen = true;
+        iframe.draggable = false;
+        iframe.loading = 'lazy';
+        iframe.referrerPolicy = 'no-referrer-when-downgrade';
+        content.appendChild(iframe);
+      }
+      else if(kind==='website'){
+        const iframe = document.createElement('iframe');
+        iframe.src = assetUrl;
+        iframe.frameBorder = '0';
+        iframe.allowFullscreen = true;
+        iframe.allow = (iframe.allow || '') + '; autoplay; encrypted-media; clipboard-write; picture-in-picture; web-share; fullscreen';
+        iframe.allow = (iframe.allow || '') + '; autoplay; encrypted-media; clipboard-write; picture-in-picture; web-share; fullscreen';
+        iframe.draggable = false;
+        iframe.loading = 'lazy';
+        iframe.referrerPolicy = 'no-referrer-when-downgrade';
+        if (!/instagram\.com\/.*\/embed\/?/i.test(assetUrl)) {
+        if (!/instagram\.com\/.*\/embed\/?/i.test(assetUrl)) { iframe.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox'; }
+      }
+        content.appendChild(iframe);
+      }
+
+      
+      else if(kind==='twitter'){
+        const host = document.createElement('div');
+        host.className = 'tweet-host';
+        host.style.width='100%';
+        host.style.height='100%';
+        host.style.overflow='auto';
+        content.appendChild(host);
+        ensureTwitterWidgets().then(function(tw){
+          if (tw && tw.widgets && node.meta && node.meta.tweetId){
+            tw.widgets.createTweet(node.meta.tweetId, host, { align: 'center' });
+          }
+        }).catch(console.warn);
+      }
+const toolbar = document.createElement('div'); 
+      toolbar.className='toolbar';
+      
+      if(kind==='image'){
+        const metaBtn = document.createElement('button'); 
+        metaBtn.textContent='Show metadata';
+        metaBtn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          if(node.metaShown){
+            if(node.metaTextbox){ node.metaTextbox.remove(); node.metaTextbox = null; }
+            node.metaShown = false; 
+            metaBtn.textContent='Show metadata';
+          }else{
+            const box = createMetadataTextbox(node);
+            node.metaTextbox = box;
+            node.metaShown = true; 
+            metaBtn.textContent='Close metadata';
+          }
+        });
+        toolbar.appendChild(metaBtn);
+      }
+      el.appendChild(toolbar);
+
+      setupTitleRename(title, node);
+
+      if(kind==='image' || kind==='youtube' || kind==='pdf' || kind==='map' || kind==='website' || kind==='twitter'){
+        const res = document.createElement('div'); 
+        res.title="Resize";
+        res.style.position='absolute'; res.style.width='12px'; res.style.height='12px';
+        res.style.right='-6px'; res.style.bottom='-6px'; res.style.background='var(--handle-bg)';
+        res.style.border='2px solid var(--handle-border)'; res.style.borderRadius='50%'; 
+        res.style.cursor='nwse-resize'; res.style.zIndex='3';
+        el.appendChild(res);
+        
+        res.addEventListener('mousedown', (e)=>{
+          e.stopPropagation();
+          const start = {x:e.clientX, y:e.clientY, w:node.w, h:node.h};
+          function mm(ev){
+                        const dx = (ev.clientX-start.x)/state.zoom;
+            const dy = (ev.clientY-start.y)/state.zoom;
+            node.w = Math.max(160, start.w + dx);
+            node.h = Math.max(120, start.h + dy);
+            el.style.width = node.w+'px'; 
+            el.style.height = node.h+'px';
+            if(node.metaTextbox){
+              node.metaTextbox.style.left = (node.w + 16) + 'px';
+            }
+}
+          function up(){ 
+            window.removeEventListener('mousemove', mm); 
+            window.removeEventListener('mouseup', up); 
+          }
+          window.addEventListener('mousemove', mm); 
+          window.addEventListener('mouseup', up);
+        });
+      }
+
+      board.appendChild(el);
+      node.el = el;
+      enableNodeInteractions(node);
+      return node;
+    }
+
+    function setupTitleRename(titleEl, item) {
+      let isRenaming = false;
+      
+      titleEl.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        startRename();
+      });
+      
+      function startRename(){
+        if(isRenaming) return;
+        isRenaming = true;
+        
+        const originalText = titleEl.textContent;
+        titleEl.classList.add('editing');
+        titleEl.contentEditable = true;
+        titleEl.focus();
+        
+        const range = document.createRange();
+        range.selectNodeContents(titleEl);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        
+        function finishRename(){
+          isRenaming = false;
+          titleEl.contentEditable = false;
+          titleEl.classList.remove('editing');
+          
+          const newText = titleEl.textContent.trim();
+          if(newText && newText !== originalText){
+            item.title = newText;
+          } else {
+            titleEl.textContent = originalText;
+          }
+        }
+        
+        function handleClickOutside(e) {
+          if (!titleEl.contains(e.target)) {
+            finishRename();
+            document.removeEventListener('click', handleClickOutside);
+          }
+        }
+        
+        titleEl.addEventListener('blur', finishRename, {once: true});
+        titleEl.addEventListener('keydown', (e)=>{
+          if(e.key === 'Enter'){
+            e.preventDefault();
+            titleEl.blur();
+          }
+          if(e.key === 'Escape'){
+            titleEl.textContent = originalText;
+            titleEl.blur();
+          }
+          e.stopPropagation();
+        });
+        
+        setTimeout(() => {
+          document.addEventListener('click', handleClickOutside);
+        }, 10);
+      }
+    }
+
+    function generateNodeTitle(kind, meta) {
+      
+      
+      if (meta && meta.platform === 'twitter') {
+        return 'X (Twitter) Post';
+      }
+    if (meta && meta.platform === 'instagram') {
+        if (meta.type === 'p') return 'Instagram Post';
+        if (meta.type === 'tv') return 'Instagram TV';
+        return 'Instagram Reel';
+      }
+    if(kind === 'youtube' && meta && meta.videoId) {
+        return meta.isShorts ? 'YouTube Shorts' : 'YouTube Video';
+      }
+      if(kind === 'map' && meta && meta.start && meta.destination) {
+        const shortStart = meta.start.length > 15 ? meta.start.substring(0, 12) + "..." : meta.start;
+        const shortDest = meta.destination.length > 15 ? meta.destination.substring(0, 12) + "..." : meta.destination;
+        return `${shortStart} → ${shortDest}`;
+      }
+      if(kind === 'website' && meta && meta.domain) {
+        return meta.domain.length > 25 ? meta.domain.substring(0, 22) + "..." : meta.domain;
+      }
+      if(meta && meta.file && meta.file.name) {
+        let name = meta.file.name.replace(/\.[^/.]+$/, "");
+        return name.length > 25 ? name.substring(0, 22) + "..." : name;
+      }
+      
+      const kindNames = {
+        image: 'Image',
+        video: 'Video', 
+        pdf: 'Document',
+        youtube: 'YouTube Video',
+        map: 'Google Map',
+        website: 'Website'
+      };
+      
+      return kindNames[kind] || 'Media';
+    }
+
+    function createMetadataTextbox(node){
+      const meta = node.meta || {};
+      const file = meta.file || {};
+      const exif = meta.exif || null;
+      const wrap = document.createElement('div');
+      wrap.className='textbox metadata';
+      wrap.contentEditable='false';
+      wrap.style.left = (node.w + 16) + 'px';
+      wrap.style.top = '0px';
+
+      const kv = (k,v)=> `<div>${k}</div><div>${v ?? '-'}</div>`;
+      const fileInfo = `
+        <div class="section-title">File info</div>
+        <div class="kv">
+          ${kv('Name', file.name || '-')}
+          ${kv('Type', file.type || '-')}
+          ${kv('Size', formatSize(file.size))}
+          ${kv('Dimensions', meta.dimensions ? meta.dimensions.w+'×'+meta.dimensions.h : '-')}
+        </div>
+      `;
+      let exifInfo = `<div class="section-title">EXIF info</div>`;
+      if(exif){
+        exifInfo += `<div class="kv">
+          ${kv('Camera', [exif.Make, exif.Model].filter(Boolean).join(' ') || '-')}
+          ${kv('Lens', exif.LensModel || '-')}
+          ${kv('Focal', exif.FocalLength ? exif.FocalLength+'mm' : '-')}
+          ${kv('Exposure', exif.ExposureTime ? exif.ExposureTime+'s' : '-')}
+          ${kv('Aperture', exif.FNumber ? 'f/'+exif.FNumber : '-')}
+          ${kv('ISO', exif.ISO || '-')}
+          ${kv('Taken', exif.DateTimeOriginal || '-')}
+        </div>`;
+      }else{
+        exifInfo += `<div class="kv"><div>EXIF</div><div>No EXIF data found</div></div>`;
+      }
+      wrap.innerHTML = fileInfo + exifInfo;
+
+      const rh = document.createElement('div'); 
+      rh.className='tb-resizer'; 
+      wrap.appendChild(rh);
+      rh.addEventListener('mousedown', (e)=>{
+        e.stopPropagation();
+        const start = {x:e.clientX, y:e.clientY, w:wrap.offsetWidth, h:wrap.offsetHeight};
+        function mm(ev){
+          const dx = (ev.clientX-start.x)/state.zoom;
+          const dy = (ev.clientY-start.y)/state.zoom;
+          const w = Math.max(240, start.w + dx), h = Math.max(140, start.h + dy);
+          wrap.style.width = w+'px'; wrap.style.height = h+'px';
+        }
+        function up(){ 
+          window.removeEventListener('mousemove', mm); 
+          window.removeEventListener('mouseup', up); 
+        }
+        window.addEventListener('mousemove', mm); 
+        window.addEventListener('mouseup', up);
+      });
+
+      node.el.appendChild(wrap);
+      return wrap;
+    }
+
+    function formatSize(bytes){
+      if(!bytes && bytes!==0) return '-';
+      const kb = bytes/1024, mb = kb/1024;
+      return mb>=1 ? mb.toFixed(2)+' MB' : kb.toFixed(1)+' KB';
+    }
+
+    function createGroup(at){
+      const id = 'g'+(state.nextId++);
+      const g = { id, x: at.x, y: at.y, w: 420, h: 280, color:'#3b82f6', title:'Group '+id };
+      state.groups.push(g);
+      const el = document.createElement('div'); 
+      el.className='group'; 
+      el.dataset.id=id;
+      el.style.left=g.x+'px'; 
+      el.style.top=g.y+'px'; 
+      el.style.width=g.w+'px'; 
+      el.style.height=g.h+'px';
+      el.style.borderColor = g.color;
+      const title = document.createElement('div'); 
+      title.className='title'; 
+      title.textContent=g.title; 
+      el.appendChild(title);
+      const res = document.createElement('div'); 
+      res.className='resizer'; 
+      el.appendChild(res);
+      
+      setupTitleRename(title, g);
+      
+      board.appendChild(el);
+      g.el = el;
+      enableGroupInteractions(g);
+      return g;
+    }
+
+    function enableNodeInteractions(node){
+      const el = node.el;
+      el.addEventListener('mousedown', (e)=>{
+        if(e.button!==0) return;
+        const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+        if(additive) toggleSelect(node.id); else selectId(node.id);
+        startDragSelection(e);
+        e.stopPropagation();
+      });
+    }
+
+    function enableGroupInteractions(g){
+      const el = g.el;
+      el.addEventListener('mousedown', (e)=>{
+        if(e.button!==0) return;
+        const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+        if(additive) toggleSelect(g.id); else selectId(g.id);
+        startDragSelection(e);
+        e.stopPropagation();
+      });
+      
+      const res = el.querySelector('.resizer');
+      res.addEventListener('mousedown', (e)=>{
+        e.stopPropagation();
+        const start = {x:e.clientX, y:e.clientY, w:g.w, h:g.h};
+        function mm(ev){
+          const dx = (ev.clientX-start.x)/state.zoom;
+          const dy = (ev.clientY-start.y)/state.zoom;
+          g.w = Math.max(200, start.w + dx); 
+          g.h = Math.max(160, start.h + dy);
+          el.style.width = g.w+'px'; 
+          el.style.height = g.h+'px';
+        }
+        function up(){ 
+          window.removeEventListener('mousemove', mm); 
+          window.removeEventListener('mouseup', up); 
+        }
+        window.addEventListener('mousemove', mm); 
+        window.addEventListener('mouseup', up);
+      });
+    }
+
+    function startDragSelection(e){
+      const start = {x:e.clientX, y:e.clientY};
+      const selected = Array.from(state.selection);
+      const startRects = {};
+      
+      selected.forEach(sid=>{
+        const n = getNodeById(sid); 
+        const g = getGroupById(sid);
+        const t = getTextboxById(sid);
+        if(n) startRects[sid] = {x:n.x, y:n.y};
+        if(g) startRects[sid] = {x:g.x, y:g.y};
+        if(t) startRects[sid] = {x:parseFloat(t.element.style.left), y:parseFloat(t.element.style.top)};
+      });
+      
+      function mm(ev){
+        const dx = (ev.clientX-start.x)/state.zoom;
+        const dy = (ev.clientY-start.y)/state.zoom;
+        selected.forEach(sid=>{
+          const n = getNodeById(sid); 
+          const g = getGroupById(sid);
+          const t = getTextboxById(sid);
+          if(n){ 
+            n.x = startRects[sid].x + dx; 
+            n.y = startRects[sid].y + dy; 
+            n.el.style.left = n.x+'px'; 
+            n.el.style.top = n.y+'px'; 
+          }
+          if(g){ 
+            g.x = startRects[sid].x + dx; 
+            g.y = startRects[sid].y + dy; 
+            g.el.style.left = g.x+'px'; 
+            g.el.style.top = g.y+'px'; 
+          }
+          if(t){
+            const newX = startRects[sid].x + dx;
+            const newY = startRects[sid].y + dy;
+            t.element.style.left = newX + 'px';
+            t.element.style.top = newY + 'px';
+          }
+        });
+      }
+      function up(){ 
+        window.removeEventListener('mousemove', mm); 
+        window.removeEventListener('mouseup', up); 
+      }
+      window.addEventListener('mousemove', mm); 
+      window.addEventListener('mouseup', up);
+    }
+
+    function beginMarquee(e){
+      clearSelection();
+      const start = screenToWorld(e.clientX, e.clientY);
+      const rectEl = document.createElement('div'); 
+      rectEl.className='marquee'; 
+      board.appendChild(rectEl);
+      
+      function mm(ev){
+        const cur = screenToWorld(ev.clientX, ev.clientY);
+        const x = Math.min(start.x, cur.x), y=Math.min(start.y, cur.y);
+        const w = Math.abs(cur.x-start.x), h=Math.abs(cur.y-start.y);
+        rectEl.style.left=x+'px'; rectEl.style.top=y+'px'; 
+        rectEl.style.width=w+'px'; rectEl.style.height=h+'px';
+        clearSelection();
+        let anyNode=false;
+        state.nodes.forEach(n=>{ 
+          if(intersects({x,y,w,h}, n)){ selectId(n.id, true); anyNode=true; } 
+        });
+        if(!anyNode) {
+          state.groups.forEach(g=>{ 
+            if(intersects({x,y,w,h}, g)) selectId(g.id, true); 
+          });
+          state.textboxes.forEach(t=>{
+            const tx = parseFloat(t.element.style.left);
+            const ty = parseFloat(t.element.style.top);
+            const tw = t.element.offsetWidth;
+            const th = t.element.offsetHeight;
+            if(intersects({x,y,w,h}, {x:tx,y:ty,w:tw,h:th})) selectId(t.id, true);
+          });
+        }
+      }
+      function up(){
+        rectEl.remove();
+        window.removeEventListener('mousemove', mm);
+        window.removeEventListener('mouseup', up);
+      }
+      window.addEventListener('mousemove', mm);
+      window.addEventListener('mouseup', up);
+    }
+
+    // Helper functions
+    function screenToWorld(sx, sy){
+      const rect = viewport.getBoundingClientRect();
+      const x = (sx - rect.left - state.origin.x) / state.zoom;
+      const y = (sy - rect.top - state.origin.y) / state.zoom;
+      return {x,y};
+    }
+    
+    function intersects(a,b){ 
+      return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.h+a.y > b.y; 
+    }
+    
+    function clearSelection(){ 
+      state.selection.forEach(id=>{
+        const el = getElement(id);
+        if(el) el.classList.remove('selected');
+      }); 
+      state.selection.clear(); 
+    }
+    
+    function selectId(id, additive=false){ 
+      if(!additive) clearSelection(); 
+      state.selection.add(id); 
+      const el = getElement(id);
+      if(el) el.classList.add('selected');
+    }
+    
+    function toggleSelect(id){ 
+      const el = getElement(id);
+      if(state.selection.has(id)){ 
+        state.selection.delete(id); 
+        if(el) el.classList.remove('selected'); 
+      } else { 
+        state.selection.add(id); 
+        if(el) el.classList.add('selected'); 
+      } 
+    }
+    
+    function getElement(id){ return document.querySelector(`[data-id="${id}"]`); }
+    function getNodeById(id){ return state.nodes.find(n=>n.id===id); }
+    function getGroupById(id){ return state.groups.find(g=>g.id===id); }
+    function getTextboxById(id){ return state.textboxes.find(t=>t.id===id); }
+    function getTextboxByElement(element){ return state.textboxes.find(t=>t.element===element); }
+
+    function deleteNode(node){ 
+      node.el.remove(); 
+      state.nodes = state.nodes.filter(n=>n!==node); 
+      state.selection.delete(node.id); 
+    }
+    
+    function duplicateNode(node){ 
+      const at = {x: node.x + 20, y: node.y + 20}; 
+      createNode(node.kind, node.assetUrl, {w: node.w, h: node.h}, at, node.meta); 
+    }
+
+    // File handling
+    function handleFiles(fileList, atPos){
+      console.log('Handling files:', fileList.length);
+      if(!fileList || !fileList.length) return;
+      let pos = atPos;
+      if(!pos){
+        const rect = viewport.getBoundingClientRect();
+        pos = screenToWorld(rect.left + rect.width/2, rect.top + rect.height/2);
+      }
+      const offsetStep = 24;
+      let idx = 0;
+      Array.from(fileList).forEach(async (f)=>{
+        const url = URL.createObjectURL(f);
+        const kind = fileKindFromMime(f.type);
+        let size = {w:360, h:240};
+        
+        if(kind==='video'){ size = {w:480, h:270}; }
+        if(kind==='pdf'){ size = {w:420, h:300}; }
+
+        const at = {x: pos.x - size.w/2 + (idx%5)*offsetStep, y: pos.y - size.h/2 + Math.floor(idx/5)*offsetStep};
+
+        let extraMeta = { file: { name: f.name, type: f.type, size: f.size }, dimensions: null, exif: null };
+        
+        if(kind==='image'){
+          await new Promise((resolve)=>{
+            const img = new Image();
+            img.onload = ()=>{ 
+              const naturalW = img.naturalWidth;
+              const naturalH = img.naturalHeight;
+              extraMeta.dimensions = {w: naturalW, h: naturalH};
+              size = calculateOptimalImageSize(naturalW, naturalH);
+              at.x = pos.x - size.w/2 + (idx%5)*offsetStep;
+              at.y = pos.y - size.h/2 + Math.floor(idx/5)*offsetStep;
+              resolve(); 
+            };
+            img.onerror = ()=> resolve();
+            img.src = url;
+          });
+        }
+
+        createNode(kind, url, size, at, extraMeta);
+        idx++;
+      });
+    }
+
+    function calculateOptimalImageSize(naturalWidth, naturalHeight) {
+      const maxDisplayWidth = 800;
+      const maxDisplayHeight = 600;
+      const minDisplayWidth = 160;
+      const minDisplayHeight = 120;
+      
+      let displayWidth = naturalWidth;
+      let displayHeight = naturalHeight;
+      
+      if (naturalWidth > maxDisplayWidth || naturalHeight > maxDisplayHeight) {
+        const widthRatio = maxDisplayWidth / naturalWidth;
+        const heightRatio = maxDisplayHeight / naturalHeight;
+        const scale = Math.min(widthRatio, heightRatio);
+        
+        displayWidth = Math.round(naturalWidth * scale);
+        displayHeight = Math.round(naturalHeight * scale);
+      }
+      
+      if (naturalWidth < minDisplayWidth && naturalHeight < minDisplayHeight) {
+        const widthRatio = minDisplayWidth / naturalWidth;
+        const heightRatio = minDisplayHeight / naturalHeight;
+        const scale = Math.min(widthRatio, heightRatio, 3);
+        
+        displayWidth = Math.round(naturalWidth * scale);
+        displayHeight = Math.round(naturalHeight * scale);
+      }
+      
+      displayWidth = Math.max(displayWidth, minDisplayWidth);
+      displayHeight = Math.max(displayHeight, minDisplayHeight);
+      
+      return { w: displayWidth, h: displayHeight };
+    }
+
+    function fileKindFromMime(mime){
+      if(mime.startsWith('image/')) return 'image';
+      if(mime.startsWith('video/')) return 'video';
+      if(mime==='application/pdf') return 'pdf';
+      return 'image';
+    }
+
+    // Fixed Save/Load functions with proper textbox state management
+    function saveBoard(){
+      console.log('Saving board...');
+      const name = prompt('Enter a name for this board:', `Board_${new Date().toLocaleDateString()}`);
+      if(!name) return;
+      
+      exportBoardDataWithFiles().then(boardData => {
+        const savedBoards = JSON.parse(localStorage.getItem('moodboards') || '{}');
+        savedBoards[name] = {
+          data: boardData,
+          timestamp: new Date().toISOString(),
+          name: name
+        };
+        localStorage.setItem('moodboards', JSON.stringify(savedBoards));
+        
+        updateSavedBoardsList();
+        alert(`Board "${name}" saved successfully with all file data!`);
+      }).catch(error => {
+        console.error('Save error:', error);
+        alert('Error saving board: ' + error.message);
+      });
+    }
+
+    function exportBoard(){
+      console.log('Exporting board...');
+      
+      const originalText = document.querySelector('#btnExport').textContent;
+      document.querySelector('#btnExport').textContent = 'Exporting...';
+      
+      exportBoardDataWithFiles().then(boardData => {
+        const dataStr = JSON.stringify(boardData, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `moodboard_export_${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        
+        document.querySelector('#btnExport').textContent = originalText;
+        alert('Board exported successfully with all file data! Check your downloads folder.');
+      }).catch(error => {
+        console.error('Export error:', error);
+        document.querySelector('#btnExport').textContent = originalText;
+        alert('Error exporting board: ' + error.message);
+      });
+    }
+
+    function importBoard(event){
+      console.log('Importing board...');
+      const file = event.target.files[0];
+      if(!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const boardData = JSON.parse(e.target.result);
+          loadBoardData(boardData);
+          alert('Board imported successfully with all file data restored!');
+        } catch (error) {
+          console.error('Import error:', error);
+          alert('Error importing board: Invalid JSON file');
+        }
+      };
+      reader.readAsText(file);
+      
+      event.target.value = '';
+    }
+
+    async function exportBoardDataWithFiles() {
+      const processedNodes = await Promise.all(state.nodes.map(async (node) => {
+        const processedNode = {...node};
+        
+        delete processedNode.el;
+        delete processedNode.metaTextbox;
+        
+        if(node.assetUrl && node.assetUrl.startsWith('blob:')) {
+          try {
+            const base64Data = await blobUrlToBase64(node.assetUrl);
+            processedNode.assetUrl = base64Data;
+            processedNode.isFileNode = true;
+            processedNode.hasBase64Data = true;
+          } catch (error) {
+            console.error('Error converting file to base64:', error);
+            processedNode.assetUrl = '[FILE_CONVERSION_ERROR]';
+            processedNode.isFileNode = true;
+            processedNode.hasBase64Data = false;
+          }
+        }
+        
+        return processedNode;
+      }));
+
+      // Fixed textbox processing with proper state saving
+      const processedTextboxes = state.textboxes.map(textbox => {
+        const el = textbox.element;
+        
+        // Get the actual content, handling placeholder text properly
+        let content = '';
+        let hasActualContent = false;
+        
+        if (!textbox.hasPlaceholder && textbox.element.textContent.trim() !== '') {
+          content = el.innerHTML;
+          hasActualContent = true;
+        }
+        
+        return {
+          id: textbox.id,
+          content: content,
+          hasPlaceholder: textbox.hasPlaceholder,
+          hasActualContent: hasActualContent,
+          left: el.style.left,
+          top: el.style.top,
+          width: el.style.width,
+          height: el.style.height
+        };
+      });
+
+      const processedGroups = state.groups.map(group => {
+        const processedGroup = {...group};
+        delete processedGroup.el;
+        return processedGroup;
+      });
+
+      return {
+        version: '4.8',
+        timestamp: new Date().toISOString(),
+        hasBase64Files: true,
+        viewport: {
+          zoom: state.zoom,
+          origin: state.origin
+        },
+        nodes: processedNodes,
+        groups: processedGroups,
+        textboxes: processedTextboxes,
+        nextId: state.nextId
+      };
+    }
+
+    function blobUrlToBase64(blobUrl) {
+      return new Promise((resolve, reject) => {
+        fetch(blobUrl)
+          .then(response => response.blob())
+          .then(blob => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          })
+          .catch(reject);
+      });
+    }
+
+    function base64ToBlob(base64Data) {
+      const parts = base64Data.split(',');
+      const mimeMatch = parts[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+      const byteString = atob(parts[1]);
+      const byteNumbers = new Array(byteString.length);
+      
+      for (let i = 0; i < byteString.length; i++) {
+        byteNumbers[i] = byteString.charCodeAt(i);
+      }
+      
+      const byteArray = new Uint8Array(byteNumbers);
+      return new Blob([byteArray], {type: mime});
+    }
+
+    // Fixed loadBoardData with proper textbox restoration
+    async function loadBoardData(boardData) {
+      clearBoard();
+      
+      if(boardData.viewport) {
+        state.zoom = boardData.viewport.zoom || 1;
+        state.origin = boardData.viewport.origin || {x: 0, y: 0};
+        applyTransform();
+      }
+      
+      state.nextId = boardData.nextId || 1;
+      
+      // Restore groups
+      if(boardData.groups) {
+        boardData.groups.forEach(groupData => {
+          const group = createGroup({x: groupData.x, y: groupData.y});
+          Object.assign(group, groupData);
+          group.el.style.width = group.w + 'px';
+          group.el.style.height = group.h + 'px';
+          group.el.style.borderColor = group.color;
+          group.el.querySelector('.title').textContent = group.title;
+        });
+      }
+      
+      // Restore nodes with base64 file conversion
+      if(boardData.nodes) {
+        for(const nodeData of boardData.nodes) {
+          let assetUrl = nodeData.assetUrl;
+          
+          if(nodeData.isFileNode && nodeData.hasBase64Data && nodeData.assetUrl.startsWith('data:')) {
+            try {
+              const blob = base64ToBlob(nodeData.assetUrl);
+              assetUrl = URL.createObjectURL(blob);
+            } catch (error) {
+              console.error('Error converting base64 to blob:', error);
+              console.warn('Skipping file node with conversion error:', nodeData.title);
+              continue;
+            }
+          } else if(nodeData.isFileNode && !nodeData.hasBase64Data) {
+            console.warn('Skipping file node with lost data:', nodeData.title);
+            continue;
+          }
+          
+          const node = createNode(
+            nodeData.kind,
+            assetUrl,
+            {w: nodeData.w, h: nodeData.h},
+            {x: nodeData.x, y: nodeData.y},
+            nodeData.meta
+          );
+          
+          node.title = nodeData.title;
+          node.el.querySelector('.title').textContent = node.title;
+        }
+      }
+      
+      // Fixed textbox restoration with proper state management
+      if(boardData.textboxes) {
+        boardData.textboxes.forEach(textboxData => {
+          const pos = {
+            x: parseFloat(textboxData.left) || 0, 
+            y: parseFloat(textboxData.top) || 0
+          };
+          
+          // Create new textbox but don't auto-focus it
+          const textbox = createFloatingTextbox(pos);
+          
+          // Restore ID and properties
+          textbox.id = textboxData.id;
+          textbox.element.dataset.id = textboxData.id;
+          
+          // Set dimensions
+          if (textboxData.width) textbox.element.style.width = textboxData.width;
+          if (textboxData.height) textbox.element.style.height = textboxData.height;
+          
+          // Restore content and placeholder state properly
+          if (textboxData.hasActualContent && textboxData.content && textboxData.content.trim() !== '') {
+            // Has real content - restore it
+            textbox.element.innerHTML = textboxData.content;
+            textbox.hasPlaceholder = false;
+          } else {
+            // Empty or placeholder - ensure placeholder is shown
+            setPlaceholderText(textbox);
+          }
+          
+          // Ensure proper state
+          textbox.isEditing = false;
+          textbox.element.blur();
+        });
+      }
+    }
+
+    function clearBoard() {
+      state.nodes.forEach(node => {
+        if(node.el) node.el.remove();
+      });
+      state.nodes = [];
+      
+      state.groups.forEach(group => {
+        if(group.el) group.el.remove();
+      });
+      state.groups = [];
+      
+      state.textboxes.forEach(textbox => {
+        if(textbox.element) textbox.element.remove();
+      });
+      state.textboxes = [];
+      
+      clearSelection();
+    }
+
+    function updateSavedBoardsList() {
+      const saveList = document.getElementById('saveList');
+      const savedBoards = JSON.parse(localStorage.getItem('moodboards') || '{}');
+      
+      saveList.innerHTML = '';
+      
+      Object.entries(savedBoards).forEach(([name, boardInfo]) => {
+        const item = document.createElement('div');
+        item.className = 'save-item';
+        
+        const date = new Date(boardInfo.timestamp).toLocaleDateString();
+        const hasFiles = boardInfo.data && boardInfo.data.hasBase64Files ? ' 📁' : '';
+        item.innerHTML = `
+          <span>${name}${hasFiles} (${date})</span>
+          <div>
+            <button onclick="loadSavedBoard('${name}')">Load</button>
+            <button onclick="deleteSavedBoard('${name}')" class="danger">Delete</button>
+          </div>
+        `;
+        
+        saveList.appendChild(item);
+      });
+      
+      if(Object.keys(savedBoards).length === 0) {
+        saveList.innerHTML = '<div style="text-align: center; color: var(--muted); font-size: 12px;">No saved boards</div>';
+      }
+    }
+
+    function loadSavedBoard(name) {
+      const savedBoards = JSON.parse(localStorage.getItem('moodboards') || '{}');
+      const boardInfo = savedBoards[name];
+      
+      if(!boardInfo) {
+        alert('Board not found!');
+        return;
+      }
+      
+      if(confirm(`Load board "${name}"? This will replace your current board.`)) {
+        loadBoardData(boardInfo.data);
+        alert(`Board "${name}" loaded successfully!`);
+      }
+    }
+
+    function deleteSavedBoard(name) {
+      if(confirm(`Delete board "${name}"? This cannot be undone.`)) {
+        const savedBoards = JSON.parse(localStorage.getItem('moodboards') || '{}');
+        delete savedBoards[name];
+        localStorage.setItem('moodboards', JSON.stringify(savedBoards));
+        updateSavedBoardsList();
+        alert(`Board "${name}" deleted.`);
+      }
+    }
+
+    function loadSavedBoards(){
+      console.log('Loading saved boards list...');
+      updateSavedBoardsList();
+    }
+
+    // Make functions globally available for onclick handlers
+    window.loadSavedBoard = loadSavedBoard;
+    window.deleteSavedBoard = deleteSavedBoard;
+
+    // Initialize the app
+    console.log('About to initialize...');
+    init();
+  
+    // === Shift + Drag to move textboxes (without interfering with typing) ===
+    (function enableShiftDragTextboxes(){
+      document.addEventListener('mousedown', (e)=>{
+        const tb = e.target.closest('.textbox');
+        if(!tb) return;
+        // Ignore the resize handle, and only act when Shift is held
+        if (!e.shiftKey || e.target.classList.contains('tb-resizer')) return;
+
+        // Prevent canvas pan/selection; we'll move the textbox itself
+        e.preventDefault();
+        e.stopPropagation();
+
+        // World-space helpers
+        function screenToWorldLocal(sx, sy){
+          try{
+            if (typeof screenToWorld === 'function') return screenToWorld(sx, sy);
+          }catch(_e){}
+          const vp = document.getElementById('viewport');
+          const rect = vp.getBoundingClientRect();
+          const zoom = (window.state && window.state.zoom) ? window.state.zoom : 1;
+          const origin = (window.state && window.state.origin) ? window.state.origin : {x:0,y:0};
+          const x = (sx - rect.left - origin.x) / zoom;
+          const y = (sy - rect.top  - origin.y) / zoom;
+          return {x,y};
+        }
+
+        // Establish starting positions in world coords
+        const startWorld = screenToWorldLocal(e.clientX, e.clientY);
+        const startLeft = parseFloat(tb.style.left) || 0;
+        const startTop  = parseFloat(tb.style.top)  || 0;
+
+        // Visual feedback
+        const prevCursor = tb.style.cursor;
+        tb.style.cursor = 'grabbing';
+        tb.classList.add('dragging');
+
+        // Disable text selection while dragging
+        const prevUserSelect = document.body.style.userSelect;
+        document.body.style.userSelect = 'none';
+
+        function onMove(ev){
+          const w = screenToWorldLocal(ev.clientX, ev.clientY);
+          const dx = w.x - startWorld.x;
+          const dy = w.y - startWorld.y;
+          tb.style.left = (startLeft + dx) + 'px';
+          tb.style.top  = (startTop  + dy) + 'px';
+        }
+        function onUp(){
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup', onUp);
+          tb.style.cursor = prevCursor;
+          tb.classList.remove('dragging');
+          document.body.style.userSelect = prevUserSelect;
+        }
+        window.addEventListener('mousemove', onMove, {passive:false});
+        window.addEventListener('mouseup', onUp, {passive:false});
+      }, true); // capture to beat other handlers
+    })();
+
+  
+
+// === Instagram helpers (final) ===
+function extractInstagramEmbed(url){
+  const typeMatch = url.match(/(?:reel|reels|p|tv)/i);
+  const codeMatch = url.match(/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/i);
+  if(!typeMatch || !codeMatch) return null;
+  const type = typeMatch[0].toLowerCase().replace('reels','reel');
+  const shortcode = codeMatch[1].replace(/[^A-Za-z0-9_-].*$/, '');
+  const embedUrl = `https://www.instagram.com/${type}/${shortcode}/embed`;
+  const ar = (type === 'p') ? 0.8 : (9/16);
+  return { embedUrl, shortcode, type, ar };
+}
+
+function createInstagramNode(originalUrl, at){
+  const parsed = extractInstagramEmbed(originalUrl);
+  if(!parsed){ alert('Invalid Instagram URL'); return; }
+  const size = (parsed.type==='p') ? { w: 480, h: 600 } : { w: 420, h: 740 };
+  const meta = {
+    platform: 'instagram',
+    type: parsed.type,
+    shortcode: parsed.shortcode,
+    embedUrl: parsed.embedUrl,
+    originalUrl: originalUrl,
+    ar: parsed.ar
+  };
+  if (typeof window.createNode === 'function') {
+    return window.createNode('website', parsed.embedUrl, size, at, meta);
+  }
+  if (typeof window.createWebsiteNode === 'function') {
+    return window.createWebsiteNode(parsed.embedUrl, at);
+  }
+  console.warn('No node creator found for Instagram.');
+}
+</script>
+
+
+<script>
+// === X (Twitter) helpers ===
+function extractTweetId(url){
+  const m = url.match(/status\/(\d+)/);
+  return m ? m[1] : null;
+}
+function ensureTwitterWidgets(){
+  return new Promise((resolve, reject)=>{
+    if (window.twttr && window.twttr.widgets) return resolve(window.twttr);
+    if (document.querySelector('script[src*="platform.twitter.com/widgets.js"]')) {
+      let tries = 0;
+      const t = setInterval(()=>{
+        tries++;
+        if (window.twttr && window.twttr.widgets){ clearInterval(t); resolve(window.twttr); }
+        if (tries>50){ clearInterval(t); reject(new Error('Twitter widgets not ready')); }
+      }, 100);
+      return;
+    }
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://platform.twitter.com/widgets.js';
+    s.charset = 'utf-8';
+    s.onload = ()=> resolve(window.twttr || {});
+    s.onerror = ()=> reject(new Error('Failed to load Twitter widgets.js'));
+    document.head.appendChild(s);
+  });
+}
+function createTwitterNode(originalUrl, at){
+  const id = extractTweetId(originalUrl);
+  if(!id){ alert('Invalid X/Twitter URL'); return; }
+  const size = { w: 600, h: 560 };
+  const meta = { platform:'twitter', tweetId:id, originalUrl: originalUrl };
+  if (typeof window.createNode === 'function') {
+    return window.createNode('twitter', originalUrl, size, at, meta);
+  }
+  if (typeof window.createWebsiteNode === 'function') {
+    return window.createWebsiteNode(originalUrl, at);
+  }
+}
+</script>
+
+<script>
+// === Touch & Pointer: Pan, Pinch-to-zoom, Double‑tap zoom; Mobile panel toggles ===
+(function(){
+  if (window.__TOUCH_INSTALLED__) return; window.__TOUCH_INSTALLED__ = true;
+  const vp = document.getElementById('viewport');
+  const brd = document.getElementById('board');
+  if(!vp || !brd || !window.state){ console.warn('Touch init skipped'); return; }
+
+  // Install FABs to toggle panels on mobile
+  function ensureFABs(){
+    const importFab = document.createElement('button');
+    importFab.className = 'fab'; importFab.id='fabImport';
+    importFab.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>';
+    importFab.title = 'Import URL';
+    importFab.addEventListener('click', ()=>{
+      const p = document.querySelector('.url-panel');
+      if(!p) return;
+      const open = p.dataset.open === '1';
+      p.style.display = open ? 'none' : 'block';
+      p.dataset.open = open ? '0' : '1';
+    });
+    const saveFab = document.createElement('button');
+    saveFab.className = 'fab'; saveFab.id='fabSave';
+    saveFab.style.right = 'calc(12px + var(--fab-size) + 10px)';
+    saveFab.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 5h14v14H5zM7 7h10v6H7zM7 15h6v2H7z"/></svg>';
+    saveFab.title = 'Save/Load';
+    saveFab.addEventListener('click', ()=>{
+      const p = document.querySelector('.save-panel');
+      if(!p) return;
+      const open = p.dataset.open === '1';
+      p.style.display = open ? 'none' : 'block';
+      p.dataset.open = open ? '0' : '1';
+    });
+    document.body.appendChild(importFab);
+    document.body.appendChild(saveFab);
+  }
+  ensureFABs();
+
+  // Gesture utils
+  vp.style.touchAction = 'none';
+  const pointers = new Map();
+  let pinchStart = null;
+  let lastTap = {t:0,x:0,y:0};
+
+  function applyTransform(){
+    brd.style.transform = `translate(${state.origin.x}px, ${state.origin.y}px) scale(${state.zoom})`;
+    const zp = document.getElementById('zoomPct'); if(zp) zp.textContent = `${Math.round(state.zoom*100)}%`;
+  }
+  function dist(a,b){ const dx=b.x-a.x, dy=b.y-a.y; return Math.hypot(dx,dy); }
+  function mid(a,b){ return {x:(a.x+b.x)/2, y:(a.y+b.y)/2}; }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  function screenToWorldPoint(sx, sy){
+    const rect = vp.getBoundingClientRect();
+    const x = (sx - rect.left - state.origin.x) / state.zoom;
+    const y = (sy - rect.top - state.origin.y) / state.zoom;
+    return {x,y};
+  }
+
+  function onPointerDown(e){
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    vp.setPointerCapture && vp.setPointerCapture(e.pointerId);
+
+    // double-tap zoom in
+    if (pointers.size === 1){
+      const now = Date.now();
+      if (now - lastTap.t < 300 && Math.hypot(e.clientX-lastTap.x, e.clientY-lastTap.y) < 24){
+        const factor = 1.25;
+        const rect = vp.getBoundingClientRect();
+        const world = screenToWorldPoint(e.clientX, e.clientY);
+        state.zoom = clamp(state.zoom * factor, 0.2, 4);
+        state.origin.x = (e.clientX - rect.left) - world.x * state.zoom;
+        state.origin.y = (e.clientY - rect.top)  - world.y * state.zoom;
+        applyTransform();
+      }
+      lastTap = {t:now, x:e.clientX, y:e.clientY};
+    }
+
+    if (pointers.size === 2){
+      const [p1, p2] = Array.from(pointers.values());
+      pinchStart = {
+        d: dist(p1, p2),
+        zoom0: state.zoom,
+        origin0: {x: state.origin.x, y: state.origin.y},
+        center: mid(p1, p2)
+      };
+    }
+
+    // Pan start if press on empty area
+    if (pointers.size === 1){
+      const targetNode = e.target.closest && e.target.closest('.node, .textbox, .group');
+      if (!targetNode){
+        state.isPanning = true;
+        state.panStart = {x: e.clientX, y: e.clientY};
+        state.originStart = {x: state.origin.x, y: state.origin.y};
+        vp.classList.add('dragging');
+      }
+    }
+    if (e.cancelable) e.preventDefault();
+  }
+
+  function onPointerMove(e){
+    if(!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+
+    if (pointers.size === 2 && pinchStart){
+      const [p1, p2] = Array.from(pointers.values());
+      const scale = dist(p1,p2) / (pinchStart.d || 1);
+      state.zoom = clamp(pinchStart.zoom0 * scale, 0.2, 4);
+
+      // keep world under pinch center
+      const rect = vp.getBoundingClientRect();
+      const world = screenToWorldPoint(pinchStart.center.x, pinchStart.center.y);
+      state.origin.x = (pinchStart.center.x - rect.left) - world.x * state.zoom;
+      state.origin.y = (pinchStart.center.y - rect.top)  - world.y * state.zoom;
+      applyTransform();
+      if (e.cancelable) e.preventDefault();
+      return;
+    }
+
+    if (pointers.size === 1 && state.isPanning){
+      const dx = (e.clientX - state.panStart.x);
+      const dy = (e.clientY - state.panStart.y);
+      state.origin.x = state.originStart.x + dx;
+      state.origin.y = state.originStart.y + dy;
+      applyTransform();
+      if (e.cancelable) e.preventDefault();
+      return;
+    }
+  }
+
+  function endPointer(e){
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinchStart = null;
+    if (pointers.size === 0){
+      state.isPanning = false;
+      vp.classList.remove('dragging');
+    }
+  }
+
+  vp.addEventListener('pointerdown', onPointerDown, {passive:false});
+  window.addEventListener('pointermove', onPointerMove, {passive:false});
+  window.addEventListener('pointerup', endPointer, {passive:true});
+  window.addEventListener('pointercancel', endPointer, {passive:true});
+  window.addEventListener('lostpointercapture', endPointer, {passive:true});
+
+  // Optional: swipe‑down to hide panels on mobile
+  function autoHidePanelsOnMobile(){
+    if (window.matchMedia('(min-width: 901px)').matches) return;
+    const urlPanel = document.querySelector('.url-panel');
+    const savePanel = document.querySelector('.save-panel');
+    if (urlPanel){ urlPanel.style.display = 'none'; urlPanel.dataset.open = '0'; }
+    if (savePanel){ savePanel.style.display = 'none'; savePanel.dataset.open = '0'; }
+  }
+  autoHidePanelsOnMobile();
+})();
+</script>
+
+</body>
+</html>
