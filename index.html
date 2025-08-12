@@ -459,6 +459,96 @@
   /* === End Floating Text Toolbar === */
 
 </style>
+<style>
+
+  /* === Floating Spotlight Search (injected) === */
+  #spotlightOverlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.45);
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 10000;
+  }
+  #spotlightOverlay.is-open { display: flex; }
+  .spotlight-card {
+    width: min(720px, 92vw);
+    border-radius: 18px;
+    background: rgba(30,35,42,.92);
+    border: 1px solid rgba(255,255,255,.18);
+    box-shadow: 0 24px 70px rgba(0,0,0,.6);
+    padding: 16px;
+  }
+  .spotlight-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+  .spotlight-input {
+    height: 44px;
+    border: 1px solid rgba(255,255,255,.25);
+    background: rgba(255,255,255,.06);
+    color: #e9eef5;
+    border-radius: 12px;
+    padding: 0 14px;
+    font: 600 15px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    outline: none;
+  }
+  .spotlight-input::placeholder { color: #b3c0cf; }
+  .spotlight-btn {
+    height: 44px; padding: 0 14px;
+    border: 0; border-radius: 12px;
+    background: white; color: #111827;
+    font: 700 14px/1 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    cursor: pointer;
+  }
+  .spotlight-hint {
+    margin-top: 10px; font-size: 12px; color: #b3c0cf;
+    display: flex; justify-content: space-between;
+  }
+  .kbd { 
+    display:inline-grid; place-items:center; 
+    min-width: 22px; height: 22px; padding: 0 6px;
+    background: rgba(255,255,255,.14); color: #e9eef5; 
+    border-radius: 6px; font-weight: 700; 
+    border: 1px solid rgba(255,255,255,.22);
+  }
+  /* === End Spotlight Search === */
+
+</style>
+<style>
+
+  /* === Canvas Bottom-Center Description (injected) === */
+  /* Fallback when appended to <body> */
+  #canvasDescription {
+    position: fixed;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    z-index: 9000;
+    color: #b3c0cf;
+    font: 700 12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    letter-spacing: .02em;
+    opacity: .85;
+    text-shadow: 0 1px 1px rgba(0,0,0,.35);
+    pointer-events: none; /* never blocks canvas interactions */
+    user-select: none;
+    background: transparent;
+    border: 0;
+    padding: 0;
+  }
+  /* Preferred when inside #viewport (canvas) */
+  #viewport #canvasDescription {
+    position: absolute;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+  }
+  /* === End Description === */
+
+</style>
 </head>
 <body>
   <header class="topbar">
@@ -2796,6 +2886,101 @@ function createTwitterNode(originalUrl, at){
   // Show for already-focused contenteditable
   if (document.activeElement && (document.activeElement.matches?.('.textbox,[contenteditable=\"true\"]'))) {
     showBarForTextbox(document.activeElement);
+  }
+})();
+</script>
+
+
+  <!-- Floating Spotlight Search -->
+  <div id="spotlightOverlay" aria-hidden="true">
+    <div class="spotlight-card" role="dialog" aria-modal="true" aria-label="Search the web">
+      <div class="spotlight-row">
+        <input id="spotlightInput" class="spotlight-input" type="text" placeholder="Search Google…" autocomplete="off">
+        <button id="spotlightGo" class="spotlight-btn" title="Search Google">Search</button>
+      </div>
+      <div class="spotlight-hint">
+        <span>Tip: Use quotes for exact matches.</span>
+        <span><span class="kbd">Left Ctrl</span> + <span class="kbd">Space</span> to open • <span class="kbd">Esc</span> to close • <span class="kbd">Enter</span> to search</span>
+      </div>
+    </div>
+  </div>
+
+
+<script>
+(function(){
+  const overlay = document.getElementById('spotlightOverlay');
+  const input = document.getElementById('spotlightInput');
+  const goBtn = document.getElementById('spotlightGo');
+  let isLeftCtrlDown = false;
+  let lastActiveEl = null;
+  let savedSelection = null;
+
+  function openOverlay(){
+    // Save focus & selection (for editors using selection restore)
+    lastActiveEl = document.activeElement;
+    const sel = window.getSelection && window.getSelection();
+    if (sel && sel.rangeCount) savedSelection = sel.getRangeAt(0).cloneRange();
+
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden', 'false');
+    setTimeout(()=>{ input.focus(); input.select(); }, 0);
+  }
+  function closeOverlay(restore=true){
+    overlay.classList.remove('is-open');
+    overlay.setAttribute('aria-hidden', 'true');
+    if (restore){
+      // Restore focus & selection
+      if (lastActiveEl && typeof lastActiveEl.focus === 'function') {
+        try { lastActiveEl.focus({preventScroll:true}); } catch(e){}
+      }
+      if (savedSelection) {
+        const sel = window.getSelection && window.getSelection();
+        if (sel) { sel.removeAllRanges(); sel.addRange(savedSelection); }
+      }
+    }
+  }
+  function searchNow(){
+    const q = (input.value || '').trim();
+    if (!q) { input.focus(); return; }
+    const url = 'https://www.google.com/search?q=' + encodeURIComponent(q);
+    window.open(url, '_blank', 'noopener');
+    closeOverlay();
+  }
+
+  // Keyboard handling — detect LeftCtrl + Space to open
+  document.addEventListener('keydown', (e)=>{
+    if (e.code === 'ControlLeft') isLeftCtrlDown = true;
+    if (e.code === 'Space' && isLeftCtrlDown && !e.shiftKey && !e.altKey && !e.metaKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      openOverlay();
+    }
+  }, true);
+  document.addEventListener('keyup', (e)=>{
+    if (e.code === 'ControlLeft') isLeftCtrlDown = false;
+  }, true);
+
+  // Overlay interactions
+  overlay.addEventListener('click', (e)=>{ if (e.target === overlay) closeOverlay(); });
+  document.addEventListener('keydown', (e)=>{
+    if (!overlay.classList.contains('is-open')) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeOverlay(); }
+    if (e.key === 'Enter' && document.activeElement === input) { e.preventDefault(); searchNow(); }
+  });
+
+  goBtn.addEventListener('click', (e)=>{ e.preventDefault(); searchNow(); });
+})();
+</script>
+<script>
+(function(){
+  var host = document.getElementById('viewport') || document.body;
+  var existing = document.getElementById('canvasDescription');
+  if (!existing) {
+    var note = document.createElement('div');
+    note.id = 'canvasDescription';
+    note.setAttribute('role', 'note');
+    note.textContent = 'Google Search Shortcut (Left Ctrl + Space)';
+    host.appendChild(note);
   }
 })();
 </script>
