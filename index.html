@@ -23,6 +23,77 @@
       --grain-strength: 0.15; /* 0–0.15 suggested */
       --glow-opacity: 0.55;   /* intensity of aurora layer */
     }
+    
+    /* === Theme variables for wires & handles === */
+    /* Default (dark theme) */
+    :root {
+      --wire-stroke: rgba(255,255,255,.95);
+      --wire-shadow: rgba(0,0,0,.6);
+      --handle-bg: rgba(255,255,255,.15);
+      --handle-border: rgba(255,255,255,.8);
+      --handle-icon: rgba(255,255,255,.95);
+      --connect-hover-outline: #60a5fa;
+    }
+    /* Light theme overrides */
+    :root.light, [data-theme="light"], .theme-light, body.light {
+      --wire-stroke: rgba(17,17,17,.9) !important;
+      --wire-shadow: rgba(0,0,0,.18) !important;
+      --handle-bg: #fff !important;
+      --handle-border: rgba(0,0,0,.55) !important;
+      --handle-icon: rgba(0,0,0,.9) !important;
+      --connect-hover-outline: #3b82f6 !important;
+    }
+    /* Dark theme explicit (redundant but ensures consistency) */
+    [data-theme="dark"], .theme-dark, body.dark {
+      --wire-stroke: rgba(255,255,255,.95);
+      --wire-shadow: rgba(0,0,0,.6);
+      --handle-bg: rgba(255,255,255,.15);
+      --handle-border: rgba(255,255,255,.8);
+      --handle-icon: rgba(255,255,255,.95);
+      --connect-hover-outline: #60a5fa;
+    }
+    /* === Wires layer sits BELOW nodes === */
+    #wires {
+      position:absolute; left:0; top:0;
+      width:50000px; height:50000px;
+      pointer-events:none;     /* wires never block */
+      z-index:0;               /* behind nodes (which are z-index:auto/1+) */
+      filter: drop-shadow(0 0 1px var(--wire-shadow));
+    }
+    .wire-path {
+      fill:none;
+      stroke: var(--wire-stroke);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: stroke;
+    }
+    /* Invisible larger hit area for wire paths */
+    .wire-hit-area {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 12;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: stroke;
+      cursor: pointer;
+    }
+    /* "On-wire" handle groups (drag these) */
+    .wire-handle {
+      pointer-events:all;
+      cursor:grab;
+    }
+    .wire-handle.dragging { cursor:grabbing; }
+    .wire-handle .hit { fill: transparent; r: 18; } /* generous hit area */
+    .wire-handle .dot { fill: var(--handle-bg); stroke: var(--handle-border); r: 8; stroke-width: 2; }
+    .wire-handle .icon {
+      fill: none; stroke: var(--handle-icon); stroke-width: 1.5;
+    }
+    /* Hover cue for connectable targets */
+    .node.connect-hover, .textbox.connect-hover, .checknode.connect-hover {
+      outline: 2px solid var(--connect-hover-outline);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--connect-hover-outline) 35%, transparent);
+    }
     :root.light{
       --bg:#f7f8fc; --panel:#ffffff; --text:#0e132f; --muted:#5b627e;
       --chip:rgba(0,0,0,.06); --shadow:0 10px 25px rgba(0,0,0,.12);
@@ -334,6 +405,17 @@
         animation: none; 
       }
     }
+    
+    /* Make it obvious links are clickable in the textbox */
+    .textbox a { 
+      text-decoration: underline; 
+      cursor: pointer; 
+    }
+    /* Ensure links are not accidentally "blocked" by overlays */
+    .textbox a { 
+      pointer-events: auto; 
+    }
+    
     .textbox .tb-resizer{
       position:absolute; width:12px; height:12px; right:-6px; bottom:-6px; 
       background:var(--handle-bg); border:2px solid var(--handle-border); 
@@ -423,6 +505,61 @@
       margin: 0;
       color: var(--muted);
       font-size: 14px;
+    }
+    
+    /* ===== Standalone Checklist Node ===== */
+    .checknode{
+      position:absolute;
+      left:200px; top:200px;
+      display:flex; align-items:center; gap:.5rem;
+      padding:.5rem .75rem;
+      border:1px solid var(--node-border);
+      background:var(--panel);
+      border-radius:.5rem;
+      box-shadow:var(--shadow);
+      user-select:none;
+      color:var(--text);
+      cursor:default;
+      transition:box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .checknode:hover{
+      border-color:rgba(255,255,255,.25);
+      box-shadow:0 6px 20px rgba(0,0,0,.3);
+    }
+    :root.light .checknode:hover{
+      border-color:rgba(0,0,0,.2);
+      box-shadow:0 6px 20px rgba(0,0,0,.15);
+    }
+    /* Drag handle (visual grip) */
+    .checknode .drag-handle{
+      width:10px; height:20px; flex:0 0 10px;
+      display:inline-block;
+      border-radius:3px;
+      background-image:
+        radial-gradient(currentColor 1px, transparent 1px),
+        radial-gradient(currentColor 1px, transparent 1px);
+      background-position: 0 0, 5px 10px;
+      background-size: 5px 10px;
+      opacity:.65;
+      cursor:grab;
+      color:var(--muted);
+    }
+    .checknode .drag-handle:active { cursor:grabbing; }
+    .checknode .drag-handle:hover { opacity:.9; }
+    .checknode input[type="checkbox"]{
+      width:1rem; height:1rem; margin:0; flex:0 0 auto; pointer-events:auto;
+      accent-color:var(--accent);
+    }
+    .checknode .checktext{
+      outline:none; min-width:2ch; max-width:36ch;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      user-select:text; cursor:text;
+      color:var(--text);
+    }
+    .checknode .checktext:focus{
+      outline:2px solid var(--accent);
+      outline-offset:2px;
+      border-radius:4px;
     }
   </style>
 
@@ -549,6 +686,317 @@
   /* === End Description === */
 
 </style>
+
+<style id="oscar-black-gold">
+  /* === Oscar Black & Gold — Dark Mode Overrides === */
+  html:not(.light) {
+    --bg:#0b0b10;
+    --panel:#111114;
+    --text:#F8F5EC;
+    --muted:#C8B88A;
+    --chip: rgba(241,200,72,.06);
+    --shadow: 0 10px 30px rgba(0,0,0,.6);
+    --accent:#D4AF37;        /* metallic gold */
+    --group:#B08900;
+    --danger:#f05252;
+    --node-border: rgba(212,175,55,.22);
+    --handle-bg: rgba(212,175,55,.18);
+    --handle-border: rgba(212,175,55,.75);
+    --handle-bg-strong: rgba(212,175,55,.28);
+    --handle-icon: rgba(255,239,180,.95);
+    --wire-stroke: rgba(255,215,96,.95);
+    --wire-shadow: rgba(0,0,0,.7);
+    --connect-hover-outline: #FFD35B;
+
+    /* Warm background tuning */
+    --bg-hue: 46;
+    --bg-sat: 18%;
+    --bg-light: 10%;
+  }
+
+  /* Replace dark background stack with a gold-tinted version */
+  html:not(.light) body {
+    background-image:
+      /* 1) Micro dot grid */
+      radial-gradient(rgba(255,215,128,.08) 1px, transparent 1.5px),
+      /* 2) Fine diagonal fiber */
+      repeating-linear-gradient(135deg, rgba(255,220,160,.03) 0 2px, transparent 2px 4px),
+      /* 3) Gold aurora tile */
+      url("data:image/svg+xml;utf8,%3Csvg xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width%3D'512' height%3D'512'%3E%0A%3Cdefs%3E%0A  %3ClinearGradient id%3D'wash' x1%3D'0' y1%3D'0' x2%3D'1' y2%3D'1'%3E%0A    %3Cstop offset%3D'0%' stop-color%3D'hsl(45, 18%, 12%)'%2F%3E%0A    %3Cstop offset%3D'100%' stop-color%3D'hsl(45, 18%, 7%)'%2F%3E%0A  %3C%2FlinearGradient%3E%0A  %3Cfilter id%3D'aurora' x%3D'-20%' y%3D'-20%' width%3D'140%' height%3D'140%'%3E%0A    %3CfeTurbulence type%3D'fractalNoise' baseFrequency%3D'0.006' numOctaves%3D'2' seed%3D'12' stitchTiles%3D'stitch'%2F%3E%0A    %3CfeColorMatrix type%3D'matrix' %0A      values%3D'1 0.10 0 0 0   0.85 0.75 0 0 0   0.05 0.05 0.55 0 0   0 0 0 .35 0'%2F%3E%0A    %3CfeGaussianBlur stdDeviation%3D'22'%2F%3E%0A  %3C%2Ffilter%3E%0A%3C%2Fdefs%3E%0A%3Crect width%3D'100%' height%3D'100%' fill%3D'url(%23wash)'%2F%3E%0A%3Crect width%3D'100%' height%3D'100%' filter%3D'url(%23aurora)' opacity%3D'0.50'%2F%3E%0A%3C%2Fsvg%3E"),
+      /* 4) Base wash driven by vars */
+      linear-gradient(
+        180deg,
+        hsl(var(--bg-hue) var(--bg-sat) calc(var(--bg-light) + 2%)),
+        hsl(var(--bg-hue) var(--bg-sat) calc(var(--bg-light) - 4%))
+      );
+  }
+
+  /* Topbar + logo */
+  html:not(.light) .topbar {
+    background: linear-gradient(180deg, rgba(212,175,55,.25), rgba(0,0,0,0));
+  }
+  html:not(.light) .logo {
+    background: linear-gradient(135deg,#2a2000,#D4AF37);
+    box-shadow: 0 6px 18px rgba(212,175,55,.25), inset 0 0 0 1px rgba(255,255,255,.05);
+  }
+
+  /* Buttons, selects, menus */
+  html:not(.light) button,
+  html:not(.light) select {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid rgba(212,175,55,.28);
+    box-shadow: 0 12px 30px rgba(0,0,0,.45);
+  }
+  html:not(.light) button:hover,
+  html:not(.light) select:hover {
+    filter: none;
+    box-shadow: 0 0 0 1px rgba(212,175,55,.35) inset, 0 0 24px rgba(212,175,55,.12);
+  }
+  html:not(.light) button.danger {
+    background: rgba(240,82,82,.12);
+    border-color: rgba(240,82,82,.35);
+  }
+
+  /* Menus */
+  html:not(.light) .menu {
+    border-color: rgba(212,175,55,.22);
+  }
+  html:not(.light) .menu button:hover {
+    background: rgba(212,175,55,.12);
+  }
+  html:not(.light) .menu hr {
+    border-top-color: rgba(212,175,55,.25);
+  }
+
+  /* Nodes, groups, titles */
+  html:not(.light) .node {
+    border-color: var(--node-border);
+  }
+  html:not(.light) .node .title {
+    border-color: rgba(212,175,55,.25);
+    background: rgba(212,175,55,.06);
+  }
+  html:not(.light) .group {
+    border-color: var(--group);
+    background: rgba(212,175,55,.06);
+  }
+
+  /* Textboxes — subtle golden glass */
+  html:not(.light) .textbox {
+    border-color: rgba(212,175,55,.45);
+    background: rgba(255,255,255,0.06);
+    box-shadow:
+      inset 0 1px 0 rgba(255,245,200,0.35),
+      inset 0 -1px 0 rgba(212,175,55,0.18),
+      0 8px 30px rgba(0,0,0,0.45),
+      0 0 24px rgba(212,175,55,0.10);
+  }
+  html:not(.light) .textbox:hover {
+    border-color: rgba(212,175,55,.6);
+    box-shadow:
+      inset 0 1px 0 rgba(255,245,200,0.45),
+      inset 0 -1px 0 rgba(212,175,55,0.25),
+      0 10px 40px rgba(0,0,0,0.5),
+      0 0 36px rgba(212,175,55,0.14);
+  }
+  html:not(.light) .textbox.selected {
+    box-shadow:
+      inset 0 1px 0 rgba(255,245,200,0.45),
+      inset 0 -1px 0 rgba(212,175,55,0.18),
+      0 8px 24px rgba(0,0,0,.5),
+      0 0 0 2px var(--accent);
+  }
+
+  /* Check node hover */
+  html:not(.light) .checknode:hover {
+    border-color: rgba(212,175,55,.35);
+    box-shadow: 0 6px 20px rgba(0,0,0,.35);
+  }
+
+  /* Contextual overlays */
+  html:not(.light) .drop-overlay {
+    background: rgba(212,175,55, 0.10);
+    border-color: var(--accent);
+  }
+  html:not(.light) .drop-message {
+    border-color: var(--accent);
+  }
+
+  /* Scale bar */
+  html:not(.light) .scale-bar {
+    background: rgba(212,175,55,.12);
+    border: 1px solid rgba(212,175,55,.25);
+  }
+
+  /* Spotlight search */
+  html:not(.light) #spotlightOverlay {
+    background: rgba(0,0,0,.5);
+  }
+  html:not(.light) .spotlight-card {
+    background: rgba(20,18,12,.92);
+    border: 1px solid rgba(212,175,55,.28);
+  }
+  html:not(.light) .spotlight-input {
+    border: 1px solid rgba(212,175,55,.35);
+    background: rgba(212,175,55,.06);
+    color: var(--text);
+  }
+  html:not(.light) .spotlight-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(212,175,55,.45);
+    border-color: var(--accent);
+  }
+  html:not(.light) .spotlight-btn {
+    background: var(--accent);
+    color: #121212;
+  }
+</style>
+
+<style id="oscar-black-gold-rim">
+  /* === Oscar — Black Canvas, Gold Rim (Dark Mode Only) === */
+  html:not(.light) {
+    --bg:#0a0a0b;
+    --panel:#111214;
+    --text:#ECEDEF;
+    --muted:#B8BDC7;
+    --accent:#D4AF37; /* gold only for rims */
+    --node-border: rgba(212,175,55,.28);
+    --panel-border: rgba(212,175,55,.22);
+    --shadow-1: 0 2px 4px rgba(0,0,0,.35);
+    --shadow-2: 0 12px 28px rgba(0,0,0,.55);
+    --shadow-3: 0 40px 80px rgba(0,0,0,.65);
+    /* reset previous goldy wiring */
+    --handle-bg: rgba(255,255,255,.06);
+    --handle-border: rgba(255,255,255,.22);
+    --handle-bg-strong: rgba(255,255,255,.12);
+    --handle-icon: rgba(255,255,255,.9);
+    --wire-stroke: rgba(255,255,255,.12);
+    --wire-shadow: rgba(0,0,0,.65);
+    --connect-hover-outline: #7a7a7a;
+  }
+
+  /* Pure black canvas w/ subtle vignette + grain; remove gold aurora */
+  html:not(.light) body {
+    background-image:
+      radial-gradient(1200px 600px at 30% -10%, rgba(255,255,255,.06), transparent 60%),
+      radial-gradient(1600px 900px at 80% -20%, rgba(255,255,255,.04), transparent 65%),
+      url("data:image/svg+xml;utf8,%3Csvg xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width%3D'128' height%3D'128'%3E%0A%3Cfilter id%3D'n'%3E%3CfeTurbulence type%3D'fractalNoise' baseFrequency%3D'0.9' numOctaves%3D'1' stitchTiles%3D'stitch'%2F%3E%3C%2Ffilter%3E%0A%3Crect width%3D'100%' height%3D'100%' filter%3D'url(%23n)' opacity%3D'.035'%2F%3E%0A%3C%2Fsvg%3E"),
+      linear-gradient(180deg, #0b0b0d, #0a0a0b);
+    background-blend-mode: normal, normal, overlay, normal;
+  }
+
+  /* Topbar and navigation: black glass with realistic shadow */
+  html:not(.light) .topbar {
+    background: rgba(14,14,16,.85);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--panel-border);
+    box-shadow: var(--shadow-1), var(--shadow-2);
+  }
+
+  /* Panels / sidebars / docks — gold rim only */
+  html:not(.light) .panel,
+  html:not(.light) .sidebar,
+  html:not(.light) .dock,
+  html:not(.light) .inspector {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--shadow-1), var(--shadow-2), var(--shadow-3);
+  }
+
+  /* Nodes — black glass with gold rim */
+  html:not(.light) .node,
+  html:not(.light) .group,
+  html:not(.light) .textbox {
+    background: rgba(20,21,24,.88);
+    border: 1px solid var(--node-border);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.03),
+      var(--shadow-1), var(--shadow-2);
+  }
+  html:not(.light) .node:hover,
+  html:not(.light) .group:hover,
+  html:not(.light) .textbox:hover {
+    border-color: rgba(212,175,55,.40);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.05),
+      0 4px 8px rgba(0,0,0,.35),
+      0 18px 40px rgba(0,0,0,.6);
+  }
+  html:not(.light) .textbox.selected,
+  html:not(.light) .node.selected,
+  html:not(.light) .group.selected {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.05),
+      0 0 0 1px rgba(212,175,55,.55),
+      0 24px 60px rgba(0,0,0,.65);
+  }
+
+  /* Menus: neutral; keep gold on rim only */
+  html:not(.light) .menu {
+    background: rgba(18,18,20,.96);
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--shadow-1), var(--shadow-2);
+  }
+  html:not(.light) .menu button:hover {
+    background: rgba(255,255,255,.06);
+  }
+  html:not(.light) .menu hr { border-top-color: rgba(255,255,255,.08); }
+
+  /* Buttons, inputs — neutral greys */
+  html:not(.light) button,
+  html:not(.light) select,
+  html:not(.light) input[type="text"],
+  html:not(.light) input[type="search"] {
+    background: rgba(24,24,26,.9);
+    color: var(--text);
+    border: 1px solid rgba(255,255,255,.10);
+    box-shadow: var(--shadow-1);
+  }
+  html:not(.light) button:hover {
+    border-color: rgba(255,255,255,.18);
+  }
+
+  /* Handles / wires — grayscale */
+  html:not(.light) .handle {
+    background: var(--handle-bg);
+    border: 1px solid var(--handle-border);
+  }
+  html:not(.light) .wire {
+    stroke: var(--wire-stroke);
+    filter: drop-shadow(0 2px 2px var(--wire-shadow));
+  }
+
+  /* Contextual overlays */
+  html:not(.light) .drop-overlay {
+    background: rgba(255,255,255,.06);
+    border: 1px dashed rgba(255,255,255,.22);
+  }
+  html:not(.light) .drop-message { border-color: rgba(255,255,255,.22); }
+
+  /* Spotlight */
+  html:not(.light) #spotlightOverlay { background: rgba(0,0,0,.55); }
+  html:not(.light) .spotlight-card {
+    background: rgba(16,16,18,.96);
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--shadow-1), var(--shadow-2);
+  }
+  html:not(.light) .spotlight-input {
+    border: 1px solid rgba(255,255,255,.15);
+    background: rgba(255,255,255,.05);
+    color: var(--text);
+  }
+</style>
+
+<style id="checklist-select-fix">
+  /* Make checklist selection visible in both themes */
+  .checknode.selected{
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-color: var(--node-border);
+  }
+</style>
 </head>
 <body>
   <header class="topbar">
@@ -647,22 +1095,32 @@
     <hr/>
     <button data-action="create-group">Create Group</button>
     <button data-action="create-textbox">Create Text Box</button>
+    <button data-action="add-checknode">➕ Add Checklist</button>
   </menu>
 
   <menu id="nodeMenu" class="menu">
     <button data-action="open">Open / Play</button>
     <hr/>
     <button data-action="toggle-metadata">Show metadata</button>
+    <!-- INSERT THESE TWO LINES -->
+    <button data-action="connect">Connect</button>
     <hr/>
+    <!-- /INSERT -->
     <button data-action="duplicate">Duplicate</button>
     <hr/>
     <button data-action="delete" class="danger">Delete</button>
   </menu>
 
   <menu id="textboxMenu" class="menu">
+    <button data-action="connect">Connect</button>
+    <hr/>
     <button data-action="duplicate">Duplicate</button>
     <hr/>
     <button data-action="delete" class="danger">Delete</button>
+  </menu>
+
+  <menu id="wireMenu" class="menu">
+    <button data-action="disconnect" class="danger">Disconnect</button>
   </menu>
 
   <script>
@@ -683,12 +1141,14 @@
     };
 
     const board = document.getElementById('board');
+    board.addEventListener('click', (e)=>{ if(e.button===0 && typeof closeMenus==='function') closeMenus(); });
     const viewport = document.getElementById('viewport');
     const canvasMenu = document.getElementById('canvasMenu');
     const nodeMenu = document.getElementById('nodeMenu');
     const textboxMenu = document.getElementById('textboxMenu');
+    const wireMenu = document.getElementById('wireMenu');
 
-    console.log('Elements found:', {board, viewport, canvasMenu, nodeMenu, textboxMenu});
+    console.log('Elements found:', {board, viewport, canvasMenu, nodeMenu, textboxMenu, wireMenu});
 
     function init(){
       console.log('Initializing...');
@@ -770,6 +1230,7 @@
 
       // Left-drag on empty canvas pans OR deselects
       viewport.addEventListener('mousedown', (e)=>{
+        if(e.button===0 && typeof closeMenus==='function') closeMenus();
         if(e.button === 1) { // Middle mouse button - pan only
           e.preventDefault();
           startPanning(e);
@@ -778,8 +1239,6 @@
         
         if(e.button!==0) return; // Only handle left mouse button for selection/pan
         if (e.target.closest('.textbox')) return;
-        if(canvasMenu.classList.contains('open') || nodeMenu.classList.contains('open') || textboxMenu.classList.contains('open')) return;
-        
         // Check if clicking on empty space (not on any node, group, or textbox)
         const clickedOnContent = e.target.closest('.node, .group, .textbox');
         
@@ -796,7 +1255,7 @@
           // Only start panning if we're not just deselecting
           startPanning(e);
         }
-      });
+    });
       
       // Handle middle mouse button wheel clicks for panning
       viewport.addEventListener('auxclick', (e) => {
@@ -810,6 +1269,30 @@
       viewport.addEventListener('contextmenu', (e)=>{
         console.log('Context menu triggered');
         e.preventDefault();
+        
+        // Check for wire handle first (highest priority)
+        const wireHandle = e.target.closest('.wire-handle');
+        if(wireHandle) {
+          console.log('Opening wire handle context menu');
+          openWireMenu(e.clientX, e.clientY, wireHandle);
+          return;
+        }
+        
+        // Check for wire path or hit area
+        const wirePath = e.target.closest('.wire-path, .wire-hit-area');
+        if(wirePath) {
+          console.log('Opening wire path context menu');
+          openWireMenu(e.clientX, e.clientY, wirePath);
+          return;
+        }
+        
+        // Check for checklist node
+        const checklistNode = e.target.closest('.checknode');
+        if(checklistNode) {
+          console.log('Opening checklist context menu');
+          openChecklistMenu(e.clientX, e.clientY, checklistNode);
+          return;
+        }
         
         const textbox = e.target.closest('.textbox');
         if(textbox && !textbox.classList.contains('metadata')){
@@ -843,6 +1326,7 @@
             const n = getNodeById(id); if(n) { n.el.remove(); state.nodes = state.nodes.filter(x=>x!==n); }
             const g = getGroupById(id); if(g) { g.el.remove(); state.groups = state.groups.filter(x=>x!==g); }
             const t = getTextboxById(id); if(t) { t.element.remove(); state.textboxes = state.textboxes.filter(x=>x!==t); }
+            const el = getElement(id); if(el && el.classList && el.classList.contains('checknode')){ if(typeof deleteChecklistNode==='function') deleteChecklistNode(el);}
           });
           clearSelection();
         }
@@ -1273,6 +1757,12 @@
 
       // Selection and dragging
       el.addEventListener('mousedown', (e)=>{
+        // Let real links win first
+        const link = e.target.closest('a[href]');
+        if (link) {
+          // Do NOT select or start drag; let the upcoming click handler decide.
+          return; 
+        }
         if(e.target.classList.contains('tb-resizer')) return;
         
         const additive = e.shiftKey || e.metaKey || e.ctrlKey;
@@ -1298,6 +1788,19 @@
         }
         
         e.stopPropagation();
+      });
+
+      // Add a dedicated click handler for links:
+      el.addEventListener('click', (e)=>{
+        const link = e.target.closest('a[href]');
+        if (!link) return;
+        // If editing, only open on Cmd/Ctrl-click (keeps normal clicks for caret placement)
+        if (textboxObj.isEditing && !(e.metaKey || e.ctrlKey)) {
+          return; // let the caret move
+        }
+        e.preventDefault(); // prevent contenteditable caret quirks
+        const href = link.getAttribute('href');
+        if (href) window.open(href, '_blank', 'noopener');
       });
 
       // Add resizer
@@ -1366,6 +1869,8 @@
           t.element.style.left = (start.x + dx) + 'px';
           t.element.style.top = (start.y + dy) + 'px';
         });
+        // <— add this
+        if (window.updateAllWires) window.updateAllWires();
       }
       
       function mouseup(){
@@ -1401,6 +1906,12 @@
         if(act==='add-google-map') openMapModal();
         if(act==='create-group') createGroup(canvasContextPoint);
         if(act==='create-textbox') createFloatingTextbox(canvasContextPoint);
+        if(act==='add-checknode') {
+          // Create checklist node at context point
+          if(typeof window.addChecklistNodeAt === 'function') {
+            window.addChecklistNodeAt(canvasContextPoint.x, canvasContextPoint.y, 'New item', false);
+          }
+        }
       };
     }
     
@@ -1425,6 +1936,13 @@
         if(!act) return;
         console.log('Node menu action:', act);
         closeMenus();
+        if (act==='connect'){
+          // Begin connection mode from this node's element
+          if (typeof window.__startConnectFrom === 'function') {
+            window.__startConnectFrom(node.el);
+          }
+          return;
+        }
         if(act==='delete'){ deleteNode(node); }
         if(act==='duplicate'){ duplicateNode(node); }
         if(act==='toggle-metadata'){
@@ -1466,6 +1984,12 @@
         if(!act) return;
         console.log('Textbox menu action:', act);
         closeMenus();
+        if (act === 'connect') {
+          if (typeof window.__startConnectFrom === 'function') {
+            window.__startConnectFrom(textboxObj.element);
+          }
+          return;
+        }
         if(act === 'delete') {
           removeTextbox(textboxObj);
         }
@@ -1475,10 +1999,132 @@
       };
     }
     
+    function openWireMenu(x, y, wireElement){
+      console.log('Opening wire menu at', x, y);
+      closeMenus();
+      wireMenu.style.left = x + 'px';
+      wireMenu.style.top = y + 'px';
+      wireMenu.classList.add('open');
+      
+      wireMenu.onmousedown = (e) => e.stopPropagation();
+      wireMenu.onclick = (e) => {
+        const act = e.target.dataset.action;
+        if(!act) return;
+        console.log('Wire menu action:', act);
+        closeMenus();
+        
+        if(act === 'disconnect') {
+          // Find the wire to disconnect
+          disconnectWire(wireElement);
+        }
+      };
+    }
+    
+    function disconnectWire(wireElement) {
+      console.log('Disconnecting wire:', wireElement);
+      
+      // Strategy 1: Look for wire group with data-wire-id
+      const wireGroup = wireElement.closest('g[data-wire-id]');
+      if(wireGroup) {
+        const wireId = wireGroup.dataset.wireId;
+        console.log('Found wire group with ID:', wireId);
+        wireGroup.remove();
+        
+        // Call wire management functions if available
+        if(window.removeWireById && typeof window.removeWireById === 'function') {
+          window.removeWireById(wireId);
+        }
+        if(window.updateAllWires && typeof window.updateAllWires === 'function') {
+          window.updateAllWires();
+        }
+        console.log('Wire disconnected successfully');
+        return;
+      }
+      
+      // Strategy 2: Look for any parent group containing wire elements
+      let wireContainer = wireElement.closest('g');
+      while(wireContainer) {
+        // Check if this group contains wire-related elements
+        const hasWirePath = wireContainer.querySelector('.wire-path, .wire-hit-area');
+        const hasWireHandle = wireContainer.querySelector('.wire-handle');
+        
+        if(hasWirePath || hasWireHandle) {
+          console.log('Found wire container group, removing:', wireContainer);
+          wireContainer.remove();
+          
+          // Call update functions
+          if(window.updateAllWires && typeof window.updateAllWires === 'function') {
+            window.updateAllWires();
+          }
+          console.log('Wire disconnected via container group');
+          return;
+        }
+        
+        // Move up to parent group
+        wireContainer = wireContainer.parentElement?.closest('g');
+      }
+      
+      // Strategy 3: Remove the immediate parent group
+      const immediateGroup = wireElement.closest('g');
+      if(immediateGroup) {
+        console.log('Removing immediate parent group as fallback');
+        immediateGroup.remove();
+        
+        if(window.updateAllWires && typeof window.updateAllWires === 'function') {
+          window.updateAllWires();
+        }
+        console.log('Wire disconnected via immediate group fallback');
+        return;
+      }
+      
+      // Strategy 4: Try to remove the wire element itself
+      if(wireElement.classList.contains('wire-path') || wireElement.classList.contains('wire-hit-area')) {
+        console.log('Removing wire element directly');
+        wireElement.remove();
+        
+        if(window.updateAllWires && typeof window.updateAllWires === 'function') {
+          window.updateAllWires();
+        }
+        console.log('Wire element removed directly');
+        return;
+      }
+      
+      console.warn('Could not find a suitable wire element to remove');
+    }
+    
+    function openChecklistMenu(x, y, checklistElement){
+      console.log('Opening checklist menu at', x, y);
+      closeMenus();
+      textboxMenu.style.left = x + 'px';
+      textboxMenu.style.top = y + 'px';
+      textboxMenu.classList.add('open');
+      
+      textboxMenu.onmousedown = (e) => e.stopPropagation();
+      textboxMenu.onclick = (e) => {
+        const act = e.target.dataset.action;
+        if(!act) return;
+        console.log('Checklist menu action:', act);
+        closeMenus();
+        if (act === 'connect') {
+          if (typeof window.__startConnectFrom === 'function') {
+            window.__startConnectFrom(checklistElement);
+          }
+          return;
+        }
+        if(act === 'delete') {
+          deleteChecklistNode(checklistElement);
+        }
+        if(act === 'duplicate') {
+          duplicateChecklistNode(checklistElement);
+        }
+      };
+    }
+    
     function closeMenus(){ 
       canvasMenu.classList.remove('open'); 
       nodeMenu.classList.remove('open'); 
       textboxMenu.classList.remove('open'); 
+      wireMenu.classList.remove('open'); 
     }
 
     function removeTextbox(textboxObj) {
@@ -1506,6 +2152,35 @@
       newTextbox.element.blur();
       
       return newTextbox;
+    }
+    
+    function deleteChecklistNode(checklistElement) {
+      const checklistId = checklistElement.dataset.id;
+      
+      // Remove from DOM
+      checklistElement.remove();
+      
+      // Remove from tracking array
+      if(window.checklistNodes) {
+        const index = window.checklistNodes.findIndex(c => c.id === checklistId);
+        if(index !== -1) {
+          window.checklistNodes.splice(index, 1);
+        }
+      }
+    }
+    
+    function duplicateChecklistNode(checklistElement) {
+      const checklistId = checklistElement.dataset.id;
+      
+      // Find the checklist data
+      const checklistData = window.checklistNodes ? window.checklistNodes.find(c => c.id === checklistId) : null;
+      
+      if(checklistData && window.addChecklistNodeAt) {
+        // Create duplicate at offset position
+        const newX = checklistData.x + 20;
+        const newY = checklistData.y + 20;
+        window.addChecklistNodeAt(newX, newY, checklistData.text, checklistData.checked);
+      }
     }
 
     // Node creation
@@ -1985,6 +2660,8 @@ const toolbar = document.createElement('div');
             t.element.style.top = newY + 'px';
           }
         });
+        // <— add this
+        if (window.updateAllWires) window.updateAllWires();
       }
       function up(){ 
         window.removeEventListener('mousemove', mm); 
@@ -2012,6 +2689,7 @@ const toolbar = document.createElement('div');
         state.nodes.forEach(n=>{ 
           if(intersects({x,y,w,h}, n)){ selectId(n.id, true); anyNode=true; } 
         });
+        if(window.checklistNodes){ window.checklistNodes.forEach(c=>{ const cw=c.element?c.element.offsetWidth:0; const ch=c.element?c.element.offsetHeight:0; if(intersects({x,y,w,h},{x:c.x,y:c.y,w:cw,h:ch})) { selectId(c.id, true); anyNode=true; } }); }
         if(!anyNode) {
           state.groups.forEach(g=>{ 
             if(intersects({x,y,w,h}, g)) selectId(g.id, true); 
@@ -2296,6 +2974,17 @@ const toolbar = document.createElement('div');
         delete processedGroup.el;
         return processedGroup;
       });
+      
+      // Process checklist nodes for saving
+      const processedChecklists = window.checklistNodes ? window.checklistNodes.map(checklist => {
+        return {
+          id: checklist.id,
+          x: checklist.x,
+          y: checklist.y,
+          text: checklist.text,
+          checked: checklist.checked
+        };
+      }) : [];
 
       return {
         version: '4.8',
@@ -2308,6 +2997,7 @@ const toolbar = document.createElement('div');
         nodes: processedNodes,
         groups: processedGroups,
         textboxes: processedTextboxes,
+        checklists: processedChecklists,
         nextId: state.nextId
       };
     }
@@ -2431,6 +3121,18 @@ const toolbar = document.createElement('div');
           textbox.element.blur();
         });
       }
+      
+      // Restore checklist nodes
+      if(boardData.checklists && window.addChecklistNodeAt) {
+        boardData.checklists.forEach(checklistData => {
+          window.addChecklistNodeAt(
+            checklistData.x,
+            checklistData.y,
+            checklistData.text,
+            checklistData.checked
+          );
+        });
+      }
     }
 
     function clearBoard() {
@@ -2448,6 +3150,14 @@ const toolbar = document.createElement('div');
         if(textbox.element) textbox.element.remove();
       });
       state.textboxes = [];
+      
+      // Clear checklist nodes
+      if(window.checklistNodes) {
+        window.checklistNodes.forEach(checklist => {
+          if(checklist.element) checklist.element.remove();
+        });
+        window.checklistNodes.length = 0;
+      }
       
       clearSelection();
     }
@@ -2564,6 +3274,8 @@ const toolbar = document.createElement('div');
           const dy = w.y - startWorld.y;
           tb.style.left = (startLeft + dx) + 'px';
           tb.style.top  = (startTop  + dy) + 'px';
+          // <— add this
+          if (window.updateAllWires) window.updateAllWires();
         }
         function onUp(){
           window.removeEventListener('mousemove', onMove);
@@ -2576,6 +3288,452 @@ const toolbar = document.createElement('div');
         window.addEventListener('mouseup', onUp, {passive:false});
       }, true); // capture to beat other handlers
     })();
+</script>
+
+<script>
+(function(){
+  const board = document.querySelector('#board, .board, #canvas, .canvas') || document.body;
+
+  // ---- Helpers: Bezier math ----
+  function bezierPoint(a,c1,c2,b,t){
+    const mt = 1-t, mt2 = mt*mt, t2 = t*t;
+    const x = a.x*mt*mt2 + 3*c1.x*t*mt2 + 3*c2.x*t2*mt + b.x*t*t2;
+    const y = a.y*mt*mt2 + 3*c1.y*t*mt2 + 3*c2.y*t2*mt + b.y*t*t2;
+    return {x,y};
+  }
+  function bezierDeriv(a,c1,c2,b,t){
+    const mt = 1-t;
+    const x = 3*mt*mt*(c1.x - a.x) + 6*mt*t*(c2.x - c1.x) + 3*t*t*(b.x - c2.x);
+    const y = 3*mt*mt*(c1.y - a.y) + 6*mt*t*(c2.y - c1.y) + 3*t*t*(b.y - c2.y);
+    return {x,y};
+  }
+  // Solve C1 so that B(t1) = P  (linear in C1)
+  function solveC1FromPoint(a,c2,b,t,P){
+    const mt = 1-t, mt2 = mt*mt, t2 = t*t;
+    const denom = 3*mt2*t || 1e-6;
+    return {
+      x: (P.x - (a.x*mt*mt2 + 3*c2.x*t2*mt + b.x*t*t2)) / denom,
+      y: (P.y - (a.y*mt*mt2 + 3*c2.y*t2*mt + b.y*t*t2)) / denom
+    };
+  }
+  // Solve C2 so that B(t2) = P  (linear in C2)
+  function solveC2FromPoint(a,c1,b,t,P){
+    const mt = 1-t, mt2 = mt*mt, t2 = t*t;
+    const denom = 3*mt*t2 || 1e-6;
+    return {
+      x: (P.x - (a.x*mt*mt2 + 3*c1.x*t*mt2 + b.x*t*t2)) / denom,
+      y: (P.y - (a.y*mt*mt2 + 3*c1.y*t*mt2 + b.y*t*t2)) / denom
+    };
+  }
+
+  // ---- Wires layer (below nodes) ----
+  function ensureWiresLayer(){
+    let svg = document.getElementById('wires');
+    if (!svg){
+      svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.id = 'wires';
+      svg.setAttribute('viewBox','0 0 50000 50000');
+      svg.setAttribute('width','50000');
+      svg.setAttribute('height','50000');
+      // insert as FIRST CHILD to ensure it's behind other absolute layers
+      board.insertBefore(svg, board.firstChild || null);
+    } else if (svg !== board.firstChild){
+      // always keep it first
+      board.insertBefore(svg, board.firstChild || null);
+    }
+    return svg;
+  }
+
+  // ---- State ----
+  window.state = window.state || {};
+  state.wires = state.wires || [];
+  state.connecting = state.connecting || null;
+
+  function getCenter(el){
+    return {
+      x: (parseFloat(el.style.left)||0) + el.offsetWidth/2,
+      y: (parseFloat(el.style.top)||0)  + el.offsetHeight/2
+    };
+  }
+
+  // create wire
+  function makeWire(fromEl, toEl){
+    const svg = ensureWiresLayer();
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g'); g.classList.add('wire');
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path'); path.classList.add('wire-path');
+
+    // on-wire handles (groups with icon + hit + dot)
+    function makeHandle(){
+      const hg = document.createElementNS('http://www.w3.org/2000/svg','g'); hg.classList.add('wire-handle');
+      const hit = document.createElementNS('http://www.w3.org/2000/svg','circle'); hit.setAttribute('class','hit'); hit.setAttribute('r','12');
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','circle'); dot.setAttribute('class','dot'); dot.setAttribute('r','4.5');
+      const icon = document.createElementNS('http://www.w3.org/2000/svg','path'); icon.setAttribute('class','icon');
+      icon.setAttribute('d','M -8 0 Q -4 -6 0 0 T 8 0'); // small S-curve
+      hg.appendChild(hit); hg.appendChild(dot); hg.appendChild(icon);
+      return hg;
+    }
+    const h1 = makeHandle(), h2 = makeHandle();
+
+    g.appendChild(path); g.appendChild(h1); g.appendChild(h2);
+    svg.appendChild(g);
+
+    const a = getCenter(fromEl);
+    const b = toEl ? getCenter(toEl) : a;
+    const defaultMag = Math.min(240, Math.max(80, Math.abs(b.x-a.x)*.35));
+    const sign = (b.x - a.x) >= 0 ? 1 : -1;
+
+    const wire = {
+      fromEl, toEl: toEl || null, g, path, h1, h2,
+      c1: { x: a.x + sign*defaultMag, y: a.y },
+      c2: { x: b.x - sign*defaultMag, y: b.y },
+      tempTarget: null
+    };
+
+    // handles only visible after attached
+    if (!toEl){ h1.style.display='none'; h2.style.display='none'; }
+
+    // dragging on-wire handles -> solve for C1/C2 at t=⅓,⅔
+    function startHandleDrag(which, down){
+      down.preventDefault(); down.stopPropagation();
+      const t = (which===1) ? 1/3 : 2/3;
+      const handle = (which===1) ? h1 : h2;
+      handle.classList.add('dragging');
+
+      function move(ev){
+        const W = (typeof screenToWorld==='function') ? screenToWorld(ev.clientX, ev.clientY) : {x:ev.clientX,y:ev.clientY};
+        const A = getCenter(wire.fromEl);
+        const B = wire.toEl ? getCenter(wire.toEl) : (wire.tempTarget || A);
+        if (which===1){
+          wire.c1 = solveC1FromPoint(A, wire.c2, B, t, W);
+        }else{
+          wire.c2 = solveC2FromPoint(A, wire.c1, B, t, W);
+        }
+        updateWire(wire);
+      }
+      function up(){
+        window.removeEventListener('mousemove', move, true);
+        window.removeEventListener('mouseup', up, true);
+        handle.classList.remove('dragging');
+      }
+      window.addEventListener('mousemove', move, true);
+      window.addEventListener('mouseup', up, true);
+    }
+    h1.addEventListener('mousedown', (e)=>startHandleDrag(1,e), true);
+    h2.addEventListener('mousedown', (e)=>startHandleDrag(2,e), true);
+
+    state.wires.push(wire);
+    updateWire(wire);
+    return wire;
+  }
+
+  function updateWire(wire){
+    // cleanup
+    if (!wire.fromEl?.isConnected || (wire.toEl && !wire.toEl.isConnected)){
+      try{ wire.g.remove(); }catch(_){}
+      state.wires = state.wires.filter(w=>w!==wire);
+      return;
+    }
+    const A = getCenter(wire.fromEl);
+    const B = wire.toEl ? getCenter(wire.toEl) : (wire.tempTarget || A);
+    const C1 = wire.c1, C2 = wire.c2;
+
+    // path
+    wire.path.setAttribute('d', `M ${A.x} ${A.y} C ${C1.x} ${C1.y}, ${C2.x} ${C2.y}, ${B.x} ${B.y}`);
+
+    // handles on-curve at t=1/3 and t=2/3
+    const t1 = 1/3, t2 = 2/3;
+    const P1 = bezierPoint(A,C1,C2,B,t1), T1 = bezierDeriv(A,C1,C2,B,t1);
+    const P2 = bezierPoint(A,C1,C2,B,t2), T2 = bezierDeriv(A,C1,C2,B,t2);
+    const a1 = Math.atan2(T1.y,T1.x)*180/Math.PI;
+    const a2 = Math.atan2(T2.y,T2.x)*180/Math.PI;
+
+    wire.h1.setAttribute('transform', `translate(${P1.x} ${P1.y}) rotate(${a1})`);
+    wire.h2.setAttribute('transform', `translate(${P2.x} ${P2.y}) rotate(${a2})`);
+  }
+
+  function updateAllWires(){ state.wires.slice().forEach(updateWire); }
+  window.updateAllWires = updateAllWires;
+
+  // ---- Connection mode (block node actions while connecting) ----
+  function startConnectFrom(el){
+    ensureWiresLayer();
+
+    const temp = makeWire(el, null);
+    temp.g.classList.add('connecting');
+
+    let hoverEl = null;
+    function setHover(el2){
+      if (hoverEl === el2) return;
+      if (hoverEl) hoverEl.classList.remove('connect-hover');
+      hoverEl = el2;
+      if (hoverEl) hoverEl.classList.add('connect-hover');
+    }
+
+    function onMove(e){
+      const W = (typeof screenToWorld==='function') ? screenToWorld(e.clientX,e.clientY) : {x:e.clientX,y:e.clientY};
+      temp.tempTarget = W;
+      updateWire(temp);
+      const hit = document.elementFromPoint(e.clientX, e.clientY);
+      const cand = hit?.closest && hit.closest('.node, .textbox, .checknode');
+      setHover(cand && cand!==el ? cand : null);
+    }
+
+    function onDown(e){
+      const target = hoverEl;
+      setHover(null);
+
+      if (target && target!==el){
+        temp.toEl = target;
+        temp.h1.style.display=''; temp.h2.style.display='';
+        updateWire(temp);
+      } else {
+        try{ temp.g.remove(); }catch(_){}
+        state.wires = state.wires.filter(w=>w!==temp);
+      }
+      end();
+    }
+
+    function end(){
+      window.removeEventListener('mousemove', onMove, true);
+      window.removeEventListener('mousedown', onDown, true);
+      state.connecting = null;
+      document.documentElement.classList.remove('connecting');
+    }
+
+    state.connecting = { wire: temp, fromEl: el };
+    document.documentElement.classList.add('connecting');
+
+    // High-priority listeners
+    window.addEventListener('mousemove', onMove, true);
+    window.addEventListener('mousedown', onDown, true);
+  }
+  window.__startConnectFrom = startConnectFrom;
+
+  // Global blocker: while connecting, prevent clicks from triggering node/textbox actions.
+  function blockWhileConnecting(e){
+    if (!state.connecting) return;
+    if (e.target?.closest && e.target.closest('.node, .textbox, .checknode')){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }
+  ['mousedown','click','mouseup','dblclick'].forEach(type=>{
+    document.addEventListener(type, blockWhileConnecting, true); // capture
+  });
+
+  // Keep wires fresh on zoom/pan (wrap applyTransform if present)
+  if (typeof window.applyTransform === 'function'){
+    const __apply = window.applyTransform;
+    window.applyTransform = function(...args){
+      const r = __apply.apply(this, args);
+      if (window.updateAllWires) window.updateAllWires();
+      return r;
+    };
+  }
+
+  // Ensure layer order on first run
+  ensureWiresLayer();
+})();
+</script>
+
+<script>
+// ===== Standalone Checklist Node + Board Context Menu =====
+(function(){
+  // Try to find your board element; fall back to document.body
+  // If your board container has a specific ID/class, put it first in the selector list:
+  const board = document.querySelector('#board, .board, #canvas, .canvas') || document.body;
+
+  // Keep track of checklist nodes for save/load integration
+  const checklistNodes = [];
+
+  // Bring-to-front helper via z-index bump
+  let zTop = 2000;
+  function bringToFront(el){ el.style.zIndex = ++zTop; }
+
+  // Core: create a draggable checklist node
+  function createChecklistNode(x, y, textValue = 'New item', checked = false){
+    const id = 'c' + Date.now() + Math.random().toString(36).substr(2, 9);
+    const node = document.createElement('div');
+    node.className = 'checknode';
+    node.dataset.type = 'checknode';
+    node.dataset.id = id;
+    node.setAttribute('role', 'group');
+
+    // Drag handle
+    const grip = document.createElement('span');
+    grip.className = 'drag-handle';
+    grip.setAttribute('aria-label', 'Drag checklist');
+    grip.setAttribute('role', 'button');
+
+    // Checkbox
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !!checked;
+
+    // Single-line text (editable)
+    const text = document.createElement('div');
+    text.className = 'checktext';
+    text.contentEditable = 'true';
+    text.textContent = textValue;
+
+    node.appendChild(grip);
+    node.appendChild(cb);
+    node.appendChild(text);
+
+    // Initial position
+    node.style.left = Math.round(x) + 'px';
+    node.style.top  = Math.round(y) + 'px';
+    bringToFront(node);
+
+    // Create checklist data object
+    const checklistData = {
+      id: id,
+      x: x,
+      y: y,
+      text: textValue,
+      checked: checked,
+      element: node
+    };
+    
+    // Add to tracking array
+    checklistNodes.push(checklistData);
+
+    // Toggle visual on check (removed strikethrough)
+    const syncChecked = ()=> {
+      // Update data when checkbox changes
+      checklistData.checked = cb.checked;
+    };
+    cb.addEventListener('change', syncChecked);
+    syncChecked();
+    
+    // Update data when text changes
+    text.addEventListener('input', ()=> {
+      checklistData.text = text.textContent;
+    });
+    text.addEventListener('blur', ()=> {
+      checklistData.text = text.textContent;
+    });
+
+    // ---- Drag logic (handle-only) ----
+    let dragging = false;
+
+    function startDrag(e){
+      e.preventDefault();
+      e.stopPropagation(); // Prevent canvas pan/selection
+      bringToFront(node);
+      dragging = true;
+      node.setAttribute('aria-grabbed', 'true');
+      // Use world-space coordinates (accounts for zoom + origin)
+      const toWorld = (sx, sy) => {
+        if (typeof screenToWorld === 'function') return screenToWorld(sx, sy);
+        // Fallback (shouldn't be needed in your app)
+        const vp = document.getElementById('viewport');
+        const rect = vp.getBoundingClientRect();
+        const zoom = (typeof state !== 'undefined' && state.zoom) ? state.zoom : 1;
+        const origin = (typeof state !== 'undefined' && state.origin) ? state.origin : {x:0,y:0};
+        return { x: (sx - rect.left - origin.x) / zoom,
+                 y: (sy - rect.top  - origin.y) / zoom };
+      };
+      const startWorld = toWorld(e.clientX, e.clientY);
+      const startLeft  = parseFloat(node.style.left) || 0;
+      const startTop   = parseFloat(node.style.top)  || 0;
+      // Multiselect: capture start positions for all selected items
+      const selectedIds = (typeof state!=='undefined' && state.selection && state.selection.size)
+        ? Array.from(state.selection)
+        : [id];
+      if(selectedIds.indexOf(id)===-1) selectedIds.push(id);
+      const startPositions = {};
+      selectedIds.forEach(sid=>{
+        let n = (typeof getNodeById==='function') && getNodeById(sid);
+        let g = (typeof getGroupById==='function') && getGroupById(sid);
+        let t = (typeof getTextboxById==='function') && getTextboxById(sid);
+        let c = (window.checklistNodes||[]).find(c=>c.id===sid);
+        if(n) startPositions[sid] = {x:n.x, y:n.y, type:'node'};
+        else if(g) startPositions[sid] = {x:g.x, y:g.y, type:'group'};
+        else if(t) startPositions[sid] = {x:parseFloat(t.element.style.left), y:parseFloat(t.element.style.top), type:'textbox'};
+        else if(c) startPositions[sid] = {x:c.x, y:c.y, type:'check'};
+      });
+      function onMove(ev){
+        if (!dragging) return;
+        const w = toWorld(ev.clientX, ev.clientY);
+        const dx = Math.round(w.x - startWorld.x);
+        const dy = Math.round(w.y - startWorld.y);
+        selectedIds.forEach(sid=>{
+          const sp = startPositions[sid]; if(!sp) return;
+          if(sp.type==='node'){
+            const n = getNodeById(sid); if(n){ n.x = sp.x + dx; n.y = sp.y + dy; n.el.style.left = n.x+'px'; n.el.style.top = n.y+'px'; }
+          } else if(sp.type==='group'){
+            const g = getGroupById(sid); if(g){ g.x = sp.x + dx; g.y = sp.y + dy; g.el.style.left = g.x+'px'; g.el.style.top = g.y+'px'; }
+          } else if(sp.type==='textbox'){
+            const t = getTextboxById(sid); if(t){ const nx = sp.x + dx, ny = sp.y + dy; t.element.style.left = nx+'px'; t.element.style.top = ny+'px'; }
+          } else if(sp.type==='check'){
+            const c = (window.checklistNodes||[]).find(c=>c.id===sid); if(c && c.element){ c.x = sp.x + dx; c.y = sp.y + dy; c.element.style.left = c.x+'px'; c.element.style.top = c.y+'px'; }
+          }
+        });
+        if (window.updateAllWires) window.updateAllWires();
+      }
+      function endDrag(ev){
+        if (ev){ ev.preventDefault(); ev.stopPropagation(); }
+        dragging = false;
+        node.setAttribute('aria-grabbed', 'false');
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', endDrag);
+      }
+      window.addEventListener('mousemove', onMove, { passive: false });
+      window.addEventListener('mouseup', endDrag, { passive: false });
+    }
+
+    // Start drag ONLY from the handle
+    grip.addEventListener('mousedown', startDrag);
+
+    // Keep clicks on checkbox/text behaving normally, but prevent canvas interaction
+    node.addEventListener('mousedown', (e)=>{
+      e.stopPropagation(); // Always prevent canvas interaction
+      if (e.target === grip) return; // drag via grip already handled
+      const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+      if(additive){ if(typeof toggleSelect==='function') toggleSelect(id); }
+      else { if(typeof selectId==='function') selectId(id); }
+    });
+    
+    // Prevent any canvas interaction when clicking anywhere on the checklist
+    node.addEventListener('click', (e)=>{
+      e.stopPropagation();
+    });
+
+    // Optional: Enter creates a new sibling node below (Shift+Enter stays in current)
+    text.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter' && !e.shiftKey){
+        e.preventDefault();
+        const belowY = (parseFloat(node.style.top)||0) + node.offsetHeight + 8;
+        const nx = (parseFloat(node.style.left)||0);
+        const nn = createChecklistNode(nx, belowY, '', false);
+        // Focus new node's text
+        setTimeout(()=>{
+          const t = nn.element.querySelector('.checktext');
+          const r = document.createRange(); const s = window.getSelection();
+          r.selectNodeContents(t); r.collapse(false); s.removeAllRanges(); s.addRange(r);
+          t.focus();
+        }, 0);
+      }
+    });
+
+    board.appendChild(node);
+    // Focus text right after creation
+    setTimeout(()=>{
+      const r = document.createRange(); const s = window.getSelection();
+      r.selectNodeContents(text); r.collapse(false); s.removeAllRanges(); s.addRange(r);
+      text.focus();
+    }, 0);
+
+    return checklistData; // Return the data object instead of the node
+  }
+
+  // Public API for integration with existing canvas menu
+  window.addChecklistNodeAt = (x, y, text, checked)=> createChecklistNode(x,y,text,checked);
+  
+  // Expose checklist nodes array for save/load integration
+  window.checklistNodes = checklistNodes;
+})();
 
   
 
@@ -2905,6 +4063,11 @@ function createTwitterNode(originalUrl, at){
     </div>
   </div>
 
+
+  <!-- Board context menu -->
+  <div id="board-context" role="menu" aria-hidden="true">
+    <div class="item" data-action="add-checknode">➕ Add Checklist</div>
+  </div>
 
 <script>
 (function(){
