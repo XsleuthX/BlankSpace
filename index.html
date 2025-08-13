@@ -990,12 +990,94 @@
 </style>
 
 <style id="checklist-select-fix">
+
+
   /* Make checklist selection visible in both themes */
   .checknode.selected{
     outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-color: var(--node-border);
   }
+
+/* Saved boards — thumbnail cards (PNG preview + actions) */
+#saveList{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+.save-card{
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px; padding:10px; display:grid; gap:8px;
+}
+.save-card img{ width:100%; height:96px; object-fit:cover; border-radius:8px; background:#000; }
+.save-card .meta{ font-size:12px; opacity:.9; line-height:1.2; display:grid; gap:2px; }
+.save-card .row{ display:flex; gap:6px; }
+.save-card button{ flex:1; padding:6px 8px; font-size:12px; border-radius:8px; cursor:pointer; }
+</style>
+<style id="no-sheen-patch">
+/* Disable sheen & micro shimmer on textboxes to prevent stutter */
+.textbox::before,
+.textbox::after{
+  background: none !important;
+  animation: none !important;
+  mix-blend-mode: normal !important;
+  filter: none !important;
+  will-change: auto !important;
+  opacity: 1 !important;
+}
+</style>
+
+<style id="tb-ctx-css">
+/* Textbox color context menu */
+#tbCtxMenu{
+  position: fixed; z-index: 99999; width: 220px;
+  background: rgba(22,26,43,.98);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px; padding: 10px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
+  display: none;
+  backdrop-filter: blur(8px);
+}
+#tbCtxMenu .title{ font-size:12px; color:#cfd7ff; opacity:.9; margin-bottom:8px; }
+#tbCtxMenu .row{ display:flex; gap:8px; align-items:center; margin:6px 0; }
+#tbCtxMenu input[type="color"]{ width: 100%; height: 36px; padding:0; border:0; background:transparent; cursor:pointer; }
+#tbCtxMenu .seg{
+  display:grid; grid-auto-flow:column; gap:6px;
+}
+#tbCtxMenu .seg button{
+  flex:1; padding:6px 8px; border-radius:8px; border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06); color:#e8ecff; cursor:pointer; font-size:12px;
+}
+#tbCtxMenu .seg button.active{ outline:2px solid rgba(139,92,246,.65); }
+#tbCtxMenu .swatch{
+  display:grid; grid-template-columns: repeat(6, 1fr); gap:6px;
+}
+#tbCtxMenu .swatch button{
+  width: 24px; height: 24px; border-radius:6px; border:1px solid rgba(255,255,255,.18); cursor:pointer;
+}
+</style>
+
+<style id="mobile-enhance-css">
+/* Mobile-friendly panels */
+@media (max-width: 900px){
+  .url-panel, .save-panel{
+    width: min(88vw, 520px) !important;
+    max-height: calc(100vh - 140px) !important;
+    font-size: 14px;
+  }
+  .save-panel h3, .url-panel h3{ font-size: 16px; }
+  .save-panel button, .url-panel button{ font-size: 13px; }
+}
+@media (max-width: 600px){
+  .url-panel, .save-panel{
+    width: min(94vw, 460px) !important;
+    max-height: calc(100vh - 120px) !important;
+    font-size: 13px;
+  }
+  .save-panel h3, .url-panel h3{ font-size: 15px; }
+  .save-panel button, .url-panel button{ font-size: 12px; padding: 8px 10px; }
+}
+/* Ensure the board captures touch gestures for dragging without scroll jitter */
+#viewport{
+  touch-action: none;
+}
 </style>
 </head>
 <body>
@@ -2853,51 +2935,62 @@ const toolbar = document.createElement('div');
     }
 
     // Fixed Save/Load functions with proper textbox state management
-    function saveBoard(){
-      console.log('Saving board...');
-      const name = prompt('Enter a name for this board:', `Board_${new Date().toLocaleDateString()}`);
-      if(!name) return;
-      
-      exportBoardDataWithFiles().then(boardData => {
-        const savedBoards = JSON.parse(localStorage.getItem('moodboards') || '{}');
-        savedBoards[name] = {
-          data: boardData,
-          timestamp: new Date().toISOString(),
-          name: name
-        };
-        localStorage.setItem('moodboards', JSON.stringify(savedBoards));
-        
-        updateSavedBoardsList();
-        alert(`Board "${name}" saved successfully with all file data!`);
-      }).catch(error => {
-        console.error('Save error:', error);
-        alert('Error saving board: ' + error.message);
-      });
-    }
+    
+
+function saveBoard(){
+  console.log('Saving board.');
+  const name = prompt('Enter a name for this board:', `Board_${new Date().toLocaleDateString()}`);
+  if(!name) return;
+
+  Promise.all([ exportBoardDataWithFiles(), captureBoardSnapshot() ])
+    .then(([boardData, snap]) => {
+      const savedBoards = JSON.parse(localStorage.getItem('moodboards') || '{}');
+      savedBoards[name] = {
+        data: boardData,
+        snapshot: snap,
+        timestamp: new Date().toISOString(),
+        name
+      };
+      localStorage.setItem('moodboards', JSON.stringify(savedBoards));
+      updateSavedBoardsList();
+      alert(`Board "${name}" saved successfully with all file data!`);
+    }).catch(error => {
+      console.error('Save error:', error);
+      alert('Error saving board: ' + error.message);
+    });
+}
+
 
     function exportBoard(){
-      console.log('Exporting board...');
-      
-      const originalText = document.querySelector('#btnExport').textContent;
-      document.querySelector('#btnExport').textContent = 'Exporting...';
-      
-      exportBoardDataWithFiles().then(boardData => {
-        const dataStr = JSON.stringify(boardData, null, 2);
-        const dataBlob = new Blob([dataStr], {type: 'application/json'});
-        
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(dataBlob);
-        link.download = `moodboard_export_${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
-        
-        document.querySelector('#btnExport').textContent = originalText;
-        alert('Board exported successfully with all file data! Check your downloads folder.');
-      }).catch(error => {
-        console.error('Export error:', error);
-        document.querySelector('#btnExport').textContent = originalText;
-        alert('Error exporting board: ' + error.message);
-      });
-    }
+  console.log('Exporting board...');
+  const btn = document.querySelector('#btnExport');
+  const originalText = btn ? btn.textContent : null;
+  if(btn) btn.textContent = 'Exporting...';
+
+  Promise.all([ exportBoardDataWithFiles(), captureBoardSnapshot() ])
+    .then(([boardData, snap]) => {
+      const dataStr = JSON.stringify(boardData, null, 2);
+      downloadTextAs(`moodboard_export_${new Date().toISOString().split('T')[0]}.json`, dataStr);
+      const name = boardData?.name || `Export_${new Date().toLocaleDateString()}`;
+      const savedBoards = JSON.parse(localStorage.getItem('moodboards') || '{}');
+      savedBoards[name] = {
+        data: boardData,
+        snapshot: snap,
+        timestamp: new Date().toISOString(),
+        name
+      };
+      localStorage.setItem('moodboards', JSON.stringify(savedBoards));
+      updateSavedBoardsList();
+      if(btn) btn.textContent = originalText;
+      alert('Board exported successfully with all file data! Check your downloads folder.');
+    })
+    .catch(error => {
+      console.error('Export error:', error);
+      if(btn) btn.textContent = originalText;
+      alert('Error exporting board: ' + error.message);
+    });
+}
+
 
     function importBoard(event){
       console.log('Importing board...');
@@ -3163,32 +3256,73 @@ const toolbar = document.createElement('div');
     }
 
     function updateSavedBoardsList() {
-      const saveList = document.getElementById('saveList');
-      const savedBoards = JSON.parse(localStorage.getItem('moodboards') || '{}');
-      
-      saveList.innerHTML = '';
-      
-      Object.entries(savedBoards).forEach(([name, boardInfo]) => {
-        const item = document.createElement('div');
-        item.className = 'save-item';
-        
-        const date = new Date(boardInfo.timestamp).toLocaleDateString();
-        const hasFiles = boardInfo.data && boardInfo.data.hasBase64Files ? ' 📁' : '';
-        item.innerHTML = `
-          <span>${name}${hasFiles} (${date})</span>
-          <div>
-            <button onclick="loadSavedBoard('${name}')">Load</button>
-            <button onclick="deleteSavedBoard('${name}')" class="danger">Delete</button>
-          </div>
-        `;
-        
-        saveList.appendChild(item);
-      });
-      
-      if(Object.keys(savedBoards).length === 0) {
-        saveList.innerHTML = '<div style="text-align: center; color: var(--muted); font-size: 12px;">No saved boards</div>';
+  const saveList = document.getElementById('saveList');
+  const savedBoards = JSON.parse(localStorage.getItem('moodboards') || '{}');
+
+  if (!saveList) return;
+
+  saveList.innerHTML = '';
+
+  const names = Object.keys(savedBoards);
+  if (names.length === 0) {
+    saveList.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;">No saved boards</div>';
+    return;
+  }
+
+  names.forEach((name) => {
+    const info = savedBoards[name] || {};
+    const date = new Date(info.timestamp || Date.now()).toLocaleString();
+    const hasFiles = info.data && info.data.hasBase64Files ? ' 📁' : '';
+    const thumb = info.snapshot && info.snapshot.thumb;
+
+    const card = document.createElement('div');
+    card.className = 'save-card';
+    card.innerHTML = `
+      ${thumb ? `<img alt="Board snapshot" src="${thumb}">` : `<div style="height:96px;border-radius:8px;background:rgba(255,255,255,.08);display:grid;place-items:center;font-size:12px;color:var(--muted)">No Preview</div>`}
+      <div class="meta">
+        <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}${hasFiles}</div>
+        <div>${date}</div>
+      </div>
+      <div class="row">
+        <button data-act="load" data-name="${name}">Load</button>
+        <button data-act="json" data-name="${name}">JSON</button>
+        <button data-act="png"  data-name="${name}">PNG</button>
+        <button data-act="del"  data-name="${name}" class="danger">Delete</button>
+      </div>
+    `;
+    saveList.appendChild(card);
+  });
+
+  saveList.onclick = (e)=>{
+    const btn = e.target.closest('button'); if(!btn) return;
+    const act = btn.getAttribute('data-act');
+    const name = btn.getAttribute('data-name');
+    const savedBoards = JSON.parse(localStorage.getItem('moodboards') || '{}');
+    const info = savedBoards[name]; if(!info) return;
+
+    if (act === 'load') {
+      if (confirm(`Load board "${name}"? This will replace your current board.`)) {
+        loadBoardData(info.data);
+        alert(`Board "${name}" loaded successfully!`);
+      }
+    } else if (act === 'json') {
+      const dataStr = JSON.stringify(info.data || {}, null, 2);
+      downloadTextAs(`${name}.json`, dataStr);
+    } else if (act === 'png') {
+      const full = (info.snapshot && (info.snapshot.full || info.snapshot.thumb));
+      if (full) downloadDataUrl(full, `${name}.png`);
+      else alert('No PNG available for this item.');
+    } else if (act === 'del') {
+      if (confirm(`Delete board "${name}"? This cannot be undone.`)) {
+        delete savedBoards[name];
+        localStorage.setItem('moodboards', JSON.stringify(savedBoards));
+        updateSavedBoardsList();
+        alert(`Board "${name}" deleted.`);
       }
     }
+  };
+}
+
 
     function loadSavedBoard(name) {
       const savedBoards = JSON.parse(localStorage.getItem('moodboards') || '{}');
@@ -4148,5 +4282,254 @@ function createTwitterNode(originalUrl, at){
 })();
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+// ==== Canvas → PNG snapshot + utilities ====
+const SNAP_MAX_W = 640, SNAP_MAX_H = 360; // thumbnail bounds
+
+async function captureBoardSnapshot(){
+  const node = document.getElementById('viewport'); // full canvas container
+  const canvas = await html2canvas(node, {
+    backgroundColor: null,
+    useCORS: true,
+    scale: 1
+  });
+  const full = canvas.toDataURL('image/png', 0.92);
+  const thumb = await downscaleDataUrl(full, SNAP_MAX_W, SNAP_MAX_H);
+  return { full, thumb };
+}
+
+async function downscaleDataUrl(dataUrl, maxW, maxH){
+  const img = new Image();
+  img.src = dataUrl;
+  await img.decode();
+  const r = Math.min(maxW / img.width, maxH / img.height, 1);
+  const w = Math.max(1, Math.round(img.width * r));
+  const h = Math.max(1, Math.round(img.height * r));
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const x = c.getContext('2d');
+  x.drawImage(img, 0, 0, w, h);
+  return c.toDataURL('image/png', 0.92);
+}
+
+/* Download helpers (used by panel buttons) */
+function downloadTextAs(name, text, mime='application/json'){
+  const blob = new Blob([text], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href:url, download:name });
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+function downloadDataUrl(dataUrl, filename){
+  const a = Object.assign(document.createElement('a'), { href:dataUrl, download:filename });
+  document.body.appendChild(a); a.click(); a.remove();
+}
+</script>
+
+<div id="tbCtxMenu" role="menu" aria-hidden="true">
+  <div class="title">Textbox color</div>
+  <div class="row seg">
+    <button type="button" data-prop="bg" class="active">Background</button>
+    <button type="button" data-prop="text">Text</button>
+    <button type="button" data-prop="border">Border</button>
+  </div>
+  <div class="row"><input id="tbColorPicker" type="color" value="#8b5cf6" /></div>
+  <div class="row swatch" id="tbSwatches"></div>
+</div>
+
+
+<script id="tb-ctx-js">
+(function(){
+  const menu = document.getElementById('tbCtxMenu');
+  const picker = document.getElementById('tbColorPicker');
+  const swatches = document.getElementById('tbSwatches');
+  const propBtns = Array.from(menu.querySelectorAll('[data-prop]'));
+  let currentTarget = null;
+  let currentProp = 'bg';
+
+  const QUICK = ['#ffffff','#000000','#111827','#1f2937','#6b7280','#9ca3af','#ef4444','#f59e0b','#fbbf24','#10b981','#3b82f6','#8b5cf6'];
+
+  function ensureSwatches(){
+    if(!swatches || swatches.childElementCount) return;
+    QUICK.forEach(c=>{
+      const b = document.createElement('button');
+      b.style.background = c;
+      b.title = c;
+      b.addEventListener('click', ()=> applyColor(c));
+      swatches.appendChild(b);
+    });
+  }
+
+  function openMenu(x,y, target){
+    currentTarget = target;
+    menu.style.left = Math.max(8, Math.min(window.innerWidth - 240, x)) + 'px';
+    menu.style.top  = Math.max(8, Math.min(window.innerHeight - 180, y)) + 'px';
+    menu.style.display = 'block';
+    menu.setAttribute('aria-hidden','false');
+
+    // initialize picker from computed style
+    try {
+      const cs = getComputedStyle(currentTarget);
+      let seed = '#8b5cf6';
+      if(currentProp==='bg' && cs.backgroundColor) seed = rgbToHex(cs.backgroundColor);
+      if(currentProp==='text' && cs.color) seed = rgbToHex(cs.color);
+      if(currentProp==='border' && cs.borderColor) seed = rgbToHex(cs.borderColor);
+      picker.value = seed;
+    } catch {}
+  }
+
+  function closeMenu(){
+    menu.style.display = 'none';
+    menu.setAttribute('aria-hidden','true');
+    currentTarget = null;
+  }
+
+  function rgbToHex(rgb){
+    const m = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+    if(!m) return '#8b5cf6';
+    return '#' + [m[1],m[2],m[3]].map(v=>{
+      const h = parseInt(v,10).toString(16).padStart(2,'0');
+      return h;
+    }).join('');
+  }
+
+  function applyColor(hex){
+    if(!currentTarget) return;
+    if(currentProp==='bg'){
+      currentTarget.style.background = hex;
+    } else if(currentProp==='text'){
+      currentTarget.style.color = hex;
+    } else if(currentProp==='border'){
+      currentTarget.style.borderColor = hex;
+    }
+  }
+
+  // color picker live update
+  picker.addEventListener('input', (e)=> applyColor(e.target.value));
+
+  // switch property
+  propBtns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      propBtns.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentProp = btn.getAttribute('data-prop') || 'bg';
+      // reset picker preview to current prop value
+      if(currentTarget){
+        const cs = getComputedStyle(currentTarget);
+        let seed = '#8b5cf6';
+        if(currentProp==='bg' && cs.backgroundColor) seed = rgbToHex(cs.backgroundColor);
+        if(currentProp==='text' && cs.color) seed = rgbToHex(cs.color);
+        if(currentProp==='border' && cs.borderColor) seed = rgbToHex(cs.borderColor);
+        picker.value = seed;
+      }
+    });
+  });
+
+  // open on right-click of textbox
+  document.addEventListener('contextmenu', (e)=>{
+    const tb = e.target.closest && e.target.closest('.textbox');
+    if(tb){
+      e.preventDefault();
+      ensureSwatches();
+      openMenu(e.clientX, e.clientY, tb);
+    } else {
+      // let the app's main context menu handle other nodes
+      if(menu.style.display==='block') closeMenu();
+    }
+  });
+
+  // close on click outside / escape / scroll / resize
+  document.addEventListener('mousedown', (e)=>{
+    if(menu.style.display==='block' && !menu.contains(e.target)){
+      // prevent immediate close when interacting inside the menu
+      const tb = e.target.closest && e.target.closest('.textbox');
+      if(!tb) closeMenu();
+    }
+  });
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenu(); });
+  window.addEventListener('scroll', closeMenu, {passive:true});
+  window.addEventListener('resize', closeMenu);
+
+  // prevent the app's global handlers from immediately closing our menu
+  menu.addEventListener('contextmenu', (e)=> e.preventDefault());
+})();
+</script>
+
+<script id="mobile-enhance-js">
+(function(){
+  // --- Proportional panel resize based on viewport ---
+  function resizePanelsForViewport(){
+    const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+    const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+    const urlPanel = document.querySelector('.url-panel');
+    const savePanel = document.querySelector('.save-panel');
+    // Compute a scale from 360px base width up to 420px; scale down on small screens
+    const base = 420;
+    const pad = 24;
+    const usable = vw - pad*2;
+    const width = Math.min(base, Math.max(280, Math.floor(usable * 0.92)));
+    const maxH = Math.floor(vh - 140);
+
+    [urlPanel, savePanel].forEach(el=>{
+      if(!el) return;
+      el.style.width = width + 'px';
+      el.style.maxHeight = maxH + 'px';
+      el.style.overflow = 'auto';
+    });
+  }
+  window.addEventListener('resize', resizePanelsForViewport);
+  window.addEventListener('orientationchange', resizePanelsForViewport);
+  document.addEventListener('DOMContentLoaded', resizePanelsForViewport);
+
+  // --- One-finger touch = mouse drag (synthesizer) ---
+  const board = document.getElementById('viewport');
+  if(board){
+    // Avoid duplicating listeners
+    if(!board.__oneFingerDragEnabled){
+      const synth = (type, touch, target)=>{
+        const ev = new MouseEvent(type, {
+          bubbles: true, cancelable: true, view: window,
+          clientX: touch.clientX, clientY: touch.clientY,
+          screenX: touch.screenX, screenY: touch.screenY,
+          buttons: type==='mouseup' ? 0 : 1
+        });
+        target.dispatchEvent(ev);
+      };
+
+      let touching = false, lastTarget = null;
+      board.addEventListener('touchstart', (e)=>{
+        if(e.touches.length !== 1) return;
+        touching = true;
+        const t = e.touches[0];
+        lastTarget = document.elementFromPoint(t.clientX, t.clientY) || board;
+        // Route to underlying target (node/textbox) to reuse existing mouse handlers
+        e.preventDefault();
+        synth('mousedown', t, lastTarget);
+      }, {passive:false});
+
+      board.addEventListener('touchmove', (e)=>{
+        if(!touching || e.touches.length !== 1) return;
+        const t = e.touches[0];
+        const tgt = document.elementFromPoint(t.clientX, t.clientY) || lastTarget || board;
+        e.preventDefault();
+        synth('mousemove', t, tgt);
+      }, {passive:false});
+
+      board.addEventListener('touchend', (e)=>{
+        if(!touching) return;
+        touching = false;
+        const t = (e.changedTouches && e.changedTouches[0]) || {clientX:0, clientY:0, screenX:0, screenY:0};
+        const tgt = document.elementFromPoint(t.clientX, t.clientY) || lastTarget || board;
+        e.preventDefault();
+        synth('mouseup', t, tgt);
+        lastTarget = null;
+      }, {passive:false});
+
+      board.addEventListener('touchcancel', ()=>{ touching = false; lastTarget=null; }, {passive:true});
+      board.__oneFingerDragEnabled = true;
+    }
+  }
+})();
+</script>
 </body>
 </html>
