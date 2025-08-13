@@ -1119,6 +1119,156 @@
 #zoomMinus:active, #zoomPlus:active{ transform: translateY(1px); }
 #zoomLabel{ min-width:60px; text-align:center; font-variant-numeric: tabular-nums; }
 </style>
+<style id="zoom-bottom-left-css">
+/* Ensure zoom controls stay bottom-left on all viewports */
+.scale-bar{
+  position: fixed !important;
+  left: 12px !important;
+  bottom: 12px !important;
+  z-index: 1500 !important;
+}
+</style>
+<style id="zoom-safearea-css">
+/* Keep zoom controls within visible window & safe areas */
+:root{
+  /* fallback values if env() not supported */
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+.scale-bar{
+  position: fixed !important;
+  left: calc(var(--safe-left) + 12px) !important;
+  bottom: calc(var(--safe-bottom) + 12px) !important;
+  max-width: calc(100vw - 24px) !important;
+  z-index: 2000 !important;
+}
+</style>
+<style id="center-zoom-and-panel-toggle-css">
+/* Bottom-center zoom controls, respecting safe areas */
+:root{
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --zoom-bottom-offset: 20px; /* Will be adjusted by JS */
+}
+.scale-bar{
+  position: fixed !important;
+  left: 50% !important;
+  transform: translateX(-50%);
+  bottom: var(--zoom-bottom-offset) !important;
+  z-index: 2000 !important;
+  max-width: calc(100vw - (var(--safe-left) + var(--safe-right)) - 24px);
+}
+
+/* Minimalistic panel toggles */
+.url-panel, .save-panel{
+  position: relative;
+}
+.panel-toggle{
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+  color: #e8ecff; cursor: pointer;
+  display: grid; place-items: center;
+  font-size: 16px; line-height: 1;
+}
+.panel-toggle:active{ transform: translateY(1px); }
+
+/* When collapsed: hide inner content except the header */
+.panel-collapsible .panel-body{ display: block; }
+.panel-collapsible.collapsed .panel-body{ display: none; }
+
+/* Make headers clickable targets too (optional) */
+.panel-collapsible > h3{
+  padding-right: 40px;  /* leave space for toggle button */
+  position: relative;
+}
+</style>
+
+<style id="alignment-and-zoom-pin-css">
+/* Pin zoom to bottom-center, safe-area aware (static offset), override any previous rules */
+.scale-bar{
+  position: fixed !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 36px) !important;
+  z-index: 2200 !important;
+}
+
+/* Panel alignment + clamping */
+.url-panel, .save-panel{
+  position: fixed;  /* make positions deterministic */
+  left: 12px;
+}
+.url-panel{ top: 72px; }           /* header height buffer */
+.save-panel{ top: auto; }          /* JS will place it under URL panel */
+@media (max-width: 900px){
+  .url-panel, .save-panel{ left: 12px; right: auto; }
+}
+</style>
+
+
+<style id="save-panel-responsive-css">
+/* Make Save & Load internals adapt to panel width */
+.save-panel .save-buttons{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.save-panel .save-buttons button{
+  flex: 1 1 auto;
+  min-width: 120px;
+}
+
+/* Responsive list: single column on narrow panels, multi when wider */
+.save-panel #saveList{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  overflow-x: hidden;
+}
+@media (min-width: 720px){
+  .save-panel #saveList{
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+}
+
+/* Cards fill width and wrap neatly */
+.save-panel .save-card{
+  width: 100%;
+  box-sizing: border-box;
+}
+.save-panel .save-card .meta{
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Thumbnails scale with width, maintain aspect ratio */
+.save-panel .save-card img{
+  display: block;
+  width: 100%;
+  height: auto !important;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #000;
+}
+
+/* Action row wraps when tight */
+.save-panel .save-card .row{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.save-panel .save-card .row button{
+  flex: 1 1 90px;
+  min-width: 86px;
+}
+</style>
+
 </head>
 <body>
   <header class="topbar">
@@ -4641,38 +4791,82 @@ function downloadDataUrl(dataUrl, filename){
   const label = document.getElementById('zoomLabel');
   const pctEl = document.getElementById('zoomPct');
   const viewport = document.getElementById('viewport');
+  const board = document.getElementById('board');
+  const bar = document.querySelector('.scale-bar');
 
   function clamp(v, min, max){ return Math.min(max, Math.max(min, v)); }
   function fmt(z){ return Math.round(z*100) + '%'; }
 
+  function matrixScaleFrom(el){
+    if(!el) return null;
+    const t = getComputedStyle(el).transform;
+    if(!t || t === 'none') return null;
+    // matrix(a,b,c,d,tx,ty) -> scaleX = sqrt(a^2 + b^2)
+    const m = t.match(/matrix\(([^)]+)\)/);
+    if(m){
+      const parts = m[1].split(',').map(v=>parseFloat(v));
+      if(parts.length >= 4){
+        const a = parts[0], b = parts[1];
+        const scale = Math.sqrt(a*a + b*b);
+        if(scale && isFinite(scale)) return scale;
+      }
+    }
+    // matrix3d / other cases
+    const m3 = t.match(/matrix3d\(([^)]+)\)/);
+    if(m3){
+      const p = m3[1].split(',').map(v=>parseFloat(v));
+      // scaleX = length of first column (m11, m12, m13)
+      if(p.length >= 16){
+        const s = Math.sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2]);
+        if(s && isFinite(s)) return s;
+      }
+    }
+    return null;
+  }
+
   function currentZoom(){
+    // Prefer reading from transform of the board (source of truth)
+    const m = matrixScaleFrom(board);
+    if(m) return m;
+    // Fallback to state.zoom
     try{ return window.state?.zoom ?? 1; } catch { return 1; }
   }
+
+  function updateLabel(){
+    const z = currentZoom();
+    if(label) label.textContent = fmt(z);
+    if(pctEl) pctEl.textContent = fmt(z);
+  }
+
   function setZoom(z, anchorPx){
-    if(!window.applyTransform || !window.state){ return; }
-    const prev = window.state.zoom;
-    const next = clamp(z, steps[0], steps[steps.length-1]);
-    if(next === prev) return;
+    // If your app uses state + applyTransform, use that path;
+    // label will be corrected by our hooks below.
+    if(window.state && typeof window.applyTransform === 'function'){
+      const rectV = viewport.getBoundingClientRect();
+      const prev = window.state.zoom ?? currentZoom();
+      const next = clamp(z, steps[0], steps[steps.length-1]);
 
-    const rectV = viewport.getBoundingClientRect();
-    const cx = anchorPx ? anchorPx.x : rectV.width  / 2;
-    const cy = anchorPx ? anchorPx.y : rectV.height / 2;
-
-    const ox = (cx - window.state.origin.x) / prev;
-    const oy = (cy - window.state.origin.y) / prev;
-    window.state.origin.x = cx - ox * next;
-    window.state.origin.y = cy - oy * next;
-    window.state.zoom = next;
-    window.applyTransform();
+      const cx = anchorPx ? anchorPx.x : rectV.width  / 2;
+      const cy = anchorPx ? anchorPx.y : rectV.height / 2;
+      const ox = (cx - window.state.origin.x) / prev;
+      const oy = (cy - window.state.origin.y) / prev;
+      window.state.origin.x = cx - ox * next;
+      window.state.origin.y = cy - oy * next;
+      window.state.zoom = next;
+      window.applyTransform();
+    }else{
+      // As a fallback, directly set transform on board
+      const next = clamp(z, steps[0], steps[steps.length-1]);
+      board && (board.style.transform = `scale(${next})`);
+    }
     updateLabel();
   }
+
   function nearestIndex(z){
-    // find index of closest step <= z (for consistent stepping)
     let idx = 0;
     for(let i=0;i<steps.length;i++){
       if(z >= steps[i]) idx = i;
     }
-    // also check if closer to the next
     if(idx < steps.length-1){
       const a = Math.abs(z - steps[idx]);
       const b = Math.abs(z - steps[idx+1]);
@@ -4687,24 +4881,11 @@ function downloadDataUrl(dataUrl, filename){
     const rectV = viewport.getBoundingClientRect();
     setZoom(steps[j], {x: rectV.width/2, y: rectV.height/2});
   }
-  function updateLabel(){
-    const z = currentZoom();
-    if(label) label.textContent = fmt(z);
-    if(pctEl) pctEl.textContent = fmt(z);
-  }
 
   if(minus) minus.addEventListener('click', ()=> step(-1));
   if(plus)  plus.addEventListener('click',  ()=> step(+1));
 
-  // Optional: keyboard shortcuts (+ / -)
-  window.addEventListener('keydown', (e)=>{
-    if(e.key === '+' || e.key === '=' ) step(+1);
-    if(e.key === '-' || e.key === '_' ) step(-1);
-  });
-
-  // Initialize UI on load
-  document.addEventListener('DOMContentLoaded', updateLabel);
-  // Keep label in sync if other code changes zoom:
+  // --- Keep label synced no matter what ---
   const _applyTransform = window.applyTransform;
   if(typeof _applyTransform === 'function'){
     window.applyTransform = function(){
@@ -4712,7 +4893,365 @@ function downloadDataUrl(dataUrl, filename){
       updateLabel();
     };
   }
+
+  // Observe transform style changes on #board
+  if(board){
+    const mo = new MutationObserver((muts)=>{
+      for(const m of muts){
+        if(m.type === 'attributes' && m.attributeName === 'style'){
+          updateLabel();
+        }
+      }
+    });
+    mo.observe(board, { attributes: true, attributeFilter: ['style'] });
+  }
+
+  // Also refresh on common interactions (click, wheel, touch, pointer)
+  const events = ['mousedown','mouseup','click','wheel','pointerdown','pointerup','touchstart','touchend'];
+  events.forEach(ev=> viewport && viewport.addEventListener(ev, updateLabel, {passive:true}));
+
+  // rAF watcher only updates when value changes (very light)
+  let lastZ = null;
+  function watchZoom(){
+    const z = currentZoom();
+    if(z !== lastZ){
+      lastZ = z;
+      updateLabel();
+    }
+    requestAnimationFrame(watchZoom);
+  }
+
+  // --- Keep controls on-screen ---
+  function clampBarIntoView(){
+    if(!bar) return;
+    const r = bar.getBoundingClientRect();
+    let x = r.left, y = r.top;
+    const pad = 12;
+    const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+    const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+    // If it's out of view for any reason, snap back to bottom-left
+    if(r.right < 0 || r.bottom < 0 || r.left > vw || r.top > vh){
+      bar.style.left = pad + 'px';
+      bar.style.bottom = pad + 'px';
+      bar.style.top = 'auto';
+      bar.style.right = 'auto';
+    }
+  }
+  ['resize','orientationchange','scroll'].forEach(ev=> window.addEventListener(ev, clampBarIntoView, {passive:true}));
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    updateLabel();
+    clampBarIntoView();
+    watchZoom();
+  });
 })();
 </script>
+<script id="center-zoom-and-panel-toggle-js">
+(function(){
+  // --- Position zoom above the footer hint by 25px ---
+  function findFooterHint(){
+    // Try an id first if exists, else search by text
+    let el = document.getElementById('footerHint');
+    if(el) return el;
+    const all = Array.from(document.querySelectorAll('div,footer,section,span,p'));
+    const needle = 'Google Search Shortcut (Left Ctrl + Space)';
+    for(const n of all){
+      if(n && n.textContent && n.textContent.trim().includes(needle)){
+        return n;
+      }
+    }
+    return null;
+  }
+
+  function updateZoomBottom(){
+    const hint = findFooterHint();
+    const safeBottom = 0; // env() is used in CSS; we just offset relative to viewport here
+    let offset = 20; // default
+    if(hint){
+      const r = hint.getBoundingClientRect();
+      const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+      // Distance from bottom of viewport to be 25px above the hint's top edge
+      const fromBottom = Math.max(12, (vh - r.top) + 25);
+      offset = fromBottom;
+    } else {
+      offset = 32; // fallback
+    }
+    // write to root variable so CSS takes it
+    document.documentElement.style.setProperty('--zoom-bottom-offset', offset + 'px');
+  }
+
+  window.addEventListener('resize', updateZoomBottom, {passive:true});
+  window.addEventListener('orientationchange', updateZoomBottom);
+  document.addEventListener('DOMContentLoaded', updateZoomBottom);
+
+  // --- Install minimalistic collapse/expand toggles on panels ---
+  function makePanelCollapsible(panel){
+    if(!panel || panel.classList.contains('panel-collapsible')) return;
+    panel.classList.add('panel-collapsible');
+
+    // Wrap everything after the first H3 as panel-body
+    let header = panel.querySelector('h3');
+    if(!header){
+      // create a fallback header if missing
+      header = document.createElement('h3');
+      header.textContent = 'Panel';
+      panel.insertBefore(header, panel.firstChild);
+    }
+    let body = panel.querySelector('.panel-body');
+    if(!body){
+      body = document.createElement('div');
+      body.className = 'panel-body';
+      // Move all siblings after header into body
+      let sib = header.nextSibling;
+      const toMove = [];
+      while(sib){
+        const next = sib.nextSibling;
+        toMove.push(sib);
+        sib = next;
+      }
+      toMove.forEach(n=> body.appendChild(n));
+      panel.appendChild(body);
+    }
+
+    // Add a toggle button
+    let btn = panel.querySelector('.panel-toggle');
+    if(!btn){
+      btn = document.createElement('button');
+      btn.className = 'panel-toggle';
+      btn.setAttribute('aria-expanded', 'true');
+      btn.title = 'Collapse/Expand';
+      btn.textContent = '–'; // collapse symbol
+      panel.appendChild(btn);
+    }
+
+    const setCollapsed = (yes)=>{
+      panel.classList.toggle('collapsed', !!yes);
+      btn.setAttribute('aria-expanded', (!yes).toString());
+      btn.textContent = yes ? '+' : '–';
+    };
+
+    btn.addEventListener('click', ()=> setCollapsed(!panel.classList.contains('collapsed')));
+    // Optional: click header to toggle
+    header.addEventListener('click', (e)=>{
+      // avoid toggling when clicking buttons inside header
+      if(e.target.closest('.panel-toggle')) return;
+      setCollapsed(!panel.classList.contains('collapsed'));
+    });
+  }
+
+  function setupPanels(){
+    const urlPanel = document.querySelector('.url-panel');
+    const savePanel = document.querySelector('.save-panel');
+    makePanelCollapsible(urlPanel);
+    makePanelCollapsible(savePanel);
+  }
+
+  document.addEventListener('DOMContentLoaded', setupPanels);
+})();
+</script>
+
+<script id="panel-align-js">
+(function(){
+  function clamp(val, min, max){ return Math.max(min, Math.min(max, val)); }
+
+  function layoutPanels(){
+    const url = document.querySelector('.url-panel');
+    const save = document.querySelector('.save-panel');
+    if(!url || !save) return;
+
+    // Ensure measured sizes are up to date
+    const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+    const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+    const pad = 12;
+
+    // Constrain widths
+    const maxW = Math.min(520, vw - pad*2);
+    [url, save].forEach(el=>{
+      el.style.maxWidth = maxW + 'px';
+      el.style.width = Math.min(el.offsetWidth || maxW, maxW) + 'px';
+      el.style.left = pad + 'px';
+    });
+
+    // Place URL panel near top-left with header buffer
+    const headerBuffer = 72; // beneath the app header
+    const urlTop = clamp(headerBuffer, pad, vh - pad - 100);
+    url.style.top = urlTop + 'px';
+
+    // Place Save panel directly under URL panel with gap
+    const gap = 12;
+    const urlRect = url.getBoundingClientRect();
+    let saveTop = Math.round(urlRect.bottom + gap);
+    const saveHeight = save.getBoundingClientRect().height || 200;
+
+    // If save panel would fall off bottom, clamp and make scrollable
+    if (saveTop + saveHeight + pad > vh){
+      saveTop = vh - saveHeight - pad;
+      // If still too tall, set max-height so it fits
+      const maxH = Math.max(140, vh - saveTop - pad);
+      save.style.maxHeight = maxH + 'px';
+      save.style.overflow = 'auto';
+    } else {
+      // reset if previously constrained
+      save.style.maxHeight = '';
+      save.style.overflow = '';
+    }
+    save.style.top = clamp(saveTop, urlTop + gap, vh - pad - 100) + 'px';
+  }
+
+  window.addEventListener('resize', layoutPanels, {passive:true});
+  window.addEventListener('orientationchange', layoutPanels);
+  document.addEventListener('DOMContentLoaded', layoutPanels);
+
+  // Re-run after panels collapse/expand to keep alignment
+  const url = document.querySelector('.url-panel');
+  const save = document.querySelector('.save-panel');
+  const rerun = ()=> setTimeout(layoutPanels, 0);
+  if(url) url.addEventListener('click', rerun, true);
+  if(save) save.addEventListener('click', rerun, true);
+})();
+</script>
+
+
+<script id="touch-gestures-js">
+(function(){
+  const viewport = document.getElementById('viewport');
+  const board = document.getElementById('board');
+  if(!viewport || !board) return;
+
+  // Ensure browser doesn't hijack gestures
+  viewport.style.touchAction = 'none';
+
+  // --- Utilities ---
+  function clamp(v, min, max){ return Math.min(max, Math.max(min, v)); }
+  function getZoom(){
+    try{ return window.state?.zoom ?? 1; }catch{ return 1; }
+  }
+  function setZoomAround(nextZoom, anchor){
+    if(!window.applyTransform || !window.state) return;
+    const rect = viewport.getBoundingClientRect();
+    const prev = getZoom();
+    const next = clamp(nextZoom, 0.05, 4);
+    const cx = anchor ? anchor.x : rect.width/2;
+    const cy = anchor ? anchor.y : rect.height/2;
+    const ox = (cx - window.state.origin.x) / prev;
+    const oy = (cy - window.state.origin.y) / prev;
+    window.state.origin.x = cx - ox * next;
+    window.state.origin.y = cy - oy * next;
+    window.state.zoom = next;
+    window.applyTransform();
+  }
+  function midpoint(a,b){
+    return { x: (a.clientX+b.clientX)/2, y: (a.clientY+b.clientY)/2 };
+  }
+  function distance(a,b){
+    const dx = a.clientX - b.clientX, dy = a.clientY - b.clientY;
+    return Math.hypot(dx, dy);
+  }
+  function synthMouse(type, pt, opts){
+    const target = document.elementFromPoint(pt.clientX, pt.clientY) || viewport;
+    const ev = new MouseEvent(type, {
+      bubbles: true, cancelable: true, view: window,
+      clientX: pt.clientX, clientY: pt.clientY,
+      screenX: pt.screenX || 0, screenY: pt.screenY || 0,
+      buttons: type==='mouseup' ? 0 : (opts && opts.buttons || 1),
+      button: opts && ('button' in opts) ? opts.button : 0,
+      shiftKey: !!(opts && opts.shiftKey),
+      ctrlKey: !!(opts && opts.ctrlKey),
+      altKey: !!(opts && opts.altKey),
+      metaKey: !!(opts && opts.metaKey)
+    });
+    target.dispatchEvent(ev);
+    return target;
+  }
+
+  // --- One-finger double-tap => right-click (context menu)
+  let lastTap = { t: 0, x: 0, y: 0 };
+  viewport.addEventListener('touchend', (e)=>{
+    if(e.changedTouches.length !== 1 || (e.touches && e.touches.length)) return;
+    const t = e.changedTouches[0];
+    const now = performance.now();
+    const dt = now - lastTap.t;
+    const dx = Math.abs(t.clientX - lastTap.x);
+    const dy = Math.abs(t.clientY - lastTap.y);
+    if(dt < 300 && dx < 20 && dy < 20){
+      e.preventDefault();
+      const target = document.elementFromPoint(t.clientX, t.clientY) || viewport;
+      // Fire a native-like contextmenu
+      const cm = new MouseEvent('contextmenu', {
+        bubbles: true, cancelable: true, view: window,
+        clientX: t.clientX, clientY: t.clientY, button: 2, buttons: 2
+      });
+      target.dispatchEvent(cm);
+      lastTap.t = 0; // reset
+    } else {
+      lastTap = { t: now, x: t.clientX, y: t.clientY };
+    }
+  }, {passive:true});
+
+  // --- Two-finger gestures (pinch zoom vs shift+drag) ---
+  let pinchStart = null;   // { d0, z0, mid0 }
+  let twoDrag = null;      // { startPt, active, tgt }
+  const PINCH_THRESHOLD = 6;      // px change in distance to qualify as zoom
+  const DRAG_VECTOR_THRESHOLD = 4; // px movement coherence to qualify as drag
+
+  viewport.addEventListener('touchstart', (e)=>{
+    if(e.touches.length === 2){
+      e.preventDefault();
+      const a = e.touches[0], b = e.touches[1];
+      pinchStart = { d0: distance(a,b), z0: getZoom(), mid0: midpoint(a,b) };
+      twoDrag = { startPt: midpoint(a,b), active: false, tgt: null };
+    }
+  }, {passive:false});
+
+  viewport.addEventListener('touchmove', (e)=>{
+    if(e.touches.length === 2 && pinchStart){
+      e.preventDefault();
+      const a = e.touches[0], b = e.touches[1];
+      const d = distance(a,b);
+      const mid = midpoint(a,b);
+      const deltaD = d - pinchStart.d0;
+      const vec = { x: mid.x - (twoDrag.startPt?.x||mid.x), y: mid.y - (twoDrag.startPt?.y||mid.y) };
+      const vecLen = Math.hypot(vec.x, vec.y);
+
+      // Decide gesture: pinch or two-finger drag
+      if(Math.abs(deltaD) > PINCH_THRESHOLD){
+        // PINCH TO ZOOM
+        const scale = d / pinchStart.d0;
+        const next = clamp(pinchStart.z0 * scale, 0.05, 4);
+        const rect = viewport.getBoundingClientRect();
+        const anchor = { x: mid.x - rect.left, y: mid.y - rect.top };
+        setZoomAround(next, anchor);
+      } else if(vecLen > DRAG_VECTOR_THRESHOLD){
+        // TWO-FINGER DRAG => Shift + Left Drag
+        const pt = { clientX: mid.x, clientY: mid.y, screenX: 0, screenY: 0 };
+        if(!twoDrag.active){
+          twoDrag.active = True;
+        }
+        if(!twoDrag.tgt){
+          twoDrag.tgt = synthMouse('mousedown', pt, { shiftKey: true, buttons: 1, button: 0 });
+        } else {
+          synthMouse('mousemove', pt, { shiftKey: true, buttons: 1, button: 0 });
+        }
+      }
+    }
+  }, {passive:false});
+
+  viewport.addEventListener('touchend', (e)=>{
+    if(pinchStart && e.touches.length < 2){
+      // End pinch/drag
+      if(twoDrag && twoDrag.active && twoDrag.tgt){
+        const endPt = twoDrag.startPt || {x:0,y:0};
+        const pt = { clientX: endPt.x, clientY: endPt.y, screenX: 0, screenY: 0 };
+        synthMouse('mouseup', pt, { shiftKey: true, buttons: 0, button: 0 });
+      }
+      pinchStart = null;
+      twoDrag = null;
+    }
+  }, {passive:true});
+
+  viewport.addEventListener('touchcancel', ()=>{ pinchStart=null; twoDrag=null; }, {passive:true});
+})();
+</script>
+
 </body>
 </html>
