@@ -1390,6 +1390,8 @@
     <hr/>
     <button data-action="duplicate">Duplicate</button>
     <hr/>
+    <button data-action="color">Textbox color…</button>
+    <hr/>
     <button data-action="delete" class="danger">Delete</button>
   </menu>
 
@@ -2255,10 +2257,21 @@
       textboxMenu.onmousedown = (e) => e.stopPropagation();
       textboxMenu.onclick = (e) => {
         const act = e.target.dataset.action;
+        const menuX = x; const menuY = y;
         if(!act) return;
         console.log('Textbox menu action:', act);
         closeMenus();
-        if (act === 'connect') {
+        if (act === 'color') {
+          e.stopPropagation();
+          window.__openingTextboxColor = true;
+          // Close existing menus first
+          // (textbox menu will close, then we open color in next tick)
+          if (typeof closeMenus==='function') closeMenus();
+          setTimeout(()=>{
+            if (typeof window.openTextboxColorAt === 'function') { window.openTextboxColorAt(x + 12, y + 8, textboxObj.element || textboxObj); }
+            window.__openingTextboxColor = false;
+          }, 0);
+        } else if (act === 'connect') {
           if (typeof window.__startConnectFrom === 'function') {
             window.__startConnectFrom(textboxObj.element);
           }
@@ -4535,7 +4548,7 @@ function downloadDataUrl(dataUrl, filename){
   const menu = document.getElementById('tbCtxMenu');
   const picker = document.getElementById('tbColorPicker');
   const swatches = document.getElementById('tbSwatches');
-  const propBtns = Array.from(menu.querySelectorAll('[data-prop]'));
+  const propBtns = menu ? Array.from(menu.querySelectorAll('[data-prop]')) : [];
   let currentTarget = null;
   let currentProp = 'bg';
 
@@ -4551,40 +4564,11 @@ function downloadDataUrl(dataUrl, filename){
       swatches.appendChild(b);
     });
   }
-
-  function openMenu(x,y, target){
-    currentTarget = target;
-    menu.style.left = Math.max(8, Math.min(window.innerWidth - 240, x)) + 'px';
-    menu.style.top  = Math.max(8, Math.min(window.innerHeight - 180, y)) + 'px';
-    menu.style.display = 'block';
-    menu.setAttribute('aria-hidden','false');
-
-    // initialize picker from computed style
-    try {
-      const cs = getComputedStyle(currentTarget);
-      let seed = '#8b5cf6';
-      if(currentProp==='bg' && cs.backgroundColor) seed = rgbToHex(cs.backgroundColor);
-      if(currentProp==='text' && cs.color) seed = rgbToHex(cs.color);
-      if(currentProp==='border' && cs.borderColor) seed = rgbToHex(cs.borderColor);
-      picker.value = seed;
-    } catch {}
-  }
-
-  function closeMenu(){
-    menu.style.display = 'none';
-    menu.setAttribute('aria-hidden','true');
-    currentTarget = null;
-  }
-
   function rgbToHex(rgb){
-    const m = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+    const m = rgb && rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
     if(!m) return '#8b5cf6';
-    return '#' + [m[1],m[2],m[3]].map(v=>{
-      const h = parseInt(v,10).toString(16).padStart(2,'0');
-      return h;
-    }).join('');
+    return '#' + [m[1],m[2],m[3]].map(v=> parseInt(v,10).toString(16).padStart(2,'0')).join('');
   }
-
   function applyColor(hex){
     if(!currentTarget) return;
     if(currentProp==='bg'){
@@ -4595,55 +4579,56 @@ function downloadDataUrl(dataUrl, filename){
       currentTarget.style.borderColor = hex;
     }
   }
+  function setProp(prop){
+    currentProp = prop || 'bg';
+    if(currentTarget){
+      const cs = getComputedStyle(currentTarget);
+      let seed = '#8b5cf6';
+      if(currentProp==='bg' && cs.backgroundColor) seed = rgbToHex(cs.backgroundColor);
+      if(currentProp==='text' && cs.color) seed = rgbToHex(cs.color);
+      if(currentProp==='border' && cs.borderColor) seed = rgbToHex(cs.borderColor);
+      if(picker) picker.value = seed;
+    }
+    propBtns.forEach(b=> b.classList.toggle('active', (b.getAttribute('data-prop')===currentProp)));
+  }
+  function openAt(x,y,target){
+    if(!menu) return;
+    ensureSwatches();
+    currentTarget = target;
+    menu.style.left = Math.max(8, Math.min(window.innerWidth - 240, x)) + 'px';
+    menu.style.top  = Math.max(8, Math.min(window.innerHeight - 180, y)) + 'px';
+    menu.style.display = 'block';
+    menu.setAttribute('aria-hidden','false');
+    setProp(currentProp);
+  }
+  function close(){
+    if(!menu) return;
+    menu.style.display = 'none';
+    menu.setAttribute('aria-hidden','true');
+    currentTarget = null;
+  }
 
-  // color picker live update
-  picker.addEventListener('input', (e)=> applyColor(e.target.value));
+  // Expose for context menu integration
+  window.openTextboxColorAt = openAt;
+  window.closeTextboxColorMenu = close;
 
-  // switch property
+  // Bind picker and prop buttons
+  if(picker) picker.addEventListener('input', (e)=> applyColor(e.target.value));
   propBtns.forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      propBtns.forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      currentProp = btn.getAttribute('data-prop') || 'bg';
-      // reset picker preview to current prop value
-      if(currentTarget){
-        const cs = getComputedStyle(currentTarget);
-        let seed = '#8b5cf6';
-        if(currentProp==='bg' && cs.backgroundColor) seed = rgbToHex(cs.backgroundColor);
-        if(currentProp==='text' && cs.color) seed = rgbToHex(cs.color);
-        if(currentProp==='border' && cs.borderColor) seed = rgbToHex(cs.borderColor);
-        picker.value = seed;
+    btn.addEventListener('click', ()=> setProp(btn.getAttribute('data-prop')||'bg'));
+  });
+
+  // Prevent menu from closing itself via right-click
+  // Close when clicking outside on canvas or document
+  document.addEventListener('click', function(e){
+    if (window.__openingTextboxColor) { return; }
+    if(menu && menu.style.display==='block'){
+      if(!menu.contains(e.target)){
+        close();
       }
-    });
-  });
-
-  // open on right-click of textbox
-  document.addEventListener('contextmenu', (e)=>{
-    const tb = e.target.closest && e.target.closest('.textbox');
-    if(tb){
-      e.preventDefault();
-      ensureSwatches();
-      openMenu(e.clientX, e.clientY, tb);
-    } else {
-      // let the app's main context menu handle other nodes
-      if(menu.style.display==='block') closeMenu();
     }
   });
-
-  // close on click outside / escape / scroll / resize
-  document.addEventListener('mousedown', (e)=>{
-    if(menu.style.display==='block' && !menu.contains(e.target)){
-      // prevent immediate close when interacting inside the menu
-      const tb = e.target.closest && e.target.closest('.textbox');
-      if(!tb) closeMenu();
-    }
-  });
-  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenu(); });
-  window.addEventListener('scroll', closeMenu, {passive:true});
-  window.addEventListener('resize', closeMenu);
-
-  // prevent the app's global handlers from immediately closing our menu
-  menu.addEventListener('contextmenu', (e)=> e.preventDefault());
+  if(menu) menu.addEventListener('contextmenu', (e)=> e.preventDefault());
 })();
 </script>
 
