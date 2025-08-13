@@ -1079,6 +1079,46 @@
   touch-action: none;
 }
 </style>
+
+<style id="zoom-btn-css">
+#zoomControls{
+  display:flex; align-items:center; gap:8px;
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  padding:6px 10px; border-radius:12px;
+  position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+  z-index:2000;
+}
+.zoom-btn{
+  width:32px; height:32px; font-size:18px; font-weight:bold;
+  border-radius:8px; border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  color:#e8ecff; cursor:pointer;
+}
+.zoom-btn:hover{ background: rgba(255,255,255,.15); }
+#zoomPct{ min-width:50px; text-align:center; font-weight:600; color:#fff; }
+</style>
+
+<style id="zoom-steps-css">
+/* Zoom controls replacing the old % panel */
+.scale-bar{ gap:10px; }
+#zoomControls{
+  display:flex; align-items:center; gap:8px;
+  background: rgba(0,0,0,.25);
+  border:1px solid rgba(255,255,255,.1);
+  padding:4px 6px; border-radius:10px;
+  backdrop-filter: blur(6px);
+}
+#zoomMinus, #zoomPlus{
+  width:32px; height:32px; border-radius:8px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+  font-size:18px; color:#e8ecff; cursor:pointer;
+  display:grid; place-items:center;
+}
+#zoomMinus:active, #zoomPlus:active{ transform: translateY(1px); }
+#zoomLabel{ min-width:60px; text-align:center; font-variant-numeric: tabular-nums; }
+</style>
 </head>
 <body>
   <header class="topbar">
@@ -1128,9 +1168,11 @@
     <div id="viewport">
       <div id="board" class="board grid" tabindex="0"></div>
     </div>
-    <div class="scale-bar">
-      <span id="zoomPct">100%</span>
-      <div class="ruler"><div class="tick"></div></div>
+    <div class="scale-bar" id="zoomControls">
+  <button type="button" class="zoom-btn" data-zoom-dir="-">−</button>
+  <span id="zoomPct">100%</span>
+  <button type="button" class="zoom-btn" data-zoom-dir="+">+</button>
+</div></div>
     </div>
   </div>
 
@@ -4528,6 +4570,147 @@ function downloadDataUrl(dataUrl, filename){
       board.addEventListener('touchcancel', ()=>{ touching = false; lastTarget=null; }, {passive:true});
       board.__oneFingerDragEnabled = true;
     }
+  }
+})();
+</script>
+
+<script id="zoom-btn-js">
+(function(){
+  const levels = [0.05, 0.10, 0.25, 0.50, 1.00, 1.50, 2.00, 4.00];
+  const zoomPctEl = document.getElementById('zoomPct');
+  const minusBtn = document.querySelector('#zoomControls [data-zoom-dir="-"]');
+  const plusBtn = document.querySelector('#zoomControls [data-zoom-dir="+"]');
+
+  function updateZoomDisplay(){
+    if(zoomPctEl) zoomPctEl.textContent = Math.round(state.zoom*100) + '%';
+  }
+
+  function setZoomTo(value, anchorPx){
+    const MIN = levels[0], MAX = levels[levels.length-1];
+    const prev = state.zoom;
+    const next = Math.min(MAX, Math.max(MIN, value));
+    if(next === prev) return;
+    const rectV = viewport.getBoundingClientRect();
+    const cx = anchorPx ? anchorPx.x : rectV.width/2;
+    const cy = anchorPx ? anchorPx.y : rectV.height/2;
+    const ox = (cx - state.origin.x) / prev;
+    const oy = (cy - state.origin.y) / prev;
+    state.origin.x = cx - ox * next;
+    state.origin.y = cy - oy * next;
+    state.zoom = next;
+    applyTransform();
+    updateZoomDisplay();
+  }
+
+  function stepZoom(dir){
+    const current = state.zoom;
+    const idx = levels.findIndex(l=> Math.abs(l - current) < 0.001);
+    if(idx === -1){
+      // if current zoom is custom, find nearest
+      let nearestIdx = 0, diff = Infinity;
+      for(let i=0;i<levels.length;i++){
+        const d = Math.abs(levels[i]-current);
+        if(d<diff){ diff=d; nearestIdx=i; }
+      }
+      if(dir==='+' && nearestIdx < levels.length-1) setZoomTo(levels[nearestIdx+1]);
+      else if(dir==='-' && nearestIdx > 0) setZoomTo(levels[nearestIdx-1]);
+    } else {
+      if(dir==='+' && idx < levels.length-1) setZoomTo(levels[idx+1]);
+      else if(dir==='-' && idx > 0) setZoomTo(levels[idx-1]);
+    }
+  }
+
+  if(minusBtn) minusBtn.addEventListener('click', ()=> stepZoom('-'));
+  if(plusBtn) plusBtn.addEventListener('click', ()=> stepZoom('+'));
+
+  // keep % updated when zoom changes elsewhere
+  const _applyTransform = applyTransform;
+  window.applyTransform = function(){
+    _applyTransform();
+    updateZoomDisplay();
+  };
+  updateZoomDisplay();
+})();
+</script>
+
+<script id="zoom-steps-js">
+(function(){
+  const steps = [0.05, 0.10, 0.25, 0.50, 1.00, 1.50, 2.00, 4.00];
+  const minus = document.getElementById('zoomMinus');
+  const plus  = document.getElementById('zoomPlus');
+  const label = document.getElementById('zoomLabel');
+  const pctEl = document.getElementById('zoomPct');
+  const viewport = document.getElementById('viewport');
+
+  function clamp(v, min, max){ return Math.min(max, Math.max(min, v)); }
+  function fmt(z){ return Math.round(z*100) + '%'; }
+
+  function currentZoom(){
+    try{ return window.state?.zoom ?? 1; } catch { return 1; }
+  }
+  function setZoom(z, anchorPx){
+    if(!window.applyTransform || !window.state){ return; }
+    const prev = window.state.zoom;
+    const next = clamp(z, steps[0], steps[steps.length-1]);
+    if(next === prev) return;
+
+    const rectV = viewport.getBoundingClientRect();
+    const cx = anchorPx ? anchorPx.x : rectV.width  / 2;
+    const cy = anchorPx ? anchorPx.y : rectV.height / 2;
+
+    const ox = (cx - window.state.origin.x) / prev;
+    const oy = (cy - window.state.origin.y) / prev;
+    window.state.origin.x = cx - ox * next;
+    window.state.origin.y = cy - oy * next;
+    window.state.zoom = next;
+    window.applyTransform();
+    updateLabel();
+  }
+  function nearestIndex(z){
+    // find index of closest step <= z (for consistent stepping)
+    let idx = 0;
+    for(let i=0;i<steps.length;i++){
+      if(z >= steps[i]) idx = i;
+    }
+    // also check if closer to the next
+    if(idx < steps.length-1){
+      const a = Math.abs(z - steps[idx]);
+      const b = Math.abs(z - steps[idx+1]);
+      if(b < a) idx = idx+1;
+    }
+    return idx;
+  }
+  function step(dir){
+    const z = currentZoom();
+    const i = nearestIndex(z) + (dir>0 ? 1 : -1);
+    const j = clamp(i, 0, steps.length-1);
+    const rectV = viewport.getBoundingClientRect();
+    setZoom(steps[j], {x: rectV.width/2, y: rectV.height/2});
+  }
+  function updateLabel(){
+    const z = currentZoom();
+    if(label) label.textContent = fmt(z);
+    if(pctEl) pctEl.textContent = fmt(z);
+  }
+
+  if(minus) minus.addEventListener('click', ()=> step(-1));
+  if(plus)  plus.addEventListener('click',  ()=> step(+1));
+
+  // Optional: keyboard shortcuts (+ / -)
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === '+' || e.key === '=' ) step(+1);
+    if(e.key === '-' || e.key === '_' ) step(-1);
+  });
+
+  // Initialize UI on load
+  document.addEventListener('DOMContentLoaded', updateLabel);
+  // Keep label in sync if other code changes zoom:
+  const _applyTransform = window.applyTransform;
+  if(typeof _applyTransform === 'function'){
+    window.applyTransform = function(){
+      _applyTransform();
+      updateLabel();
+    };
   }
 })();
 </script>
