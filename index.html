@@ -1269,6 +1269,9 @@
 }
 </style>
 
+<style id="pointer-gestures-css">
+#viewport, #board { touch-action: none; }
+</style>
 </head>
 <body>
   <header class="topbar">
@@ -5235,6 +5238,133 @@ function downloadDataUrl(dataUrl, filename){
   }, {passive:true});
 
   viewport.addEventListener('touchcancel', ()=>{ pinchStart=null; twoDrag=null; }, {passive:true});
+})();
+</script>
+
+
+<script id="pointer-gestures-js">
+(function(){
+  const viewport = document.getElementById('viewport');
+  const board = document.getElementById('board');
+  if(!viewport || !board) return;
+
+  const active = new Map(); // pointerId -> {x,y}
+  let pinch = null; // {d0, z0, mid0:{x,y}}
+  let twoDrag = null; // {active:boolean, last:{x,y}, tgt:EventTarget|null}
+
+  function clamp(v, min, max){ return Math.min(max, Math.max(min, v)); }
+  function getZoom(){
+    try { return window.state?.zoom ?? 1; } catch { return 1; }
+  }
+  function setZoomAround(nextZoom, anchor){
+    if(!window.applyTransform || !window.state) return;
+    const rect = viewport.getBoundingClientRect();
+    const prev = getZoom();
+    const next = clamp(nextZoom, 0.05, 4);
+    const cx = anchor ? anchor.x : rect.width/2;
+    const cy = anchor ? anchor.y : rect.height/2;
+    const ox = (cx - window.state.origin.x) / prev;
+    const oy = (cy - window.state.origin.y) / prev;
+    window.state.origin.x = cx - ox * next;
+    window.state.origin.y = cy - oy * next;
+    window.state.zoom = next;
+    window.applyTransform();
+  }
+  function midpoint(a,b){ return { x:(a.x+b.x)/2, y:(a.y+b.y)/2 }; }
+  function distance(a,b){ const dx=a.x-b.x, dy=a.y-b.y; return Math.hypot(dx,dy); }
+
+  function synthMouse(type, pt, opts){
+    const target = document.elementFromPoint(pt.x, pt.y) || viewport;
+    const ev = new MouseEvent(type, {
+      bubbles:true, cancelable:true, view:window,
+      clientX:pt.x, clientY:pt.y,
+      buttons: type==='mouseup' ? 0 : (opts && opts.buttons || 1),
+      button: (opts && 'button' in opts) ? opts.button : 0,
+      shiftKey: !!(opts && opts.shiftKey),
+      ctrlKey: !!(opts && opts.ctrlKey),
+      altKey: !!(opts && opts.altKey),
+      metaKey: !!(opts && opts.metaKey),
+    });
+    target.dispatchEvent(ev);
+    return target;
+  }
+
+  function onPointerDown(e){
+    if(e.pointerType !== 'touch') return;
+    viewport.setPointerCapture(e.pointerId);
+    active.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if(active.size === 2){
+      // initialize pinch/drag
+      const pts = Array.from(active.values());
+      pinch = { d0: distance(pts[0], pts[1]), z0: getZoom(), mid0: midpoint(pts[0], pts[1]) };
+      twoDrag = { active:false, last: pinch.mid0, tgt: null };
+      e.preventDefault();
+    }
+  }
+  function onPointerMove(e){
+    if(e.pointerType !== 'touch') return;
+    if(!active.has(e.pointerId)) return;
+    active.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if(active.size === 2 && pinch){
+      const pts = Array.from(active.values());
+      const mid = midpoint(pts[0], pts[1]);
+      const d = distance(pts[0], pts[1]);
+      const deltaD = d - pinch.d0;
+      const vec = { x: mid.x - twoDrag.last.x, y: mid.y - twoDrag.last.y };
+      const vecLen = Math.hypot(vec.x, vec.y);
+
+      const PINCH_THRESH = 4;   // px distance change to treat as pinch
+      const DRAG_THRESH  = 3;   // px move to treat as drag
+
+      if(Math.abs(deltaD) > PINCH_THRESH){
+        // pinch zoom
+        const scale = d / pinch.d0;
+        const next = clamp(pinch.z0 * scale, 0.05, 4);
+        const rect = viewport.getBoundingClientRect();
+        setZoomAround(next, { x: mid.x - rect.left, y: mid.y - rect.top });
+        twoDrag.last = mid;
+      } else if(vecLen > DRAG_THRESH){
+        // two-finger drag => Shift + left drag
+        if(!twoDrag.active){
+          twoDrag.active = true;
+          twoDrag.tgt = synthMouse('mousedown', mid, { shiftKey: true, buttons: 1, button: 0 });
+        } else {
+          synthMouse('mousemove', mid, { shiftKey: true, buttons: 1, button: 0 });
+        }
+        twoDrag.last = mid;
+      }
+      e.preventDefault();
+    }
+  }
+  function onPointerUp(e){
+    if(e.pointerType !== 'touch') return;
+    if(active.has(e.pointerId)) active.delete(e.pointerId);
+    if(twoDrag && twoDrag.active){
+      const end = twoDrag.last || {x:e.clientX, y:e.clientY};
+      synthMouse('mouseup', end, { shiftKey: true, buttons: 0, button: 0 });
+    }
+    if(active.size < 2){
+      pinch = null;
+      twoDrag = null;
+    }
+  }
+  function onPointerCancel(e){
+    if(active.has(e.pointerId)) active.delete(e.pointerId);
+    if(twoDrag && twoDrag.active){
+      const end = twoDrag.last || {x:e.clientX, y:e.clientY};
+      synthMouse('mouseup', end, { shiftKey: true, buttons: 0, button: 0 });
+    }
+    if(active.size < 2){
+      pinch = null;
+      twoDrag = null;
+    }
+  }
+
+  // Register listeners (pointer events avoid passive listener issues)
+  viewport.addEventListener('pointerdown', onPointerDown);
+  viewport.addEventListener('pointermove', onPointerMove);
+  viewport.addEventListener('pointerup', onPointerUp);
+  viewport.addEventListener('pointercancel', onPointerCancel);
 })();
 </script>
 
