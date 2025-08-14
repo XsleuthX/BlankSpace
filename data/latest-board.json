@@ -1,0 +1,169 @@
+{
+  "version": "4.8",
+  "timestamp": "2025-08-13T17:00:41.071Z",
+  "hasBase64Files": true,
+  "viewport": {
+    "zoom": 0.6703200460356391,
+    "origin": {
+      "x": 50.35715906820451,
+      "y": 230.8605939921398
+    }
+  },
+  "nodes": [
+    {
+      "id": "n2",
+      "kind": "youtube",
+      "x": 193.44813477938595,
+      "y": 491.68934474852836,
+      "w": 560,
+      "h": 315,
+      "assetUrl": "https://www.youtube.com/embed/bGQv9huL46Y",
+      "textboxes": [],
+      "meta": {
+        "videoId": "bGQv9huL46Y",
+        "platform": "youtube",
+        "embedUrl": "https://www.youtube.com/embed/bGQv9huL46Y",
+        "isShorts": false
+      },
+      "metaShown": false,
+      "title": "YouTube Video"
+    },
+    {
+      "id": "n5",
+      "kind": "youtube",
+      "x": 199.59467630553274,
+      "y": 853.3507051986085,
+      "w": 560,
+      "h": 315,
+      "assetUrl": "https://www.youtube.com/embed/m8rfp3h0KyQ",
+      "textboxes": [],
+      "meta": {
+        "videoId": "m8rfp3h0KyQ",
+        "platform": "youtube",
+        "embedUrl": "https://www.youtube.com/embed/m8rfp3h0KyQ",
+        "isShorts": false
+      },
+      "metaShown": false,
+      "title": "YouTube Video"
+    },
+    {
+      "id": "n6",
+      "kind": "map",
+      "x": 944.8020773542053,
+      "y": 313.39104347696843,
+      "w": 482.63803573470466,
+      "h": 444.2068367230259,
+      "assetUrl": "https://maps.google.com/maps?q=Sapporo+to+Otaro&output=embed",
+      "textboxes": [],
+      "meta": {
+        "start": "Sapporo",
+        "destination": "Otaro",
+        "mapType": "directions",
+        "embedUrl": "https://maps.google.com/maps?q=Sapporo+to+Otaro&output=embed",
+        "fullUrl": "https://www.google.com/maps/dir/Sapporo/Otaro"
+      },
+      "metaShown": false,
+      "title": "Sapporo → Otaro"
+    },
+    {
+      "id": "n7",
+      "kind": "website",
+      "x": 870.763776673785,
+      "y": 791.8036316436495,
+      "w": 381.54376965143894,
+      "h": 609.449011653032,
+      "assetUrl": "https://www.airbnb.com.sg/rooms/1035491904646569974?adults=2&search_mode=regular_search&check_in=2025-09-15&check_out=2025-09-20&children=0&infants=0&pets=0&source_impression_id=p3_1755103997_P36fpL2Q_NsvGO5X&previous_page_section_name=1000&federated_search_id=da030e94-2006-4d3c-bda6-7b1e647f63db",
+      "textboxes": [],
+      "meta": {
+        "originalUrl": "https://www.airbnb.com.sg/rooms/1035491904646569974?adults=2&search_mode=regular_search&check_in=2025-09-15&check_out=2025-09-20&children=0&infants=0&pets=0&source_impression_id=p3_1755103997_P36fpL2Q_NsvGO5X&previous_page_section_name=1000&federated_search_id=da030e94-2006-4d3c-bda6-7b1e647f63db",
+        "website": true,
+        "domain": "www.airbnb.com.sg"
+      },
+      "metaShown": false,
+      "title": "www.airbnb.com.sg"
+    },
+    {
+      "id": "n9",
+      "kind": "website",
+      "x": 1621.8265399659479,
+      "y": 419.4107093627225,
+      "w": 444.1962072566095,
+      "h": 501.53956995567614,
+      "assetUrl": "https://www.instagram.com/p/DF5OteCPtdj/embed",
+      "textboxes": [],
+      "meta": {
+        "platform": "instagram",
+        "type": "p",
+        "shortcode": "DF5OteCPtdj",
+        "embedUrl": "https://www.instagram.com/p/DF5OteCPtdj/embed",
+        "originalUrl": "https://www.instagram.com/p/DF5OteCPtdj/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+        "ar": 0.8
+      },
+      "metaShown": false,
+      "title": "Instagram Post"
+    },
+    {
+      "id": "n10",
+      "kind": "website",
+      "x": 1441.315751551354,
+      "y": 938.5657041418848,
+      "w": 460.60627893066345,
+      "h": 503.0313946533174,
+      "assetUrl": "https://www.instagram.com/p/DNGNtRJuqAY/embed",
+      "textboxes": [],
+      "meta": {
+        "platform": "instagram",
+        "type": "p",
+        "shortcode": "DNGNtRJuqAY",
+        "embedUrl": "https://www.instagram.com/p/DNGNtRJuqAY/embed",
+        "originalUrl": "https://www.instagram.com/p/DNGNtRJuqAY/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+        "ar": 0.8
+      },
+      "metaShown": false,
+      "title": "Instagram Post"
+    }
+  ],
+  "groups": [
+    {
+      "id": "g1",
+      "x": 121.31923133405331,
+      "y": 382.62618978566616,
+      "w": 480.3140156196604,
+      "h": 872.8936852675992,
+      "color": "#3b82f6",
+      "title": "Ideas"
+    },
+    {
+      "id": "g4",
+      "x": 823.4636595592359,
+      "y": 383.65306501645813,
+      "w": 529.9788110446755,
+      "h": 871.2664411704715,
+      "color": "#3b82f6",
+      "title": "Itinerary"
+    },
+    {
+      "id": "g8",
+      "x": 1537.2450499534377,
+      "y": 379.47690626359844,
+      "w": 479.39378753334415,
+      "h": 873.9378753334415,
+      "color": "#3b82f6",
+      "title": "Photo Spots"
+    }
+  ],
+  "textboxes": [
+    {
+      "id": "t11",
+      "content": "<span style=\"font-size:45px;\"><span style=\"font-family: &quot;Noto Serif&quot;, Georgia, &quot;Times New Roman&quot;, Times, serif;\"><span style=\"font-size: 55px;\"><span style=\"background-color: rgb(253, 255, 143);\"><b><i>Travel Ideas</i></b></span><span style=\"background-color: rgb(115, 172, 247); font-size: 55px;\">​</span></span></span><div style=\"text-align: left;\"><span style=\"font-family:'Courier New', Courier, monospace;\"><span style=\"font-size:45px;\"><span style=\"font-size:35px;\"><span style=\"font-size:45px;\"><span style=\"background-color: rgb(216, 242, 253);\">Brainstorm</span><span style=\"font-size:45px;\">​</span></span><span style=\"font-size:35px;\">​</span></span><span style=\"font-size:45px;\">​</span></span></span></div></span><div></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "318.717px",
+      "top": "246.359px",
+      "width": "413px",
+      "height": "191px"
+    }
+  ],
+  "checklists": [],
+  "nextId": 12
+}
