@@ -1388,28 +1388,6 @@
 }
 </style>
 
-
-<style id="mobile-textbox-input-css">
-/* Make textboxes behave like real editors on mobile */
-.textbox{
-  -webkit-user-select: text !important;
-  user-select: text !important;
-  touch-action: auto !important;       /* override viewport/board touch-action:none */
-  caret-color: auto;
-}
-.textbox *{
-  -webkit-user-select: text !important;
-  user-select: text !important;
-  touch-action: auto !important;
-}
-/* While editing, show text cursor and disable grab affordance */
-.textbox.editing, .textbox:focus{
-  cursor: text !important;
-}
-/* Don't let resize handle steal taps meant for typing */
-.textbox .tb-resizer{ touch-action: none; }
-</style>
-
 </head>
 <body>
   <header class="topbar">
@@ -5332,24 +5310,7 @@ function downloadDataUrl(dataUrl, filename){
       ctrlKey: !!(opts && opts.ctrlKey),
       altKey: !!(opts && opts.altKey),
       metaKey: !!(opts && opts.metaKey)
-    }
-    // Dispatch a mouse event on a specific DOM element (not hit-testing)
-    function synthMouseOn(target, type, pt, opts){
-      if(!target) return;
-      const ev = new MouseEvent(type, {
-        bubbles:true, cancelable:true, view:window,
-        clientX:pt.x ?? pt.clientX ?? 0, clientY:pt.y ?? pt.clientY ?? 0,
-        buttons: type==='mouseup' ? 0 : (opts && opts.buttons || 1),
-        button: (opts && 'button' in opts) ? opts.button : 0,
-        shiftKey: !!(opts && opts.shiftKey),
-        ctrlKey: !!(opts && opts.ctrlKey),
-        altKey: !!(opts && opts.altKey),
-        metaKey: !!(opts && opts.metaKey),
-      });
-      target.dispatchEvent(ev);
-      return target;
-    }
-    );
+    });
     target.dispatchEvent(ev);
     return target;
   }
@@ -5404,15 +5365,6 @@ function downloadDataUrl(dataUrl, filename){
       const vecLen = Math.hypot(vec.x, vec.y);
 
       // Decide gesture: pinch or two-finger drag
-
-      // Dynamic thresholds: base 10px scaled by DPR and 1/sqrt(zoom)
-      const __z = (typeof getZoom === 'function' ? getZoom() : (window.state && window.state.zoom) || 1) || 1;
-      const __dpr = (window.devicePixelRatio || 1);
-      const __zoomFactor = Math.max(0.7, 1 / Math.sqrt(__z));
-      const PINCH_THRESHOLD = 10 * __dpr * __zoomFactor;
-      const DRAG_VECTOR_THRESHOLD = 10 * __dpr * __zoomFactor;
-
-      // Decide gesture: pinch or two-finger drag
       if(Math.abs(deltaD) > PINCH_THRESHOLD){
         // PINCH TO ZOOM
         const scale = d / pinchStart.d0;
@@ -5421,23 +5373,18 @@ function downloadDataUrl(dataUrl, filename){
         const anchor = { x: mid.x - rect.left, y: mid.y - rect.top };
         setZoomAround(next, anchor);
       } else if(vecLen > DRAG_VECTOR_THRESHOLD){
-        
-        // TWO-FINGER DRAG => Only when midpoint is over a .textbox
-        const hit = document.elementFromPoint(mid.x, mid.y);
-        const textboxEl = hit && hit.closest && hit.closest('.textbox');
-        if (textboxEl) {
-          const pt = { x: mid.x, y: mid.y };
-          if(!twoDrag.active){
-            twoDrag.active = true;
-            twoDrag.tgt = textboxEl;
-            synthMouseOn(textboxEl, 'mousedown', pt, { buttons:1, button:0 });
-          } else {
-            synthMouseOn(textboxEl, 'mousemove', pt, { buttons:1, button:0 });
-          }
-          twoDrag.lastMid = {x: mid.x, y: mid.y};
+        // TWO-FINGER DRAG => Shift + Left Drag
+        const pt = { clientX: mid.x, clientY: mid.y, screenX: 0, screenY: 0 };
+        if(!twoDrag.active){
+          twoDrag.active = True;
         }
-    
+        if(!twoDrag.tgt){
+          twoDrag.tgt = synthMouse('mousedown', pt, { shiftKey: true, buttons: 1, button: 0 });
+        } else {
+          synthMouse('mousemove', pt, { shiftKey: true, buttons: 1, button: 0 });
+        }
       }
+    }
   }, {passive:false});
 
   viewport.addEventListener('touchend', (e)=>{
@@ -5610,11 +5557,8 @@ function downloadDataUrl(dataUrl, filename){
     }
   }
   function endDragIfNeeded(pt){
-    if (twoDrag && twoDrag.active) {
-      const endPt = (twoDrag.lastMid || twoDrag.startPt || {x:0,y:0});
-      const tgt = twoDrag.tgt;
-      if(tgt){ synthMouseOn(tgt, 'mouseup', endPt, { buttons:0, button:0 }); }
-, pt, { shiftKey:true, buttons:0, button:0 });
+    if(twoDrag && twoDrag.active){
+      synthMouse('mouseup', pt, { shiftKey:true, buttons:0, button:0 });
     }
   }
   function onPointerUp(e){
@@ -5942,91 +5886,6 @@ function downloadDataUrl(dataUrl, filename){
     const urlPanel=document.querySelector('.url-panel'); const savePanel=document.querySelector('.save-panel');
     positionMinimized(urlPanel, savePanel);
   });
-})();
-</script>
-
-
-<script id="mobile-textbox-input-js">
-(function(){
-  // Helper: place caret at end
-  function placeCaretEnd(el){
-    try{
-      const sel = window.getSelection();
-      const rng = document.createRange();
-      rng.selectNodeContents(el);
-      rng.collapse(false);
-      sel.removeAllRanges(); sel.addRange(rng);
-    }catch(_){}
-  }
-  // Enter edit mode
-  function beginEdit(tb){
-    if(!tb) return;
-    tb.setAttribute('contenteditable','true');  // keep true for subsequent taps
-    tb.classList.add('editing');
-    // Focus next tick so iOS/Safari reliably opens keyboard
-    setTimeout(()=>{
-      try{ tb.focus({preventScroll:true}); }catch(_){ tb.focus(); }
-      placeCaretEnd(tb);
-    }, 0);
-  }
-  // Commit (blur or Enter/Escape)
-  function endEdit(tb){
-    if(!tb) return;
-    tb.classList.remove('editing');
-    // Keep contenteditable so the next tap still opens keyboard quickly
-    tb.setAttribute('contenteditable','true');
-  }
-
-  // Tap or click inside textbox => begin editing
-  document.addEventListener('click', function(e){
-    const tb = e.target.closest('.textbox');
-    if(!tb) return;
-    // Ignore taps on resizer handle
-    if(e.target.closest('.tb-resizer')) return;
-    beginEdit(tb);
-  }, {passive:true});
-
-  // Enter/Escape to end edit (desktop); mobile relies on blur
-  document.addEventListener('keydown', function(e){
-    const tb = document.activeElement && document.activeElement.closest && document.activeElement.closest('.textbox');
-    if(!tb) return;
-    if(e.key === 'Enter' || e.key === 'Escape'){
-      // Let Shift+Enter insert newline if desired; otherwise prevent
-      if(e.key === 'Enter' && e.shiftKey) return;
-      e.preventDefault();
-      tb.blur();
-      endEdit(tb);
-    }
-  });
-
-  // If focus leaves the textbox, end edit state
-  document.addEventListener('focusout', function(e){
-    const tb = e.target && e.target.closest && e.target.closest('.textbox');
-    if(tb){ endEdit(tb); }
-  });
-
-  // High-priority capture: stop other gesture handlers from preventing default on textboxes
-  // This keeps OSK & selection working even if #viewport/#board use touch-action:none
-  function allowDefaultsOnTextboxes(ev){
-    const tb = ev.target && ev.target.closest && ev.target.closest('.textbox');
-    if(!tb) return;
-    // Do not prevent defaults for textboxes; also stop propagation so app-level handlers don't call preventDefault
-    // Only for touch/pointer where mobile keyboard is impacted
-    if(ev.type === 'touchstart' || ev.type === 'pointerdown'){
-      ev.stopPropagation();
-    }
-  }
-  document.addEventListener('touchstart', allowDefaultsOnTextboxes, {capture:true, passive:true});
-  document.addEventListener('pointerdown', allowDefaultsOnTextboxes, {capture:true});
-
-  // Also: if your app uses pointermove to drag the whole canvas, don't do it while editing
-  document.addEventListener('pointermove', function(ev){
-    const editing = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('textbox');
-    if(editing){
-      ev.stopPropagation(); // avoid canvas drag stealing move events during typing/selection
-    }
-  }, {capture:true});
-
 })();
 </script>
 
