@@ -1,28 +1,28 @@
 {
   "version": "4.8",
-  "timestamp": "2025-08-13T17:00:41.071Z",
+  "timestamp": "2025-08-14T14:54:02.304Z",
   "hasBase64Files": true,
   "viewport": {
-    "zoom": 0.6703200460356391,
+    "zoom": 1,
     "origin": {
-      "x": 50.35715906820451,
-      "y": 230.8605939921398
+      "x": -114,
+      "y": -9
     }
   },
   "nodes": [
     {
-      "id": "n2",
+      "id": "n4",
       "kind": "youtube",
-      "x": 193.44813477938595,
-      "y": 491.68934474852836,
+      "x": 318,
+      "y": 435.5,
       "w": 560,
       "h": 315,
-      "assetUrl": "https://www.youtube.com/embed/bGQv9huL46Y",
+      "assetUrl": "https://www.youtube.com/embed/DnaXS89TbyQ",
       "textboxes": [],
       "meta": {
-        "videoId": "bGQv9huL46Y",
+        "videoId": "DnaXS89TbyQ",
         "platform": "youtube",
-        "embedUrl": "https://www.youtube.com/embed/bGQv9huL46Y",
+        "embedUrl": "https://www.youtube.com/embed/DnaXS89TbyQ",
         "isShorts": false
       },
       "metaShown": false,
@@ -31,72 +31,72 @@
     {
       "id": "n5",
       "kind": "youtube",
-      "x": 199.59467630553274,
-      "y": 853.3507051986085,
+      "x": 397,
+      "y": 791.5,
       "w": 560,
       "h": 315,
-      "assetUrl": "https://www.youtube.com/embed/m8rfp3h0KyQ",
+      "assetUrl": "https://www.youtube.com/embed/G7LounlxPdA",
       "textboxes": [],
       "meta": {
-        "videoId": "m8rfp3h0KyQ",
+        "videoId": "G7LounlxPdA",
         "platform": "youtube",
-        "embedUrl": "https://www.youtube.com/embed/m8rfp3h0KyQ",
+        "embedUrl": "https://www.youtube.com/embed/G7LounlxPdA",
         "isShorts": false
       },
       "metaShown": false,
       "title": "YouTube Video"
     },
     {
-      "id": "n6",
+      "id": "n7",
       "kind": "map",
-      "x": 944.8020773542053,
-      "y": 313.39104347696843,
-      "w": 482.63803573470466,
-      "h": 444.2068367230259,
-      "assetUrl": "https://maps.google.com/maps?q=Sapporo+to+Otaro&output=embed",
+      "x": 1002,
+      "y": 371.5,
+      "w": 560,
+      "h": 400,
+      "assetUrl": "https://maps.google.com/maps?q=Tokyo+to+Tokyo&output=embed",
       "textboxes": [],
       "meta": {
-        "start": "Sapporo",
-        "destination": "Otaro",
+        "start": "Tokyo",
+        "destination": "Tokyo",
         "mapType": "directions",
-        "embedUrl": "https://maps.google.com/maps?q=Sapporo+to+Otaro&output=embed",
-        "fullUrl": "https://www.google.com/maps/dir/Sapporo/Otaro"
+        "embedUrl": "https://maps.google.com/maps?q=Tokyo+to+Tokyo&output=embed",
+        "fullUrl": "https://www.google.com/maps/dir/Tokyo/Tokyo"
       },
       "metaShown": false,
-      "title": "Sapporo → Otaro"
+      "title": "Tokyo → Tokyo"
     },
     {
-      "id": "n7",
+      "id": "n8",
       "kind": "website",
-      "x": 870.763776673785,
-      "y": 791.8036316436495,
-      "w": 381.54376965143894,
-      "h": 609.449011653032,
-      "assetUrl": "https://www.airbnb.com.sg/rooms/1035491904646569974?adults=2&search_mode=regular_search&check_in=2025-09-15&check_out=2025-09-20&children=0&infants=0&pets=0&source_impression_id=p3_1755103997_P36fpL2Q_NsvGO5X&previous_page_section_name=1000&federated_search_id=da030e94-2006-4d3c-bda6-7b1e647f63db",
+      "x": 1172,
+      "y": 805.5,
+      "w": 331,
+      "h": 470,
+      "assetUrl": "https://artlist.io/",
       "textboxes": [],
       "meta": {
-        "originalUrl": "https://www.airbnb.com.sg/rooms/1035491904646569974?adults=2&search_mode=regular_search&check_in=2025-09-15&check_out=2025-09-20&children=0&infants=0&pets=0&source_impression_id=p3_1755103997_P36fpL2Q_NsvGO5X&previous_page_section_name=1000&federated_search_id=da030e94-2006-4d3c-bda6-7b1e647f63db",
+        "originalUrl": "https://artlist.io/",
         "website": true,
-        "domain": "www.airbnb.com.sg"
+        "domain": "artlist.io"
       },
       "metaShown": false,
-      "title": "www.airbnb.com.sg"
+      "title": "artlist.io"
     },
     {
       "id": "n9",
       "kind": "website",
-      "x": 1621.8265399659479,
-      "y": 419.4107093627225,
-      "w": 444.1962072566095,
-      "h": 501.53956995567614,
-      "assetUrl": "https://www.instagram.com/p/DF5OteCPtdj/embed",
+      "x": 1724,
+      "y": 320.5,
+      "w": 294,
+      "h": 473,
+      "assetUrl": "https://www.instagram.com/p/DNVjUx9u15a/embed",
       "textboxes": [],
       "meta": {
         "platform": "instagram",
         "type": "p",
-        "shortcode": "DF5OteCPtdj",
-        "embedUrl": "https://www.instagram.com/p/DF5OteCPtdj/embed",
-        "originalUrl": "https://www.instagram.com/p/DF5OteCPtdj/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+        "shortcode": "DNVjUx9u15a",
+        "embedUrl": "https://www.instagram.com/p/DNVjUx9u15a/embed",
+        "originalUrl": "https://www.instagram.com/reel/DNVjUx9u15a/?utm_source=ig_web_copy_link",
         "ar": 0.8
       },
       "metaShown": false,
@@ -105,18 +105,18 @@
     {
       "id": "n10",
       "kind": "website",
-      "x": 1441.315751551354,
-      "y": 938.5657041418848,
-      "w": 460.60627893066345,
-      "h": 503.0313946533174,
-      "assetUrl": "https://www.instagram.com/p/DNGNtRJuqAY/embed",
+      "x": 1569,
+      "y": 825.5,
+      "w": 317,
+      "h": 445,
+      "assetUrl": "https://www.instagram.com/p/DNUP1FbT-Xk/embed",
       "textboxes": [],
       "meta": {
         "platform": "instagram",
         "type": "p",
-        "shortcode": "DNGNtRJuqAY",
-        "embedUrl": "https://www.instagram.com/p/DNGNtRJuqAY/embed",
-        "originalUrl": "https://www.instagram.com/p/DNGNtRJuqAY/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==",
+        "shortcode": "DNUP1FbT-Xk",
+        "embedUrl": "https://www.instagram.com/p/DNUP1FbT-Xk/embed",
+        "originalUrl": "https://www.instagram.com/reel/DNUP1FbT-Xk/?utm_source=ig_web_copy_link",
         "ar": 0.8
       },
       "metaShown": false,
@@ -126,44 +126,44 @@
   "groups": [
     {
       "id": "g1",
-      "x": 121.31923133405331,
-      "y": 382.62618978566616,
-      "w": 480.3140156196604,
-      "h": 872.8936852675992,
+      "x": 479,
+      "y": 320,
+      "w": 378,
+      "h": 868,
       "color": "#3b82f6",
       "title": "Ideas"
     },
     {
-      "id": "g4",
-      "x": 823.4636595592359,
-      "y": 383.65306501645813,
-      "w": 529.9788110446755,
-      "h": 871.2664411704715,
+      "id": "g2",
+      "x": 1032,
+      "y": 327,
+      "w": 378,
+      "h": 868,
       "color": "#3b82f6",
       "title": "Itinerary"
     },
     {
-      "id": "g8",
-      "x": 1537.2450499534377,
-      "y": 379.47690626359844,
-      "w": 479.39378753334415,
-      "h": 873.9378753334415,
+      "id": "g3",
+      "x": 1607,
+      "y": 325,
+      "w": 378,
+      "h": 868,
       "color": "#3b82f6",
-      "title": "Photo Spots"
+      "title": "Photos"
     }
   ],
   "textboxes": [
     {
-      "id": "t11",
-      "content": "<span style=\"font-size:45px;\"><span style=\"font-family: &quot;Noto Serif&quot;, Georgia, &quot;Times New Roman&quot;, Times, serif;\"><span style=\"font-size: 55px;\"><span style=\"background-color: rgb(253, 255, 143);\"><b><i>Travel Ideas</i></b></span><span style=\"background-color: rgb(115, 172, 247); font-size: 55px;\">​</span></span></span><div style=\"text-align: left;\"><span style=\"font-family:'Courier New', Courier, monospace;\"><span style=\"font-size:45px;\"><span style=\"font-size:35px;\"><span style=\"font-size:45px;\"><span style=\"background-color: rgb(216, 242, 253);\">Brainstorm</span><span style=\"font-size:45px;\">​</span></span><span style=\"font-size:35px;\">​</span></span><span style=\"font-size:45px;\">​</span></span></span></div></span><div></div>",
+      "id": "t6",
+      "content": "<span style=\"font-size:45px;\"><span style=\"font-family: &quot;Noto Serif&quot;, Georgia, &quot;Times New Roman&quot;, Times, serif; background-color: rgb(251, 245, 65);\"><i><font color=\"#313ce3\"><b><span style=\"font-size:43px;\"><span style=\"font-size:50px;\">Travel Ideas<span style=\"font-size:50px;\">​</span></span><span style=\"font-size:44px;\">​<span style=\"font-size:45px;\">​</span></span></span></b></font></i></span>\n<span style=\"font-family: Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace; background-color: rgb(235, 163, 255);\">Brainstorm</span><span style=\"font-size:45px;\">​</span></span>",
       "hasPlaceholder": false,
       "hasActualContent": true,
-      "left": "318.717px",
-      "top": "246.359px",
-      "width": "413px",
-      "height": "191px"
+      "left": "579px",
+      "top": "245px",
+      "width": "402px",
+      "height": "179px"
     }
   ],
   "checklists": [],
-  "nextId": 12
+  "nextId": 11
 }
