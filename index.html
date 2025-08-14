@@ -5283,6 +5283,7 @@ function downloadDataUrl(dataUrl, filename){
 
 
 
+
 <script id="pointer-gestures-js">
 (function(){
   const viewport = document.getElementById('viewport');
@@ -5291,7 +5292,7 @@ function downloadDataUrl(dataUrl, filename){
 
   // Track multiple touch pointers
   const active = new Map(); // pointerId -> {x,y}
-  let pinch = null;         // {d0, z0, mid0}
+  let pinch = null;         // {d0, z0, mid0, lastScale}
   let twoDrag = null;       // {active:boolean, last:{x,y}, tgt:EventTarget|null}
   let mode = 'none';        // 'none' | 'pinch' | 'drag'
 
@@ -5330,20 +5331,29 @@ function downloadDataUrl(dataUrl, filename){
     return target;
   }
 
+  // Synthesize a wheel event at (x,y) with deltaY mapped to scale change.
+  // Positive deltaY => zoom out, Negative => zoom in (typical browser convention).
+  function synthWheelAt(x, y, deltaY){
+    const target = document.elementFromPoint(x, y) || viewport;
+    const ev = new WheelEvent('wheel', {
+      bubbles: true, cancelable: true,
+      clientX: x, clientY: y,
+      deltaY: deltaY, deltaMode: 0, // pixel
+      ctrlKey: true  // many apps treat ctrl+wheel as intentional zoom
+    });
+    target.dispatchEvent(ev);
+    return target;
+  }
+
   function dynamicThresholds(){
     const z = getZoom() || 1;
     const dpr = (window.devicePixelRatio || 1);
-    const BASE_PINCH = 12;  // slightly lower than before to pick up subtle pinches
-    const BASE_DRAG  = 10;
-    const zoomFactor = Math.max(0.75, 1 / Math.sqrt(z));
+    const BASE_PINCH = 10;  // slightly permissive to favor pinch
+    const BASE_DRAG  = 12;  // favor pinch over drag when ambiguous
+    const zoomFactor = Math.max(0.7, 1 / Math.sqrt(z));
     const pinch = BASE_PINCH * dpr * zoomFactor;
     const drag  = BASE_DRAG  * dpr * zoomFactor;
-    return {
-      PINCH_THRESH: pinch,
-      DRAG_THRESH:  drag,
-      PINCH_HYST:   pinch * 1.6,  // for switching from drag -> pinch
-      DRAG_HYST:    drag  * 1.4    // for switching from pinch -> drag (rare)
-    };
+    return { PINCH_THRESH: pinch, DRAG_THRESH: drag };
   }
 
   function onPointerDown(e){
@@ -5352,7 +5362,7 @@ function downloadDataUrl(dataUrl, filename){
     active.set(e.pointerId, {x:e.clientX, y:e.clientY});
     if(active.size === 2){
       const pts = Array.from(active.values());
-      pinch = { d0: distance(pts[0], pts[1]), z0: getZoom(), mid0: midpoint(pts[0], pts[1]) };
+      pinch = { d0: distance(pts[0], pts[1]), z0: getZoom(), mid0: midpoint(pts[0], pts[1]), lastScale: 1 };
       twoDrag = { active:false, last: pinch.mid0, tgt: null };
       mode = 'none';
       e.preventDefault();
@@ -5363,42 +5373,51 @@ function downloadDataUrl(dataUrl, filename){
     if(!active.has(e.pointerId)) return;
     active.set(e.pointerId, {x:e.clientX, y:e.clientY});
     if(active.size === 2 && pinch){
-      const { PINCH_THRESH, DRAG_THRESH, PINCH_HYST } = dynamicThresholds();
+      const { PINCH_THRESH, DRAG_THRESH } = dynamicThresholds();
       const pts = Array.from(active.values());
       const mid = midpoint(pts[0], pts[1]);
       const d = distance(pts[0], pts[1]);
       const deltaD = d - pinch.d0;
       const vec = { x: mid.x - twoDrag.last.x, y: mid.y - twoDrag.last.y };
       const vecLen = Math.hypot(vec.x, vec.y);
-      const absDelta = Math.abs(deltaD);
-      const scale = d / pinch.d0;
-      const scaleDev = Math.abs(scale - 1); // scale change magnitude
 
       if(mode === 'none'){
-        // Ratio-based decision: choose the dominant gesture
-        const pinchScore = absDelta;  // distance change
-        const dragScore  = vecLen;    // centroid translation
-        if(pinchScore > PINCH_THRESH && pinchScore > dragScore * 1.25){
+        if(Math.abs(deltaD) > PINCH_THRESH && Math.abs(deltaD) > vecLen * 1.15){
           mode = 'pinch';
-        } else if(dragScore > DRAG_THRESH){
+        } else if(vecLen > DRAG_THRESH){
           mode = 'drag';
-        }
-      } else if(mode === 'drag'){
-        // allow switch to pinch if scale change becomes very strong
-        if(absDelta > PINCH_HYST){
-          // end drag mouse sequence before switching
-          if(twoDrag && twoDrag.active){
-            synthMouse('mouseup', mid, { shiftKey:true, buttons:0, button:0 });
-            twoDrag.active = false;
-          }
-          mode = 'pinch';
         }
       }
 
       if(mode === 'pinch'){
+        const scale = d / pinch.d0;
+        const step = scale / (pinch.lastScale || 1);
+        pinch.lastScale = scale;
+
+        // Map to wheel deltaY (log-ish to keep it smooth). Negative = zoom in.
+        const k = 480; // sensitivity factor
+        const deltaY = -Math.sign(step-1) * Math.min(240, Math.abs(Math.log(step)) * k || 0);
+
+        // Dispatch a wheel event at the pinch midpoint
         const rect = viewport.getBoundingClientRect();
-        const next = clamp(pinch.z0 * scale, 0.05, 4);
-        setZoomAround(next, { x: mid.x - rect.left, y: mid.y - rect.top });
+        const px = mid.x; const py = mid.y;
+        synthWheelAt(px, py, deltaY);
+
+        // Fallback: if zoom didn't change after 2 frames, use setZoomAround
+        const zBefore = getZoom();
+        let checks = 0;
+        function verify(){
+          checks++;
+          const zNow = getZoom();
+          if(zNow === zBefore && checks < 2){
+            requestAnimationFrame(verify);
+          } else if(zNow === zBefore){
+            // wheel not handled; fallback to direct zoom
+            setZoomAround(pinch.z0 * scale, { x: mid.x - rect.left, y: mid.y - rect.top });
+          }
+        }
+        requestAnimationFrame(verify);
+
         twoDrag.last = mid;
         e.preventDefault();
       } else if(mode === 'drag'){
@@ -5430,13 +5449,14 @@ function downloadDataUrl(dataUrl, filename){
     if(active.size < 2){ pinch = null; twoDrag = null; mode = 'none'; }
   }
 
-  // Register with passive:false to ensure preventDefault works everywhere
+  // Use passive:false to ensure preventDefault is honored
   viewport.addEventListener('pointerdown', onPointerDown, {passive:false});
   viewport.addEventListener('pointermove', onPointerMove, {passive:false});
   viewport.addEventListener('pointerup', onPointerUp, {passive:false});
   viewport.addEventListener('pointercancel', onPointerCancel, {passive:false});
 })();
 </script>
+
 
 
 
