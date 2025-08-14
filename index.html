@@ -5434,13 +5434,6 @@ function downloadDataUrl(dataUrl, filename){
 (function(){
   const viewport = document.getElementById('viewport');
   const board = document.getElementById('board');
-  viewport.addEventListener('touchstart', function(e){
-    if(e.touches && e.touches.length >= 2){ e.preventDefault(); }
-    if(window.__isEditingTextbox){ window.__isEditingTextbox = false; }
-  }, {passive:false});
-  viewport.addEventListener('touchmove', function(e){
-    if(e.touches && e.touches.length >= 2){ e.preventDefault(); }
-  }, {passive:false});
   if(!viewport || !board) return;
 
   // Track multiple touch pointers
@@ -5510,8 +5503,6 @@ function downloadDataUrl(dataUrl, filename){
   }
 
   function onPointerDown(e){
-    if(window.__isEditingTextbox) return;
-
     if(e.pointerType !== 'touch') return;
     try{ viewport.setPointerCapture(e.pointerId); }catch{}
     active.set(e.pointerId, {x:e.clientX, y:e.clientY});
@@ -5524,8 +5515,6 @@ function downloadDataUrl(dataUrl, filename){
     }
   }
   function onPointerMove(e){
-    if(window.__isEditingTextbox) return;
-
     if(e.pointerType !== 'touch') return;
     if(!active.has(e.pointerId)) return;
     active.set(e.pointerId, {x:e.clientX, y:e.clientY});
@@ -5595,16 +5584,12 @@ function downloadDataUrl(dataUrl, filename){
     }
   }
   function onPointerUp(e){
-    if(window.__isEditingTextbox) return;
-
     if(e.pointerType !== 'touch') return;
     active.delete(e.pointerId);
     endDragIfNeeded({x:e.clientX, y:e.clientY});
     if(active.size < 2){ pinch = null; twoDrag = null; mode = 'none'; }
   }
   function onPointerCancel(e){
-    if(window.__isEditingTextbox) return;
-
     active.delete(e.pointerId);
     endDragIfNeeded({x:e.clientX, y:e.clientY});
     if(active.size < 2){ pinch = null; twoDrag = null; mode = 'none'; }
@@ -6008,34 +5993,6 @@ function downloadDataUrl(dataUrl, filename){
     }
   }, {capture:true});
 
-})();
-</script>
-
-
-<script id="editing-reset-after-textbox-js">
-(function(){
-  if(typeof window.__isEditingTextbox === 'undefined') window.__isEditingTextbox = false;
-  function isInTextbox(t){ return !!(t && t.closest && t.closest('.textbox')); }
-  function endAnyTextboxEdit(){
-    const act = document.activeElement;
-    if(isInTextbox(act)){ try{ act.blur(); }catch(_){ } }
-    document.querySelectorAll('.textbox.editing').forEach(tb=> tb.classList.remove('editing'));
-    window.__isEditingTextbox = false;
-  }
-  window.__endAnyTextboxEdit = endAnyTextboxEdit;
-
-  const viewport = document.getElementById('viewport');
-  if(viewport){
-    const endIfOutside = function(e){
-      const t = e.target;
-      if(!isInTextbox(t)){ endAnyTextboxEdit(); }
-    };
-    viewport.addEventListener('pointerdown', endIfOutside, {capture:true});
-    viewport.addEventListener('touchstart', endIfOutside, {capture:true, passive:false});
-    document.addEventListener('pointerdown', function(e){
-      if(!isInTextbox(e.target) && !viewport.contains(e.target)){ endAnyTextboxEdit(); }
-    }, {capture:true});
-  }
 })();
 </script>
 
