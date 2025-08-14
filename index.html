@@ -5282,6 +5282,7 @@ function downloadDataUrl(dataUrl, filename){
 
 
 
+
 <script id="pointer-gestures-js">
 (function(){
   const viewport = document.getElementById('viewport');
@@ -5330,17 +5331,18 @@ function downloadDataUrl(dataUrl, filename){
   }
 
   function dynamicThresholds(){
-    // Scale thresholds with zoom & devicePixelRatio so behavior feels consistent
     const z = getZoom() || 1;
     const dpr = (window.devicePixelRatio || 1);
-    // Base thresholds in CSS px at 100% zoom on 1x DPR
-    const BASE_PINCH = 14;  // how much distance change to trigger pinch
-    const BASE_DRAG  = 10;  // how much centroid move to trigger drag
-    // As you zoom in, content moves more per finger px — slightly relax thresholds with sqrt
+    const BASE_PINCH = 12;  // slightly lower than before to pick up subtle pinches
+    const BASE_DRAG  = 10;
     const zoomFactor = Math.max(0.75, 1 / Math.sqrt(z));
+    const pinch = BASE_PINCH * dpr * zoomFactor;
+    const drag  = BASE_DRAG  * dpr * zoomFactor;
     return {
-      PINCH_THRESH: BASE_PINCH * dpr * zoomFactor,
-      DRAG_THRESH:  BASE_DRAG  * dpr * zoomFactor
+      PINCH_THRESH: pinch,
+      DRAG_THRESH:  drag,
+      PINCH_HYST:   pinch * 1.6,  // for switching from drag -> pinch
+      DRAG_HYST:    drag  * 1.4    // for switching from pinch -> drag (rare)
     };
   }
 
@@ -5352,7 +5354,7 @@ function downloadDataUrl(dataUrl, filename){
       const pts = Array.from(active.values());
       pinch = { d0: distance(pts[0], pts[1]), z0: getZoom(), mid0: midpoint(pts[0], pts[1]) };
       twoDrag = { active:false, last: pinch.mid0, tgt: null };
-      mode = 'none'; // reset mode for new gesture
+      mode = 'none';
       e.preventDefault();
     }
   }
@@ -5361,33 +5363,45 @@ function downloadDataUrl(dataUrl, filename){
     if(!active.has(e.pointerId)) return;
     active.set(e.pointerId, {x:e.clientX, y:e.clientY});
     if(active.size === 2 && pinch){
-      const { PINCH_THRESH, DRAG_THRESH } = dynamicThresholds();
+      const { PINCH_THRESH, DRAG_THRESH, PINCH_HYST } = dynamicThresholds();
       const pts = Array.from(active.values());
       const mid = midpoint(pts[0], pts[1]);
       const d = distance(pts[0], pts[1]);
       const deltaD = d - pinch.d0;
       const vec = { x: mid.x - twoDrag.last.x, y: mid.y - twoDrag.last.y };
       const vecLen = Math.hypot(vec.x, vec.y);
+      const absDelta = Math.abs(deltaD);
+      const scale = d / pinch.d0;
+      const scaleDev = Math.abs(scale - 1); // scale change magnitude
 
       if(mode === 'none'){
-        // Decide initial mode using thresholds
-        if(Math.abs(deltaD) > PINCH_THRESH){
+        // Ratio-based decision: choose the dominant gesture
+        const pinchScore = absDelta;  // distance change
+        const dragScore  = vecLen;    // centroid translation
+        if(pinchScore > PINCH_THRESH && pinchScore > dragScore * 1.25){
           mode = 'pinch';
-        } else if(vecLen > DRAG_THRESH){
+        } else if(dragScore > DRAG_THRESH){
           mode = 'drag';
+        }
+      } else if(mode === 'drag'){
+        // allow switch to pinch if scale change becomes very strong
+        if(absDelta > PINCH_HYST){
+          // end drag mouse sequence before switching
+          if(twoDrag && twoDrag.active){
+            synthMouse('mouseup', mid, { shiftKey:true, buttons:0, button:0 });
+            twoDrag.active = false;
+          }
+          mode = 'pinch';
         }
       }
 
       if(mode === 'pinch'){
-        // Pinch to zoom (locked)
-        const scale = d / pinch.d0;
-        const next = clamp(pinch.z0 * scale, 0.05, 4);
         const rect = viewport.getBoundingClientRect();
+        const next = clamp(pinch.z0 * scale, 0.05, 4);
         setZoomAround(next, { x: mid.x - rect.left, y: mid.y - rect.top });
         twoDrag.last = mid;
         e.preventDefault();
       } else if(mode === 'drag'){
-        // Two-finger drag => Shift + Left drag (locked)
         if(!twoDrag.active){
           twoDrag.active = true;
           twoDrag.tgt = synthMouse('mousedown', mid, { shiftKey:true, buttons:1, button:0 });
@@ -5416,12 +5430,14 @@ function downloadDataUrl(dataUrl, filename){
     if(active.size < 2){ pinch = null; twoDrag = null; mode = 'none'; }
   }
 
-  viewport.addEventListener('pointerdown', onPointerDown);
-  viewport.addEventListener('pointermove', onPointerMove);
-  viewport.addEventListener('pointerup', onPointerUp);
-  viewport.addEventListener('pointercancel', onPointerCancel);
+  // Register with passive:false to ensure preventDefault works everywhere
+  viewport.addEventListener('pointerdown', onPointerDown, {passive:false});
+  viewport.addEventListener('pointermove', onPointerMove, {passive:false});
+  viewport.addEventListener('pointerup', onPointerUp, {passive:false});
+  viewport.addEventListener('pointercancel', onPointerCancel, {passive:false});
 })();
 </script>
+
 
 
 
