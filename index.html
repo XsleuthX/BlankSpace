@@ -5398,12 +5398,13 @@ function downloadDataUrl(dataUrl, filename){
         // TWO-FINGER DRAG => Shift + Left Drag
         const pt = { clientX: mid.x, clientY: mid.y, screenX: 0, screenY: 0 };
         if(!twoDrag.active){
-          twoDrag.active = True;
+          twoDrag.active = true;
         }
         if(!twoDrag.tgt){
           twoDrag.tgt = synthMouse('mousedown', pt, { shiftKey: true, buttons: 1, button: 0 });
         } else {
           synthMouse('mousemove', pt, { shiftKey: true, buttons: 1, button: 0 });
+          twoDrag.lastMid = {x: mid.x, y: mid.y};
         }
       }
     }
@@ -5413,7 +5414,7 @@ function downloadDataUrl(dataUrl, filename){
     if(pinchStart && e.touches.length < 2){
       // End pinch/drag
       if(twoDrag && twoDrag.active && twoDrag.tgt){
-        const endPt = twoDrag.startPt || {x:0,y:0};
+        const endPt = (twoDrag.lastMid || twoDrag.startPt || {x:0,y:0});
         const pt = { clientX: endPt.x, clientY: endPt.y, screenX: 0, screenY: 0 };
         synthMouse('mouseup', pt, { shiftKey: true, buttons: 0, button: 0 });
       }
