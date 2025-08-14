@@ -1272,6 +1272,45 @@
 <style id="pointer-gestures-css">
 #viewport, #board { touch-action: none; }
 </style>
+<style id="panel-collapse-to-button-css">
+/* Collapse panels to small floating buttons */
+.url-panel, .save-panel{ position: fixed; }
+.url-panel.panel-collapsed, .save-panel.panel-collapsed{
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 12px !important;
+}
+/* Hide body and header when collapsed */
+.url-panel.panel-collapsed .panel-body,
+.save-panel.panel-collapsed .panel-body,
+.url-panel.panel-collapsed h3,
+.save-panel.panel-collapsed h3{ display: none !important; }
+
+/* Toggle button */
+.panel-toggle{
+  position: absolute; top: 8px; right: 8px;
+  width: 28px; height: 28px; border-radius: 8px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+  color: #e8ecff; cursor: pointer; display: grid; place-items: center;
+  font-size: 16px; line-height: 1;
+}
+.panel-toggle:active{ transform: translateY(1px); }
+
+/* When collapsed, the toggle becomes the button face */
+.url-panel.panel-collapsed .panel-toggle,
+.save-panel.panel-collapsed .panel-toggle{
+  position: static; width: 36px; height: 36px; margin: 0;
+}
+
+/* Positions (left for URL, right for Save) */
+.url-panel{ top: 80px; left: 16px; }
+.save-panel{ top: 80px; right: 16px; }
+</style>
 </head>
 <body>
   <header class="topbar">
@@ -5365,6 +5404,130 @@ function downloadDataUrl(dataUrl, filename){
   viewport.addEventListener('pointermove', onPointerMove);
   viewport.addEventListener('pointerup', onPointerUp);
   viewport.addEventListener('pointercancel', onPointerCancel);
+})();
+</script>
+
+
+<script id="panel-collapse-to-button-js">
+(function(){
+  function snapshotStyles(panel){
+    if(panel.__snapshotDone) return;
+    const cs = getComputedStyle(panel);
+    // Save inline styles (what we can faithfully restore)
+    panel.__orig = {
+      width: panel.style.width || '',
+      height: panel.style.height || '',
+      maxHeight: panel.style.maxHeight || '',
+      maxWidth: panel.style.maxWidth || '',
+      overflow: panel.style.overflow || '',
+      left: panel.style.left || '',
+      right: panel.style.right || '',
+      top: panel.style.top || '',
+      bottom: panel.style.bottom || ''
+    };
+    // Also save computed width/height in case there were none inline set
+    panel.__origComputed = {
+      width: cs.width,
+      height: cs.height,
+      maxHeight: cs.maxHeight,
+      maxWidth: cs.maxWidth
+    };
+    panel.__snapshotDone = true;
+  }
+
+  function restoreStyles(panel){
+    if(!panel.__orig) return;
+    const o = panel.__orig;
+    panel.style.width = o.width;
+    panel.style.height = o.height;
+    panel.style.maxHeight = o.maxHeight;
+    panel.style.maxWidth = o.maxWidth;
+    panel.style.overflow = o.overflow;
+    panel.style.left = o.left;
+    panel.style.right = o.right;
+    panel.style.top = o.top;
+    panel.style.bottom = o.bottom;
+  }
+
+  function applyCollapsedStyles(panel){
+    // Keep position, but shrink into a neat button footprint.
+    panel.style.width = "44px";
+    panel.style.height = "44px";
+    panel.style.maxHeight = "44px";
+    panel.style.maxWidth = "44px";
+    panel.style.overflow = "hidden";
+  }
+
+  function makeCollapsible(panel, icon){
+    if(!panel || panel.__collapsible) return;
+    panel.__collapsible = true;
+
+    // Wrap contents after header into .panel-body for easier hide/show
+    let header = panel.querySelector('h3');
+    if(!header){
+      header = document.createElement('h3');
+      header.textContent = 'Panel';
+      panel.insertBefore(header, panel.firstChild);
+    }
+    let body = panel.querySelector('.panel-body');
+    if(!body){
+      body = document.createElement('div');
+      body.className = 'panel-body';
+      let sib = header.nextSibling;
+      const move = [];
+      while(sib){
+        const next = sib.nextSibling;
+        move.push(sib);
+        sib = next;
+      }
+      move.forEach(n=> body.appendChild(n));
+      panel.appendChild(body);
+    }
+
+    // Toggle button
+    let btn = panel.querySelector('.panel-toggle');
+    if(!btn){
+      btn = document.createElement('button');
+      btn.className = 'panel-toggle';
+      btn.title = 'Collapse/Expand';
+      btn.textContent = '–';
+      panel.appendChild(btn);
+    }
+
+    function setCollapsed(yes){
+      if(yes){
+        snapshotStyles(panel);
+        panel.classList.add('panel-collapsed');
+        applyCollapsedStyles(panel);
+      }else{
+        panel.classList.remove('panel-collapsed');
+        restoreStyles(panel);
+      }
+      btn.textContent = yes ? icon : '–';
+      btn.setAttribute('aria-expanded', (!yes).toString());
+    }
+
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      setCollapsed(!panel.classList.contains('panel-collapsed'));
+    });
+
+    // Clicking the collapsed button area should expand
+    panel.addEventListener('click', (e)=>{
+      if(panel.classList.contains('panel-collapsed')){
+        e.stopPropagation();
+        setCollapsed(false);
+      }
+    });
+
+    // Initialize expanded (keeps current dimensions)
+    setCollapsed(false);
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    makeCollapsible(document.querySelector('.url-panel'), '⇧');   // URL panel collapses to button
+    makeCollapsible(document.querySelector('.save-panel'), '⇧');  // Save panel collapses to button
+  });
 })();
 </script>
 
