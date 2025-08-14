@@ -1311,6 +1311,83 @@
 .url-panel{ top: 80px; left: 16px; }
 .save-panel{ top: 80px; right: 16px; }
 </style>
+
+<style id="node-title-hit-css">
+/* Larger, easier-to-tap node title */
+.node .title{
+  padding: 6px 10px !important;
+  font-size: 14px !important;
+  min-height: 28px;
+  line-height: 1.2;
+  touch-action: manipulation !important;   /* allow taps to trigger focus */
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+/* Extra hit-slap area (invisible) for small titles */
+.node .title::after{
+  content:"";
+  position:absolute;
+  left:-6px; right:-6px; top:-6px; bottom:-6px;
+  border-radius: 14px;
+  pointer-events: none; /* purely enlarges the easy tap visual area; not blocking */
+}
+/* When editing, ensure text cursor and visual affordance */
+.node .title.editing{
+  cursor: text !important;
+}
+</style>
+
+
+<style id="collapsed-panels-css">
+/* Collapsed look: keep existing colors/background/borders from panel, just compress */
+.url-panel.panel-collapsed,
+.save-panel.panel-collapsed{
+  width: 56px !important;
+  height: 56px !important;
+  min-width: 56px !important;
+  min-height: 56px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 12px;
+  overflow: hidden !important;
+}
+/* Hide content except the toggle button (used as the face) */
+.url-panel.panel-collapsed .panel-body,
+.url-panel.panel-collapsed h3,
+.save-panel.panel-collapsed .panel-body,
+.save-panel.panel-collapsed h3{
+  display: none !important;
+}
+
+/* The toggle becomes the face with centered label text */
+.panel-toggle{
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+}
+/* In collapsed mode, the button fills and shows the label ("URL"/"Save") */
+.url-panel.panel-collapsed .panel-toggle,
+.save-panel.panel-collapsed .panel-toggle{
+  position: static;
+  width: 100%; height: 100%;
+  margin: 0;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 14px;
+  letter-spacing: .2px;
+}
+</style>
+
 </head>
 <body>
   <header class="topbar">
@@ -1417,6 +1494,8 @@
   <menu id="nodeMenu" class="menu">
     <button data-action="open">Open / Play</button>
     <hr/>
+    <button data-action="delete-group" class="danger">Delete Group</button>
+
     <button data-action="toggle-metadata">Show metadata</button>
     <!-- INSERT THESE TWO LINES -->
     <button data-action="connect">Connect</button>
@@ -1427,7 +1506,14 @@
     <button data-action="delete" class="danger">Delete</button>
   </menu>
 
-  <menu id="textboxMenu" class="menu">
+  
+  <menu id="groupMenu" class="menu">
+    <button data-action="rename">Rename…</button>
+    <button data-action="duplicate">Duplicate</button>
+    <hr/>
+    <button data-action="delete" class="danger">Delete</button>
+  </menu>
+<menu id="textboxMenu" class="menu">
     <button data-action="connect">Connect</button>
     <hr/>
     <button data-action="duplicate">Duplicate</button>
@@ -1629,6 +1715,15 @@
           openNodeMenu(e.clientX, e.clientY, getNodeById(id));
         }else{
           console.log('Opening canvas menu');
+          // Group menu when right-clicking empty group area
+          const groupEl = e.target.closest('.group');
+          if(groupEl && !e.target.closest('.node')){
+            console.log('Opening group menu');
+            const gid = groupEl.dataset.id; const g = (typeof getGroupById==='function') ? getGroupById(gid) : groupEl;
+            openGroupMenu(e.clientX, e.clientY, g);
+            return;
+          }
+
           openCanvasMenu(e.clientX, e.clientY);
         }
       });
@@ -2249,7 +2344,8 @@
       }
       
       nodeMenu.onmousedown = (e)=>e.stopPropagation();
-      nodeMenu.onclick = (e)=>{
+      nodeMenu.onclick = (e) => {
+
         const act = e.target.dataset.action; 
         if(!act) return;
         console.log('Node menu action:', act);
@@ -2286,7 +2382,34 @@
             window.open(originalUrl, '_blank');
           }
         }
-      };
+      
+        if(act==='delete-group'){
+          try{
+            const nodeEl = node.el || node;
+            // Compute node center
+            const nr = nodeEl.getBoundingClientRect();
+            const nx = nr.left + nr.width/2;
+            const ny = nr.top + nr.height/2;
+            // Find containing group by geometry (center point inside)
+            const groups = Array.from(document.querySelectorAll('.group'));
+            let found = null;
+            for(const g of groups){
+              const gr = g.getBoundingClientRect();
+              if(nx >= gr.left && nx <= gr.right && ny >= gr.top && ny <= gr.bottom){
+                found = g; break;
+              }
+            }
+            if(found){
+              found.remove();
+            }else{
+              console.warn('No containing group found to delete for node.');
+              // Optionally: alert('This node is not inside a group.');
+            }
+          }catch(err){ console.error('Delete Group failed:', err); }
+          return;
+        }
+
+};
     }
 
     function openTextboxMenu(x, y, textboxObj){
@@ -2454,6 +2577,7 @@
       nodeMenu.classList.remove('open'); 
       textboxMenu.classList.remove('open'); 
       wireMenu.classList.remove('open'); 
+      const groupMenu = document.getElementById('groupMenu'); if(groupMenu) groupMenu.classList.remove('open'); 
     }
 
     function removeTextbox(textboxObj) {
@@ -5556,7 +5680,7 @@ function downloadDataUrl(dataUrl, filename){
         panel.classList.remove('panel-collapsed');
         restoreStyles(panel);
       }
-      btn.textContent = yes ? icon : '–';
+      btn.textContent = yes ? label : '–';
       btn.setAttribute('aria-expanded', (!yes).toString());
     }
 
@@ -5580,6 +5704,187 @@ function downloadDataUrl(dataUrl, filename){
   document.addEventListener('DOMContentLoaded', ()=>{
     makeCollapsible(document.querySelector('.url-panel'), '⇧');   // URL panel collapses to button
     makeCollapsible(document.querySelector('.save-panel'), '⇧');  // Save panel collapses to button
+  });
+})();
+</script>
+
+
+<script id="node-title-edit-js">
+(function(){
+  function focusEditable(el){
+    // Make it contenteditable only during edit
+    el.setAttribute('contenteditable','true');
+    el.classList.add('editing');
+    setTimeout(()=>{
+      try{
+        const sel = window.getSelection();
+        const rng = document.createRange();
+        rng.selectNodeContents(el);
+        rng.collapse(false);
+        sel.removeAllRanges(); sel.addRange(rng);
+        el.focus({preventScroll:true});
+      }catch(_){ el.focus(); }
+    },0);
+
+    function commit(){
+      el.removeEventListener('blur', onBlur);
+      el.removeEventListener('keydown', onKey);
+      el.classList.remove('editing');
+      // Keep contenteditable for easier mobile re-focus next time
+      el.setAttribute('contenteditable','true');
+    }
+    function onBlur(){ commit(); }
+    function onKey(e){
+      if(e.key === 'Enter' || e.key === 'Escape'){
+        e.preventDefault();
+        commit();
+      }
+    }
+    el.addEventListener('blur', onBlur);
+    el.addEventListener('keydown', onKey);
+  }
+
+  // Tap or click title to edit
+  document.addEventListener('click', function(e){
+    const t = e.target.closest('.node .title');
+    if(!t) return;
+    focusEditable(t);
+    // Do not stop propagation; we rely on global code not to preventDefault on click in titles
+  }, {passive:true});
+
+  // Prevent global gesture code from hijacking text selection in titles
+  // Hint: If there are pointer handlers elsewhere, they should check e.target.closest('.title')
+  // and skip preventDefault.
+})();
+</script>
+
+
+<script id="group-menu-js">
+(function(){
+  const groupMenu = document.getElementById('groupMenu');
+  const board = document.getElementById('board');
+
+  window.openGroupMenu = function(x, y, group){
+    if(!groupMenu || !group) return;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const w = 220, h = 140;
+    const left = Math.max(8, Math.min(vw - w - 8, x));
+    const top  = Math.max(8, Math.min(vh - h - 8, y));
+    groupMenu.style.left = left + 'px';
+    groupMenu.style.top  = top + 'px';
+    groupMenu.classList.add('open');
+
+    groupMenu.onclick = (e)=>{
+      const act = e.target && e.target.dataset && e.target.dataset.action;
+      if(!act) return;
+      if(act==='rename'){
+        try{
+          const el = group.el || group;
+          const t = el.querySelector('.title');
+          if(t){
+            // Immediate inline rename with caret at end
+            t.classList.add('editing');
+            t.setAttribute('contenteditable','true');
+            setTimeout(()=>{
+              try{
+                const sel = window.getSelection();
+                const rng = document.createRange();
+                rng.selectNodeContents(t);
+                rng.collapse(false);
+                sel.removeAllRanges(); sel.addRange(rng);
+                t.focus({preventScroll:true});
+              }catch(_){ t.focus(); }
+            }, 0);
+            // Commit on Enter / Blur
+            function commit(){
+              t.classList.remove('editing');
+              t.setAttribute('contenteditable','true'); // keep editable for mobile ease
+              t.removeEventListener('blur', onBlur);
+              t.removeEventListener('keydown', onKey);
+              // sync title into model if present
+              if(group && group.title !== undefined){
+                group.title = t.textContent.trim();
+              }
+            }
+            function onBlur(){ commit(); }
+            function onKey(ev){
+              if(ev.key==='Enter' || ev.key==='Escape'){ ev.preventDefault(); commit(); }
+            }
+            t.addEventListener('blur', onBlur);
+            t.addEventListener('keydown', onKey);
+          }
+        }catch(err){ console.error('Rename group failed', err); }
+      } else if(act==='duplicate'){
+        try{
+          const src = group;
+          const srcEl = src.el || src;
+          // Use canonical creation path
+          const br = document.getElementById('board').getBoundingClientRect();
+          const r  = srcEl.getBoundingClientRect();
+          const at = { x: r.left - br.left + 24, y: r.top - br.top + 24 };
+          if(typeof createGroup === 'function'){
+            const g2 = createGroup(at);
+            // Copy properties
+            if(g2){
+              g2.w = src.w || srcEl.offsetWidth;
+              g2.h = src.h || srcEl.offsetHeight;
+              g2.color = src.color || (getComputedStyle(srcEl).borderColor);
+              g2.title = src.title || (srcEl.querySelector('.title')?.textContent || 'Group');
+              // Apply to DOM
+              g2.el.style.width  = g2.w + 'px';
+              g2.el.style.height = g2.h + 'px';
+              g2.el.style.borderColor = g2.color;
+              const t2 = g2.el.querySelector('.title');
+              if(t2) t2.textContent = g2.title;
+            }
+          }else{
+            console.warn('createGroup() not available; falling back to shallow clone');
+            const clone = srcEl.cloneNode(true);
+            clone.classList.remove('selected');
+            clone.style.left = at.x + 'px';
+            clone.style.top  = at.y + 'px';
+            document.getElementById('board').appendChild(clone);
+          }
+        }catch(err){ console.error('Duplicate group failed', err); }
+      } else if(act==='delete'){
+        try{
+          const el = group.el || group;
+          el.remove();
+          // remove from state if present
+          if(window.state && Array.isArray(state.groups)){
+            state.groups = state.groups.filter(g=> g.id !== (group.id || el.dataset.id));
+          }
+        }catch(err){ console.error('Delete group failed', err); }
+      }
+      groupMenu.classList.remove('open');
+    };
+  };
+})();
+</script>
+
+
+<script>
+(function(){
+  function positionMinimized(urlPanel, savePanel){
+    if(!urlPanel || !savePanel) return;
+    if(urlPanel.classList.contains('panel-collapsed')){
+      const urlRectTop = parseInt(urlPanel.style.top || 80, 10);
+      const urlRectLeft = parseInt(urlPanel.style.left || 16, 10);
+      urlPanel.style.left = (isNaN(urlRectLeft)?16:urlRectLeft) + 'px';
+      urlPanel.style.top  = (isNaN(urlRectTop)?80:urlRectTop) + 'px';
+      if(savePanel.classList.contains('panel-collapsed')){
+        const gap = 12;
+        savePanel.style.left = urlPanel.style.left;
+        const baseTop = parseInt(urlPanel.style.top,10) || 80;
+        savePanel.style.top  = (baseTop + 56 + gap) + 'px';
+      }
+    }
+    window.__positionMinimized = positionMinimized;
+  }
+  window.__positionMinimized = positionMinimized;
+  window.addEventListener('resize', ()=>{
+    const urlPanel=document.querySelector('.url-panel'); const savePanel=document.querySelector('.save-panel');
+    positionMinimized(urlPanel, savePanel);
   });
 })();
 </script>
