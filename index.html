@@ -5891,9 +5891,9 @@ function downloadDataUrl(dataUrl, filename){
 
 
     <script>
-      // Function to fetch the latest board data from GitHub
+      // Function to fetch the latest board data from a local file
       function fetchLatestBoardData() {
-        fetch('https://github.com/XsleuthX/BlankSpace/blob/main/data/latest-board.json')
+        fetch('./data/latest-board.json')  // Local path
           .then(response => response.json())  // Parse the JSON response
           .then(data => {
             // Once the data is fetched, update the mood board
@@ -5936,6 +5936,75 @@ function downloadDataUrl(dataUrl, filename){
         fetchLatestBoardData();
       };
     </script>
+    
+    <script>
+      // Function to fetch the latest board data from GitHub
+      function fetchLatestBoardData() {
+        console.log("Fetching JSON data...");  // Log to confirm the fetch attempt
+        fetch('https://github.com/XsleuthX/BlankSpace/blob/main/data/latest-board.json')  // Update with your GitHub repository URL
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();  // Parse the JSON response
+          })
+          .then(data => {
+            console.log("JSON data loaded successfully.");  // Confirm successful load
+            updateMoodBoard(data);
+          })
+          .catch(error => {
+            console.error('Error fetching the latest JSON:', error);
+            console.log('No JSON found, using default board state.');
+            // Optionally use default data if fetch fails
+            loadDefaultBoardState();
+          });
+      }
+
+      // Function to load default board state if JSON is not found
+      function loadDefaultBoardState() {
+        console.log("Loading default board state.");
+        // Default data for the mood board (example)
+        const defaultData = {
+          items: [
+            { id: 1, name: "Default Item 1", position: { x: 100, y: 100 } },
+            { id: 2, name: "Default Item 2", position: { x: 200, y: 200 } }
+          ]
+        };
+        updateMoodBoard(defaultData);
+      }
+
+      // Function to update the mood board with fetched data
+      function updateMoodBoard(data) {
+        clearBoard();
+
+        data.items.forEach(item => {
+          addItemToBoard(item);
+        });
+      }
+
+      // Clear existing items on the board
+      function clearBoard() {
+        const board = document.getElementById('board');
+        board.innerHTML = '';
+      }
+
+      // Function to add an item to the board
+      function addItemToBoard(item) {
+        const itemElement = document.createElement('div');
+        itemElement.classList.add('node');
+        itemElement.style.left = `${item.position.x}px`;
+        itemElement.style.top = `${item.position.y}px`;
+        itemElement.innerText = item.name;
+        document.getElementById('board').appendChild(itemElement);
+      }
+
+      // Trigger the fetch function when the page loads
+      window.onload = function() {
+        fetchLatestBoardData();
+      };
+    </script>
     </body>
+    
+    
     
 </html>
