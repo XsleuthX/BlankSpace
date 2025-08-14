@@ -5893,7 +5893,7 @@ function downloadDataUrl(dataUrl, filename){
       // Function to fetch the latest board data from GitHub
       function fetchLatestBoardData() {
         console.log("Fetching JSON data...");  // Log to confirm the fetch attempt
-        fetch(''https://github.com/XsleuthX/BlankSpace/blob/main/data/latest-board.json')// Update with your GitHub repository URL
+        fetch(''https://raw.githubusercontent.com/XsleuthX/BlankSpace/main/data/latest-board.json')// Update with your GitHub repository URL
           .then(response => {
             if (!response.ok) {
               throw new Error('Network response was not ok');
