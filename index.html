@@ -5332,7 +5332,24 @@ function downloadDataUrl(dataUrl, filename){
       ctrlKey: !!(opts && opts.ctrlKey),
       altKey: !!(opts && opts.altKey),
       metaKey: !!(opts && opts.metaKey)
-    });
+    }
+    // Dispatch a mouse event on a specific DOM element (not hit-testing)
+    function synthMouseOn(target, type, pt, opts){
+      if(!target) return;
+      const ev = new MouseEvent(type, {
+        bubbles:true, cancelable:true, view:window,
+        clientX:pt.x ?? pt.clientX ?? 0, clientY:pt.y ?? pt.clientY ?? 0,
+        buttons: type==='mouseup' ? 0 : (opts && opts.buttons || 1),
+        button: (opts && 'button' in opts) ? opts.button : 0,
+        shiftKey: !!(opts && opts.shiftKey),
+        ctrlKey: !!(opts && opts.ctrlKey),
+        altKey: !!(opts && opts.altKey),
+        metaKey: !!(opts && opts.metaKey),
+      });
+      target.dispatchEvent(ev);
+      return target;
+    }
+    );
     target.dispatchEvent(ev);
     return target;
   }
@@ -5387,6 +5404,15 @@ function downloadDataUrl(dataUrl, filename){
       const vecLen = Math.hypot(vec.x, vec.y);
 
       // Decide gesture: pinch or two-finger drag
+
+      // Dynamic thresholds: base 10px scaled by DPR and 1/sqrt(zoom)
+      const __z = (typeof getZoom === 'function' ? getZoom() : (window.state && window.state.zoom) || 1) || 1;
+      const __dpr = (window.devicePixelRatio || 1);
+      const __zoomFactor = Math.max(0.7, 1 / Math.sqrt(__z));
+      const PINCH_THRESHOLD = 10 * __dpr * __zoomFactor;
+      const DRAG_VECTOR_THRESHOLD = 10 * __dpr * __zoomFactor;
+
+      // Decide gesture: pinch or two-finger drag
       if(Math.abs(deltaD) > PINCH_THRESHOLD){
         // PINCH TO ZOOM
         const scale = d / pinchStart.d0;
@@ -5395,26 +5421,30 @@ function downloadDataUrl(dataUrl, filename){
         const anchor = { x: mid.x - rect.left, y: mid.y - rect.top };
         setZoomAround(next, anchor);
       } else if(vecLen > DRAG_VECTOR_THRESHOLD){
-        // TWO-FINGER DRAG => Shift + Left Drag
-        const pt = { clientX: mid.x, clientY: mid.y, screenX: 0, screenY: 0 };
-        if(!twoDrag.active){
-          twoDrag.active = true;
-        }
-        if(!twoDrag.tgt){
-          twoDrag.tgt = synthMouse('mousedown', pt, { shiftKey: true, buttons: 1, button: 0 });
-        } else {
-          synthMouse('mousemove', pt, { shiftKey: true, buttons: 1, button: 0 });
+        
+        // TWO-FINGER DRAG => Only when midpoint is over a .textbox
+        const hit = document.elementFromPoint(mid.x, mid.y);
+        const textboxEl = hit && hit.closest && hit.closest('.textbox');
+        if (textboxEl) {
+          const pt = { x: mid.x, y: mid.y };
+          if(!twoDrag.active){
+            twoDrag.active = true;
+            twoDrag.tgt = textboxEl;
+            synthMouseOn(textboxEl, 'mousedown', pt, { buttons:1, button:0 });
+          } else {
+            synthMouseOn(textboxEl, 'mousemove', pt, { buttons:1, button:0 });
+          }
           twoDrag.lastMid = {x: mid.x, y: mid.y};
         }
+    
       }
-    }
   }, {passive:false});
 
   viewport.addEventListener('touchend', (e)=>{
     if(pinchStart && e.touches.length < 2){
       // End pinch/drag
       if(twoDrag && twoDrag.active && twoDrag.tgt){
-        const endPt = (twoDrag.lastMid || twoDrag.startPt || {x:0,y:0});
+        const endPt = twoDrag.startPt || {x:0,y:0};
         const pt = { clientX: endPt.x, clientY: endPt.y, screenX: 0, screenY: 0 };
         synthMouse('mouseup', pt, { shiftKey: true, buttons: 0, button: 0 });
       }
@@ -5435,13 +5465,6 @@ function downloadDataUrl(dataUrl, filename){
 (function(){
   const viewport = document.getElementById('viewport');
   const board = document.getElementById('board');
-  viewport.addEventListener('touchstart', function(e){
-    if(e.touches && e.touches.length >= 2){ e.preventDefault(); }
-    if(window.__isEditingTextbox){ window.__isEditingTextbox = false; }
-  }, {passive:false});
-  viewport.addEventListener('touchmove', function(e){
-    if(e.touches && e.touches.length >= 2){ e.preventDefault(); }
-  }, {passive:false});
   if(!viewport || !board) return;
 
   // Track multiple touch pointers
@@ -5511,8 +5534,6 @@ function downloadDataUrl(dataUrl, filename){
   }
 
   function onPointerDown(e){
-    if(window.__isEditingTextbox) return;
-
     if(e.pointerType !== 'touch') return;
     try{ viewport.setPointerCapture(e.pointerId); }catch{}
     active.set(e.pointerId, {x:e.clientX, y:e.clientY});
@@ -5525,8 +5546,6 @@ function downloadDataUrl(dataUrl, filename){
     }
   }
   function onPointerMove(e){
-    if(window.__isEditingTextbox) return;
-
     if(e.pointerType !== 'touch') return;
     if(!active.has(e.pointerId)) return;
     active.set(e.pointerId, {x:e.clientX, y:e.clientY});
@@ -5591,21 +5610,20 @@ function downloadDataUrl(dataUrl, filename){
     }
   }
   function endDragIfNeeded(pt){
-    if(twoDrag && twoDrag.active){
-      synthMouse('mouseup', pt, { shiftKey:true, buttons:0, button:0 });
+    if (twoDrag && twoDrag.active) {
+      const endPt = (twoDrag.lastMid || twoDrag.startPt || {x:0,y:0});
+      const tgt = twoDrag.tgt;
+      if(tgt){ synthMouseOn(tgt, 'mouseup', endPt, { buttons:0, button:0 }); }
+, pt, { shiftKey:true, buttons:0, button:0 });
     }
   }
   function onPointerUp(e){
-    if(window.__isEditingTextbox) return;
-
     if(e.pointerType !== 'touch') return;
     active.delete(e.pointerId);
     endDragIfNeeded({x:e.clientX, y:e.clientY});
     if(active.size < 2){ pinch = null; twoDrag = null; mode = 'none'; }
   }
   function onPointerCancel(e){
-    if(window.__isEditingTextbox) return;
-
     active.delete(e.pointerId);
     endDragIfNeeded({x:e.clientX, y:e.clientY});
     if(active.size < 2){ pinch = null; twoDrag = null; mode = 'none'; }
@@ -6009,34 +6027,6 @@ function downloadDataUrl(dataUrl, filename){
     }
   }, {capture:true});
 
-})();
-</script>
-
-
-<script id="editing-reset-after-textbox-js">
-(function(){
-  if(typeof window.__isEditingTextbox === 'undefined') window.__isEditingTextbox = false;
-  function isInTextbox(t){ return !!(t && t.closest && t.closest('.textbox')); }
-  function endAnyTextboxEdit(){
-    const act = document.activeElement;
-    if(isInTextbox(act)){ try{ act.blur(); }catch(_){ } }
-    document.querySelectorAll('.textbox.editing').forEach(tb=> tb.classList.remove('editing'));
-    window.__isEditingTextbox = false;
-  }
-  window.__endAnyTextboxEdit = endAnyTextboxEdit;
-
-  const viewport = document.getElementById('viewport');
-  if(viewport){
-    const endIfOutside = function(e){
-      const t = e.target;
-      if(!isInTextbox(t)){ endAnyTextboxEdit(); }
-    };
-    viewport.addEventListener('pointerdown', endIfOutside, {capture:true});
-    viewport.addEventListener('touchstart', endIfOutside, {capture:true, passive:false});
-    document.addEventListener('pointerdown', function(e){
-      if(!isInTextbox(e.target) && !viewport.contains(e.target)){ endAnyTextboxEdit(); }
-    }, {capture:true});
-  }
 })();
 </script>
 
