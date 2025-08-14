@@ -1390,24 +1390,8 @@
 
 
 <style id="mobile-textbox-input-css">
-/* Make textboxes behave like real editors on mobile */
-.textbox{
-  -webkit-user-select: text !important;
-  user-select: text !important;
-  touch-action: auto !important;       /* override viewport/board touch-action:none */
-  caret-color: auto;
-}
-.textbox *{
-  -webkit-user-select: text !important;
-  user-select: text !important;
-  touch-action: auto !important;
-}
-/* While editing, show text cursor and disable grab affordance */
-.textbox.editing, .textbox:focus{
-  cursor: text !important;
-}
-/* Don't let resize handle steal taps meant for typing */
-.textbox .tb-resizer{ touch-action: none; }
+.textbox, .textbox *{ -webkit-user-select: text !important; user-select: text !important; touch-action: auto !important; }
+.textbox.editing, .textbox:focus{ cursor: text !important; }
 </style>
 
 </head>
@@ -5503,6 +5487,9 @@ function downloadDataUrl(dataUrl, filename){
   }
 
   function onPointerDown(e){
+    if(e && e.target && e.target.closest && e.target.closest('.textbox')) return;
+if(window.__isEditingTextbox) return;
+
     if(e.pointerType !== 'touch') return;
     try{ viewport.setPointerCapture(e.pointerId); }catch{}
     active.set(e.pointerId, {x:e.clientX, y:e.clientY});
@@ -5515,6 +5502,8 @@ function downloadDataUrl(dataUrl, filename){
     }
   }
   function onPointerMove(e){
+    if(window.__isEditingTextbox) return;
+
     if(e.pointerType !== 'touch') return;
     if(!active.has(e.pointerId)) return;
     active.set(e.pointerId, {x:e.clientX, y:e.clientY});
@@ -5584,12 +5573,16 @@ function downloadDataUrl(dataUrl, filename){
     }
   }
   function onPointerUp(e){
+    if(window.__isEditingTextbox) return;
+
     if(e.pointerType !== 'touch') return;
     active.delete(e.pointerId);
     endDragIfNeeded({x:e.clientX, y:e.clientY});
     if(active.size < 2){ pinch = null; twoDrag = null; mode = 'none'; }
   }
   function onPointerCancel(e){
+    if(window.__isEditingTextbox) return;
+
     active.delete(e.pointerId);
     endDragIfNeeded({x:e.clientX, y:e.clientY});
     if(active.size < 2){ pinch = null; twoDrag = null; mode = 'none'; }
@@ -5914,85 +5907,78 @@ function downloadDataUrl(dataUrl, filename){
 
 <script id="mobile-textbox-input-js">
 (function(){
-  // Helper: place caret at end
   function placeCaretEnd(el){
-    try{
-      const sel = window.getSelection();
-      const rng = document.createRange();
-      rng.selectNodeContents(el);
-      rng.collapse(false);
-      sel.removeAllRanges(); sel.addRange(rng);
-    }catch(_){}
+    try{ const sel=window.getSelection(), rng=document.createRange(); rng.selectNodeContents(el); rng.collapse(false); sel.removeAllRanges(); sel.addRange(rng);}catch(_){}
   }
-  // Enter edit mode
   function beginEdit(tb){
     if(!tb) return;
-    tb.setAttribute('contenteditable','true');  // keep true for subsequent taps
+    tb.setAttribute('contenteditable','true');
     tb.classList.add('editing');
-    // Focus next tick so iOS/Safari reliably opens keyboard
-    setTimeout(()=>{
-      try{ tb.focus({preventScroll:true}); }catch(_){ tb.focus(); }
-      placeCaretEnd(tb);
-    }, 0);
+    setTimeout(()=>{ try{ tb.focus({preventScroll:true}); }catch(_){ tb.focus(); } placeCaretEnd(tb); }, 0);
   }
-  // Commit (blur or Enter/Escape)
   function endEdit(tb){
     if(!tb) return;
     tb.classList.remove('editing');
-    // Keep contenteditable so the next tap still opens keyboard quickly
     tb.setAttribute('contenteditable','true');
   }
-
-  // Tap or click inside textbox => begin editing
   document.addEventListener('click', function(e){
-    const tb = e.target.closest('.textbox');
+    const tb = e.target.closest && e.target.closest('.textbox');
     if(!tb) return;
-    // Ignore taps on resizer handle
     if(e.target.closest('.tb-resizer')) return;
     beginEdit(tb);
   }, {passive:true});
 
-  // Enter/Escape to end edit (desktop); mobile relies on blur
   document.addEventListener('keydown', function(e){
     const tb = document.activeElement && document.activeElement.closest && document.activeElement.closest('.textbox');
     if(!tb) return;
     if(e.key === 'Enter' || e.key === 'Escape'){
-      // Let Shift+Enter insert newline if desired; otherwise prevent
       if(e.key === 'Enter' && e.shiftKey) return;
-      e.preventDefault();
-      tb.blur();
-      endEdit(tb);
+      e.preventDefault(); tb.blur(); endEdit(tb);
     }
   });
 
-  // If focus leaves the textbox, end edit state
   document.addEventListener('focusout', function(e){
     const tb = e.target && e.target.closest && e.target.closest('.textbox');
     if(tb){ endEdit(tb); }
   });
 
-  // High-priority capture: stop other gesture handlers from preventing default on textboxes
-  // This keeps OSK & selection working even if #viewport/#board use touch-action:none
   function allowDefaultsOnTextboxes(ev){
     const tb = ev.target && ev.target.closest && ev.target.closest('.textbox');
     if(!tb) return;
-    // Do not prevent defaults for textboxes; also stop propagation so app-level handlers don't call preventDefault
-    // Only for touch/pointer where mobile keyboard is impacted
+    if((ev.touches && ev.touches.length>1) || (ev.pointerType==='touch' && ev.isPrimary===false)){
+      ev.stopPropagation();
+      return;
+    }
     if(ev.type === 'touchstart' || ev.type === 'pointerdown'){
       ev.stopPropagation();
     }
   }
   document.addEventListener('touchstart', allowDefaultsOnTextboxes, {capture:true, passive:true});
+  document.addEventListener('touchend', allowDefaultsOnTextboxes, {capture:true, passive:true});
+  document.addEventListener('touchcancel', allowDefaultsOnTextboxes, {capture:true, passive:true});
   document.addEventListener('pointerdown', allowDefaultsOnTextboxes, {capture:true});
+  document.addEventListener('pointerup', allowDefaultsOnTextboxes, {capture:true});
+  document.addEventListener('pointercancel', allowDefaultsOnTextboxes, {capture:true});
 
-  // Also: if your app uses pointermove to drag the whole canvas, don't do it while editing
   document.addEventListener('pointermove', function(ev){
     const editing = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('textbox');
-    if(editing){
-      ev.stopPropagation(); // avoid canvas drag stealing move events during typing/selection
-    }
+    if(editing){ ev.stopPropagation(); }
   }, {capture:true});
+})();
+</script>
 
+
+<script id="mobile-editing-flag-js">
+(function(){
+  window.__isEditingTextbox = false;
+  function setEditing(on){ window.__isEditingTextbox = !!on; }
+  document.addEventListener('focusin', function(e){
+    if(e.target && e.target.closest && e.target.closest('.textbox')){ setEditing(true); }
+  }, true);
+  document.addEventListener('focusout', function(e){
+    if(e.target && e.target.closest && e.target.closest('.textbox')){ setTimeout(()=>setEditing(false), 50); }
+  }, true);
+  window.__setEditingTextbox = setEditing;
 })();
 </script>
 
