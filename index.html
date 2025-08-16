@@ -247,12 +247,12 @@
 
     .node{
       position:absolute; border-radius:20px; background:var(--panel); box-shadow:var(--shadow);
-      border:1px solid var(--node-border); overflow:visible; user-select:none; cursor:grab; z-index: 1999;
+      border:1px solid var(--node-border); overflow:visible; user-select:none; cursor:grab;
     }
     .node:active{cursor:grabbing}
     .node.selected{outline:2px solid var(--accent)}
     .node .content{width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.02)}
-    .node .toolbar{position:absolute; top:6px; right:6px; display:flex; gap:6px; z-index:2200}
+    .node .toolbar{position:absolute; top:6px; right:6px; display:flex; gap:6px; z-index:1000}
     .node .toolbar button{padding:4px 8px; font-size:12px}
 
     /* Node title styling - minimal like groups */
@@ -280,17 +280,19 @@
     /* Glassmorphism textbox styling - adapted from glassmorphism file */
     .textbox {
       position: absolute;
-      min-width: 240px;
-      min-height: 140px;
+      min-width: 120px;
+      min-height: 70px;
       cursor: grab;
       z-index: 1600;
       white-space: pre-wrap;
       word-break: break-word;
       text-align: left;
       font-size: 18px;
-      line-height: 1.5;
+      line-height: 1.2;
       resize: both;
       overflow: auto;
+      scrollbar-color: var(--accent) rgb(255, 255, 255);
+      scrollbar-width: thin;
       
       /* Glassmorphism styling */
       padding: 14px 18px;
@@ -419,7 +421,7 @@
     .textbox .tb-resizer{
       position:absolute; width:12px; height:12px; right:-6px; bottom:-6px; 
       background:var(--handle-bg); border:2px solid var(--handle-border); 
-      border-radius:50%; cursor:nwse-resize; z-index: 10;
+      border-radius:50%; cursor:nwse-resize; z-index: 1700;
       transition: all 0.2s ease;
       opacity: 0.6;
     }
@@ -482,9 +484,7 @@
       justify-content: center;
       z-index: 9999;
       backdrop-filter: blur(4px);
-    
-      pointer-events: none; /* avoid capturing drag events to prevent flicker */
-}
+    }
     .drop-overlay.active {
       display: flex;
     }
@@ -568,7 +568,7 @@
 <style>
 /* X (Twitter) node visual parity */
 .node.twitter .tweet-host{
-  position:relative; z-index:2000; border-radius:16px;
+  position:relative; z-index:1; border-radius:16px;
   background:#000;
 }
 </style>
@@ -655,6 +655,37 @@
     border: 1px solid rgba(255,255,255,.22);
   }
   /* === End Spotlight Search === */
+
+</style>
+<style>
+
+  /* === Canvas Bottom-Center Description (injected) === */
+  /* Fallback when appended to <body> */
+  #canvasDescription {
+    position: fixed;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    z-index: 9000;
+    color: #b3c0cf;
+    font: 700 12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    letter-spacing: .02em;
+    opacity: .85;
+    text-shadow: 0 1px 1px rgba(0,0,0,.35);
+    pointer-events: none; /* never blocks canvas interactions */
+    user-select: none;
+    background: transparent;
+    border: 0;
+    padding: 0;
+  }
+  /* Preferred when inside #viewport (canvas) */
+  #viewport #canvasDescription {
+    position: absolute;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+  }
+  /* === End Description === */
 
 </style>
 
@@ -982,6 +1013,7 @@
 .save-card .row{ display:flex; gap:6px; }
 .save-card button{ flex:1; padding:6px 8px; font-size:12px; border-radius:8px; cursor:pointer; }
 </style>
+
 <style id="no-sheen-patch">
 /* Disable sheen & micro shimmer on textboxes to prevent stutter */
 .textbox::before,
@@ -1090,47 +1122,8 @@
 #zoomMinus:active, #zoomPlus:active{ transform: translateY(1px); }
 #zoomLabel{ min-width:60px; text-align:center; font-variant-numeric: tabular-nums; }
 </style>
-<style id="zoom-bottom-left-css">
-/* Ensure zoom controls stay bottom-left on all viewports */
-.scale-bar{
-  position: fixed !important;
-  left: 12px !important;
-  bottom: 12px !important;
-  z-index: 1500 !important;
-}
-</style>
-<style id="zoom-safearea-css">
-/* Keep zoom controls within visible window & safe areas */
-:root{
-  /* fallback values if env() not supported */
-  --safe-left: env(safe-area-inset-left, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-}
-.scale-bar{
-  position: fixed !important;
-  left: calc(var(--safe-left) + 12px) !important;
-  bottom: calc(var(--safe-bottom) + 12px) !important;
-  max-width: calc(100vw - 24px) !important;
-  z-index: 2000 !important;
-}
-</style>
-<style id="center-zoom-and-panel-toggle-css">
-/* Bottom-center zoom controls, respecting safe areas */
-:root{
-  --safe-left: env(safe-area-inset-left, 0px);
-  --safe-right: env(safe-area-inset-right, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --zoom-bottom-offset: 20px; /* Will be adjusted by JS */
-}
-.scale-bar{
-  position: fixed !important;
-  left: 50% !important;
-  transform: translateX(-50%);
-  bottom: var(--zoom-bottom-offset) !important;
-  z-index: 2000 !important;
-  max-width: calc(100vw - (var(--safe-left) + var(--safe-right)) - 24px);
-}
 
+<style>
 /* Minimalistic panel toggles */
 .url-panel, .save-panel{
   position: relative;
@@ -1827,8 +1820,7 @@
         e.stopPropagation();
       }
       
-      // Highlight drop area — replaced by dragCounter approach
-      /* old listeners removed */
+      // Highlight drop area
       
       // Robust anti-flicker DnD overlay logic
       let __dragCounter = 0;
@@ -2373,6 +2365,7 @@
             window.open(originalUrl, '_blank');
           }
         }
+
 };
     }
 
@@ -4362,7 +4355,7 @@ function createTwitterNode(originalUrl, at){
 <script>
 (function(){
   const bar = document.getElementById('textToolbar');
-  const MIN_OFFSET = 50, MARGIN = 8;
+  const MIN_OFFSET = -100, MARGIN = 8;
   let activeTextbox = null, savedRange = null;
 
   const isIn = (el, host) => !!(el && host && host.contains(el));
@@ -4379,7 +4372,7 @@ function createTwitterNode(originalUrl, at){
     const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
     let left = rect.left + (rect.width/2) - (tbw/2);
     left = clamp(Math.round(left), MARGIN, vw - tbw - MARGIN);
-    let top = rect.bottom + MIN_OFFSET;
+    let top = rect.top + MIN_OFFSET;
     if (top + tbh + MARGIN > vh) top = Math.max(MARGIN, vh - tbh - MARGIN);
     bar.style.left = left + 'px'; bar.style.top  = Math.round(top) + 'px';
   }
@@ -5050,41 +5043,6 @@ function downloadDataUrl(dataUrl, filename){
 </script>
 <script id="center-zoom-and-panel-toggle-js">
 (function(){
-  // --- Position zoom above the footer hint by 25px ---
-  function findFooterHint(){
-    // Try an id first if exists, else search by text
-    let el = document.getElementById('footerHint');
-    if(el) return el;
-    const all = Array.from(document.querySelectorAll('div,footer,section,span,p'));
-    const needle = 'Google Search Shortcut (Left Ctrl + Space)';
-    for(const n of all){
-      if(n && n.textContent && n.textContent.trim().includes(needle)){
-        return n;
-      }
-    }
-    return null;
-  }
-
-  function updateZoomBottom(){
-    const hint = findFooterHint();
-    const safeBottom = 0; // env() is used in CSS; we just offset relative to viewport here
-    let offset = 20; // default
-    if(hint){
-      const r = hint.getBoundingClientRect();
-      const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-      // Distance from bottom of viewport to be 25px above the hint's top edge
-      const fromBottom = Math.max(12, (vh - r.top) + 25);
-      offset = fromBottom;
-    } else {
-      offset = 32; // fallback
-    }
-    // write to root variable so CSS takes it
-    document.documentElement.style.setProperty('--zoom-bottom-offset', offset + 'px');
-  }
-
-  window.addEventListener('resize', updateZoomBottom, {passive:true});
-  window.addEventListener('orientationchange', updateZoomBottom);
-  document.addEventListener('DOMContentLoaded', updateZoomBottom);
 
   // --- Install minimalistic collapse/expand toggles on panels ---
   function makePanelCollapsible(panel){
@@ -5631,7 +5589,7 @@ function downloadDataUrl(dataUrl, filename){
         panel.classList.remove('panel-collapsed');
         restoreStyles(panel);
       }
-      btn.textContent = yes ? label : '-';
+      btn.textContent = yes ? label : '–';
       btn.setAttribute('aria-expanded', (!yes).toString());
     }
 
