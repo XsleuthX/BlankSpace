@@ -4604,12 +4604,6 @@ function createTwitterNode(originalUrl, at){
     </div>
   </div>
 
-
-  <!-- Board context menu -->
-  <div id="board-context" role="menu" aria-hidden="true">
-    <div class="item" data-action="add-checknode">➕ Add Checklist</div>
-  </div>
-
 <script>
 (function(){
   const overlay = document.getElementById('spotlightOverlay');
@@ -4673,19 +4667,6 @@ function createTwitterNode(originalUrl, at){
   });
 
   goBtn.addEventListener('click', (e)=>{ e.preventDefault(); searchNow(); });
-})();
-</script>
-<script>
-(function(){
-  var host = document.getElementById('viewport') || document.body;
-  var existing = document.getElementById('canvasDescription');
-  if (!existing) {
-    var note = document.createElement('div');
-    note.id = 'canvasDescription';
-    note.setAttribute('role', 'note');
-    note.textContent = 'Google Search Shortcut (Left Ctrl + Space)';
-    host.appendChild(note);
-  }
 })();
 </script>
 
@@ -5991,6 +5972,57 @@ function downloadDataUrl(dataUrl, filename){
       ensureBtn(); wire(document.getElementById('tjsStarter'));
     }
   })();
+</script>
+
+
+<script>
+(function(){
+  // Keep the #togetherjs=... hash in place while a session is running.
+  var togetherHash = null;
+  function hasTogetherHash(h){ return /(^|#|&)(togetherjs=)/i.test(h || location.hash); }
+
+  function ensureHash(){
+    if (window.TogetherJS && window.TogetherJS.running && togetherHash && !hasTogetherHash()){
+      // Restore the hash the session started with (prevents disconnection)
+      try{ location.hash = togetherHash.replace(/^#/, ''); }catch(e){}
+      console.warn('[TogetherJS] Restored session hash; your router modified the URL hash during a session.');
+    }
+  }
+
+  function onStart(){
+    togetherHash = location.hash || '';
+    // In case your code clears hash on load:
+    if (!hasTogetherHash() && togetherHash) {
+      // nothing
+    }
+    window.addEventListener('hashchange', function(){ setTimeout(ensureHash, 0); }, true);
+    document.addEventListener('visibilitychange', function(){
+      if (document.hidden) setTimeout(ensureHash, 0);
+    }, true);
+    console.log('[TogetherJS] Session started. Share URL:', (window.TogetherJS && window.TogetherJS.shareUrl && window.TogetherJS.shareUrl()));
+  }
+
+  function onStop(){
+    togetherHash = null;
+    console.log('[TogetherJS] Session stopped.');
+  }
+
+  // Wire into TogetherJS lifecycle if available
+  function wire(){
+    if (!window.TogetherJS || !window.TogetherJS.hub) return;
+    window.TogetherJS.hub.on('ready', onStart);
+    window.TogetherJS.hub.on('close', onStop);
+    // Simple peer presence log (helps verify that peers are seen by the hub)
+    window.TogetherJS.hub.on('peers', function(msg){
+      try { console.log('[TogetherJS] Peers:', msg && msg.peers); } catch(e){}
+    });
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', wire);
+  } else {
+    wire();
+  }
+})();
 </script>
 
 </body>
