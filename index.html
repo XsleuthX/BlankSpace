@@ -1,6 +1,70 @@
 <!doctype html>
 <html lang="en">
 <head>
+<!-- TogetherJS Early Hash Freeze (prevents invite hash from being wiped on load) -->
+<script id="togetherjs-hash-freeze-early">
+(function(){
+  try{
+    var initialHash = window.location.hash || "";
+    var hasTJS = /(^|#|&)(togetherjs=)/i.test(initialHash);
+    if(!hasTJS) return;
+
+    // Remember the exact TogetherJS piece so we can re-apply it precisely.
+    var tjsMatch = initialHash.match(/(?:^|#|&)(togetherjs=[^&]+)/i);
+    var tjsPart = tjsMatch ? tjsMatch[1] : null;
+    if(!tjsPart) return;
+
+    // Helper to ensure the current URL contains the TogetherJS hash.
+    function ensureTJSHash(){
+      try{
+        var h = (window.location.hash || "");
+        if (!/(^|#|&)(togetherjs=)/i.test(h)){
+          // Preserve any other hash content, append tjsPart cleanly
+          var cleaned = h.replace(/^#/, "");
+          var joined = cleaned ? ("#" + cleaned + "&" + tjsPart) : ("#" + tjsPart);
+          window.location.hash = joined.replace(/^#/, "");
+        }
+      }catch(e){ /* no-op */ }
+    }
+
+    // Guard against code calling history.pushState/replaceState with a URL
+    // that drops the TogetherJS hash.
+    function wrapHistory(fnName){
+      var orig = history[fnName];
+      if (!orig) return;
+      history[fnName] = function(state, title, url){
+        try{
+          if (typeof url === "string"){
+            var u = new URL(url, window.location.href);
+            var h = u.hash || "";
+            if (!/(^|#|&)(togetherjs=)/i.test(h)){
+              var cleaned = h.replace(/^#/, "");
+              u.hash = cleaned ? (cleaned + "&" + tjsPart) : ("#" + tjsPart);
+              url = u.href;
+            }
+          }
+        }catch(e){ /* ignore */ }
+        return orig.apply(this, [state, title, url]);
+      };
+    }
+    wrapHistory("pushState");
+    wrapHistory("replaceState");
+
+    // If any script clears the hash, put it back immediately.
+    window.addEventListener("hashchange", function(){ setTimeout(ensureTJSHash, 0); }, true);
+
+    // Also re-assert when the page gains focus/visibility again (some routers change on blur)
+    document.addEventListener("visibilitychange", function(){
+      if (document.hidden) return;
+      setTimeout(ensureTJSHash, 0);
+    }, true);
+
+    // First run to normalize the URL right away.
+    ensureTJSHash();
+  }catch(e){ /* swallow */ }
+})();
+</script>
+
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>BlankSpace</title>
@@ -5916,7 +5980,7 @@ function downloadDataUrl(dataUrl, filename){
 <script>
   // Config
   window.TogetherJSConfig_toolName = "Collaborate";
-  window.TogetherJSConfig_autoStart = false;
+  window.TogetherJSConfig_autoStart = /(^|#|&)(togetherjs=)/i.test(location.hash);
   window.TogetherJSConfig_getUserName = function () {
     try {
       var n = localStorage.getItem("togetherjs_name");
