@@ -4603,19 +4603,6 @@ function createTwitterNode(originalUrl, at){
   goBtn.addEventListener('click', (e)=>{ e.preventDefault(); searchNow(); });
 })();
 </script>
-<script>
-(function(){
-  var host = document.getElementById('viewport') || document.body;
-  var existing = document.getElementById('canvasDescription');
-  if (!existing) {
-    var note = document.createElement('div');
-    note.id = 'canvasDescription';
-    note.setAttribute('role', 'note');
-    note.textContent = 'Google Search Shortcut (Left Ctrl + Space)';
-    host.appendChild(note);
-  }
-})();
-</script>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
@@ -5644,7 +5631,7 @@ function downloadDataUrl(dataUrl, filename){
         panel.classList.remove('panel-collapsed');
         restoreStyles(panel);
       }
-      btn.textContent = yes ? label : '–';
+      btn.textContent = yes ? label : '-';
       btn.setAttribute('aria-expanded', (!yes).toString());
     }
 
