@@ -1,70 +1,6 @@
 <!doctype html>
 <html lang="en">
 <head>
-<!-- TogetherJS Early Hash Freeze (prevents invite hash from being wiped on load) -->
-<script id="togetherjs-hash-freeze-early">
-(function(){
-  try{
-    var initialHash = window.location.hash || "";
-    var hasTJS = /(^|#|&)(togetherjs=)/i.test(initialHash);
-    if(!hasTJS) return;
-
-    // Remember the exact TogetherJS piece so we can re-apply it precisely.
-    var tjsMatch = initialHash.match(/(?:^|#|&)(togetherjs=[^&]+)/i);
-    var tjsPart = tjsMatch ? tjsMatch[1] : null;
-    if(!tjsPart) return;
-
-    // Helper to ensure the current URL contains the TogetherJS hash.
-    function ensureTJSHash(){
-      try{
-        var h = (window.location.hash || "");
-        if (!/(^|#|&)(togetherjs=)/i.test(h)){
-          // Preserve any other hash content, append tjsPart cleanly
-          var cleaned = h.replace(/^#/, "");
-          var joined = cleaned ? ("#" + cleaned + "&" + tjsPart) : ("#" + tjsPart);
-          window.location.hash = joined.replace(/^#/, "");
-        }
-      }catch(e){ /* no-op */ }
-    }
-
-    // Guard against code calling history.pushState/replaceState with a URL
-    // that drops the TogetherJS hash.
-    function wrapHistory(fnName){
-      var orig = history[fnName];
-      if (!orig) return;
-      history[fnName] = function(state, title, url){
-        try{
-          if (typeof url === "string"){
-            var u = new URL(url, window.location.href);
-            var h = u.hash || "";
-            if (!/(^|#|&)(togetherjs=)/i.test(h)){
-              var cleaned = h.replace(/^#/, "");
-              u.hash = cleaned ? (cleaned + "&" + tjsPart) : ("#" + tjsPart);
-              url = u.href;
-            }
-          }
-        }catch(e){ /* ignore */ }
-        return orig.apply(this, [state, title, url]);
-      };
-    }
-    wrapHistory("pushState");
-    wrapHistory("replaceState");
-
-    // If any script clears the hash, put it back immediately.
-    window.addEventListener("hashchange", function(){ setTimeout(ensureTJSHash, 0); }, true);
-
-    // Also re-assert when the page gains focus/visibility again (some routers change on blur)
-    document.addEventListener("visibilitychange", function(){
-      if (document.hidden) return;
-      setTimeout(ensureTJSHash, 0);
-    }, true);
-
-    // First run to normalize the URL right away.
-    ensureTJSHash();
-  }catch(e){ /* swallow */ }
-})();
-</script>
-
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>BlankSpace</title>
@@ -311,12 +247,12 @@
 
     .node{
       position:absolute; border-radius:20px; background:var(--panel); box-shadow:var(--shadow);
-      border:1px solid var(--node-border); overflow:visible; user-select:none; cursor:grab;
+      border:1px solid var(--node-border); overflow:visible; user-select:none; cursor:grab; z-index: 1999;
     }
     .node:active{cursor:grabbing}
     .node.selected{outline:2px solid var(--accent)}
     .node .content{width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.02)}
-    .node .toolbar{position:absolute; top:6px; right:6px; display:flex; gap:6px; z-index:5}
+    .node .toolbar{position:absolute; top:6px; right:6px; display:flex; gap:6px; z-index:2200}
     .node .toolbar button{padding:4px 8px; font-size:12px}
 
     /* Node title styling - minimal like groups */
@@ -632,7 +568,7 @@
 <style>
 /* X (Twitter) node visual parity */
 .node.twitter .tweet-host{
-  position:relative; z-index:1; border-radius:16px;
+  position:relative; z-index:2000; border-radius:16px;
   background:#000;
 }
 </style>
@@ -719,37 +655,6 @@
     border: 1px solid rgba(255,255,255,.22);
   }
   /* === End Spotlight Search === */
-
-</style>
-<style>
-
-  /* === Canvas Bottom-Center Description (injected) === */
-  /* Fallback when appended to <body> */
-  #canvasDescription {
-    position: fixed;
-    left: 50%;
-    bottom: 12px;
-    transform: translateX(-50%);
-    z-index: 9000;
-    color: #b3c0cf;
-    font: 700 12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    letter-spacing: .02em;
-    opacity: .85;
-    text-shadow: 0 1px 1px rgba(0,0,0,.35);
-    pointer-events: none; /* never blocks canvas interactions */
-    user-select: none;
-    background: transparent;
-    border: 0;
-    padding: 0;
-  }
-  /* Preferred when inside #viewport (canvas) */
-  #viewport #canvasDescription {
-    position: absolute;
-    left: 50%;
-    bottom: 12px;
-    transform: translateX(-50%);
-  }
-  /* === End Description === */
 
 </style>
 
@@ -1454,18 +1359,6 @@
 }
 </style>
 
-<style id="tjs-inline-css">
-/* === TogetherJS floating button === */
-#tjsStarter{
-  position: fixed; right: 14px; bottom: 14px; z-index: 99999;
-  padding: 10px 14px; border-radius: 12px; border:1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.55); color: #fff; font: 600 13px/1 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  box-shadow: 0 10px 24px rgba(0,0,0,.4); cursor: pointer;
-  backdrop-filter: blur(8px) saturate(140%);
-}
-#tjsStarter:hover{ filter: brightness(1.1); }
-#tjsStarter.running{ background: rgba(16,185,129,.85); border-color: rgba(255,255,255,.3); }
-</style>
 </head>
 <body>
   <header class="topbar">
@@ -1572,8 +1465,6 @@
   <menu id="nodeMenu" class="menu">
     <button data-action="open">Open / Play</button>
     <hr/>
-    <button data-action="delete-group" class="danger">Delete Group</button>
-
     <button data-action="toggle-metadata">Show metadata</button>
     <!-- INSERT THESE TWO LINES -->
     <button data-action="connect">Connect</button>
@@ -2482,33 +2373,6 @@
             window.open(originalUrl, '_blank');
           }
         }
-      
-        if(act==='delete-group'){
-          try{
-            const nodeEl = node.el || node;
-            // Compute node center
-            const nr = nodeEl.getBoundingClientRect();
-            const nx = nr.left + nr.width/2;
-            const ny = nr.top + nr.height/2;
-            // Find containing group by geometry (center point inside)
-            const groups = Array.from(document.querySelectorAll('.group'));
-            let found = null;
-            for(const g of groups){
-              const gr = g.getBoundingClientRect();
-              if(nx >= gr.left && nx <= gr.right && ny >= gr.top && ny <= gr.bottom){
-                found = g; break;
-              }
-            }
-            if(found){
-              found.remove();
-            }else{
-              console.warn('No containing group found to delete for node.');
-              // Optionally: alert('This node is not inside a group.');
-            }
-          }catch(err){ console.error('Delete Group failed:', err); }
-          return;
-        }
-
 };
     }
 
@@ -4668,6 +4532,12 @@ function createTwitterNode(originalUrl, at){
     </div>
   </div>
 
+
+  <!-- Board context menu -->
+  <div id="board-context" role="menu" aria-hidden="true">
+    <div class="item" data-action="add-checknode">➕ Add Checklist</div>
+  </div>
+
 <script>
 (function(){
   const overlay = document.getElementById('spotlightOverlay');
@@ -4731,6 +4601,19 @@ function createTwitterNode(originalUrl, at){
   });
 
   goBtn.addEventListener('click', (e)=>{ e.preventDefault(); searchNow(); });
+})();
+</script>
+<script>
+(function(){
+  var host = document.getElementById('viewport') || document.body;
+  var existing = document.getElementById('canvasDescription');
+  if (!existing) {
+    var note = document.createElement('div');
+    note.id = 'canvasDescription';
+    note.setAttribute('role', 'note');
+    note.textContent = 'Google Search Shortcut (Left Ctrl + Space)';
+    host.appendChild(note);
+  }
 })();
 </script>
 
@@ -5967,125 +5850,6 @@ function downloadDataUrl(dataUrl, filename){
     const urlPanel=document.querySelector('.url-panel'); const savePanel=document.querySelector('.save-panel');
     positionMinimized(urlPanel, savePanel);
   });
-})();
-</script>
-
-
-<!-- TogetherJS Launcher -->
-<button id="tjsStarter" title="Start shared session">Start Together</button>
-
-
-<!-- TogetherJS embed -->
-<script src="https://togetherjs.com/togetherjs-min.js"></script>
-<script>
-  // Config
-  window.TogetherJSConfig_toolName = "Collaborate";
-  window.TogetherJSConfig_autoStart = /(^|#|&)(togetherjs=)/i.test(location.hash);
-  window.TogetherJSConfig_getUserName = function () {
-    try {
-      var n = localStorage.getItem("togetherjs_name");
-      if (!n) {
-        n = prompt("Display name for collaboration:", "") || "";
-        if (n) localStorage.setItem("togetherjs_name", n);
-      }
-      return n || "Guest";
-    } catch(e){ return "Guest"; }
-  };
-
-  (function(){
-    function byId(id){ return document.getElementById(id); }
-    function ensureBtn(){
-      if (!byId('tjsStarter')) {
-        var b = document.createElement('button');
-        b.id = 'tjsStarter';
-        b.textContent = 'Start Together';
-        b.title = 'Start shared session';
-        document.body.appendChild(b);
-        wire(b);
-      }
-    }
-    function wire(btn){
-      btn.addEventListener('click', function(){
-        if (window.TogetherJS && window.TogetherJS.running){
-          window.TogetherJS(); // toggle off
-          btn.classList.remove('running');
-          btn.textContent = 'Start Together';
-          return;
-        }
-        if (!window.TogetherJS) return alert('TogetherJS script not loaded.');
-        TogetherJS(this);
-        TogetherJS.hub.on('ready', function(){
-          btn.classList.add('running');
-          btn.textContent = 'In Session — Click to Stop';
-          try {
-            var link = TogetherJS.shareUrl();
-            if (navigator.clipboard && link) navigator.clipboard.writeText(link);
-          } catch(e){}
-        });
-        TogetherJS.hub.on('close', function(){
-          btn.classList.remove('running');
-          btn.textContent = 'Start Together';
-        });
-      });
-    }
-    if (document.readyState === 'loading'){
-      document.addEventListener('DOMContentLoaded', function(){
-        ensureBtn(); wire(document.getElementById('tjsStarter'));
-      });
-    } else {
-      ensureBtn(); wire(document.getElementById('tjsStarter'));
-    }
-  })();
-</script>
-
-
-<script>
-(function(){
-  // Keep the #togetherjs=... hash in place while a session is running.
-  var togetherHash = null;
-  function hasTogetherHash(h){ return /(^|#|&)(togetherjs=)/i.test(h || location.hash); }
-
-  function ensureHash(){
-    if (window.TogetherJS && window.TogetherJS.running && togetherHash && !hasTogetherHash()){
-      // Restore the hash the session started with (prevents disconnection)
-      try{ location.hash = togetherHash.replace(/^#/, ''); }catch(e){}
-      console.warn('[TogetherJS] Restored session hash; your router modified the URL hash during a session.');
-    }
-  }
-
-  function onStart(){
-    togetherHash = location.hash || '';
-    // In case your code clears hash on load:
-    if (!hasTogetherHash() && togetherHash) {
-      // nothing
-    }
-    window.addEventListener('hashchange', function(){ setTimeout(ensureHash, 0); }, true);
-    document.addEventListener('visibilitychange', function(){
-      if (document.hidden) setTimeout(ensureHash, 0);
-    }, true);
-    console.log('[TogetherJS] Session started. Share URL:', (window.TogetherJS && window.TogetherJS.shareUrl && window.TogetherJS.shareUrl()));
-  }
-
-  function onStop(){
-    togetherHash = null;
-    console.log('[TogetherJS] Session stopped.');
-  }
-
-  // Wire into TogetherJS lifecycle if available
-  function wire(){
-    if (!window.TogetherJS || !window.TogetherJS.hub) return;
-    window.TogetherJS.hub.on('ready', onStart);
-    window.TogetherJS.hub.on('close', onStop);
-    // Simple peer presence log (helps verify that peers are seen by the hub)
-    window.TogetherJS.hub.on('peers', function(msg){
-      try { console.log('[TogetherJS] Peers:', msg && msg.peers); } catch(e){}
-    });
-  }
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', wire);
-  } else {
-    wire();
-  }
 })();
 </script>
 
