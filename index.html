@@ -18,9 +18,9 @@
       --bg-hue: 220;          /* 200–260 = blue/purple Apple vibe */
       --bg-sat: 28%;          /* overall saturation */
       --bg-light: 12%;        /* base lightness (darker for dark theme) */
-      --tile: 4098px;          /* 256/512/1024 */
+      --tile: 2048px;          /* 256/512/1024 */
       --grid-gap: 24px;       /* spacing of the micro dot grid */
-      --grain-strength: 0.15; /* 0–0.15 suggested */
+      --grain-strength: 0.5; /* 0–0.15 suggested */
       --glow-opacity: 0.55;   /* intensity of aurora layer */
     }
     
@@ -43,15 +43,7 @@
       --handle-icon: rgba(0,0,0,.9) !important;
       --connect-hover-outline: #3b82f6 !important;
     }
-    /* Dark theme explicit (redundant but ensures consistency) */
-    [data-theme="dark"], .theme-dark, body.dark {
-      --wire-stroke: rgba(255,255,255,.95);
-      --wire-shadow: rgba(0,0,0,.6);
-      --handle-bg: rgba(255,255,255,.15);
-      --handle-border: rgba(255,255,255,.8);
-      --handle-icon: rgba(255,255,255,.95);
-      --connect-hover-outline: #60a5fa;
-    }
+  
     /* === Wires layer sits BELOW nodes === */
     #wires {
       position:absolute; left:0; top:0;
@@ -291,7 +283,7 @@
       line-height: 1.2;
       resize: both;
       overflow: auto;
-      scrollbar-color: var(--accent) rgb(255, 255, 255);
+      scrollbar-color: var(--accent) var(--handle-bg);
       scrollbar-width: thin;
       
       /* Glassmorphism styling */
@@ -716,22 +708,29 @@
     --bg-light: 10%;
   }
 
-  /* Replace dark background stack with a gold-tinted version */
-  html:not(.light) body {
-    background-image:
-      /* 1) Micro dot grid */
-      radial-gradient(rgba(255,215,128,.08) 1px, transparent 1.5px),
+ /* Clean dark background — no gridlines */
+html:not(.light) body {
+  /* keep your HSL vars for the base wash */
+  background-image:
+    /* 1) Micro dot grid */
+    radial-gradient(rgba(255,215,128,.08) 1px, transparent 1.5px),
       /* 2) Fine diagonal fiber */
       repeating-linear-gradient(135deg, rgba(255,220,160,.03) 0 2px, transparent 2px 4px),
-      /* 3) Gold aurora tile */
-      url("data:image/svg+xml;utf8,%3Csvg xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width%3D'512' height%3D'512'%3E%0A%3Cdefs%3E%0A  %3ClinearGradient id%3D'wash' x1%3D'0' y1%3D'0' x2%3D'1' y2%3D'1'%3E%0A    %3Cstop offset%3D'0%' stop-color%3D'hsl(45, 18%, 12%)'%2F%3E%0A    %3Cstop offset%3D'100%' stop-color%3D'hsl(45, 18%, 7%)'%2F%3E%0A  %3C%2FlinearGradient%3E%0A  %3Cfilter id%3D'aurora' x%3D'-20%' y%3D'-20%' width%3D'140%' height%3D'140%'%3E%0A    %3CfeTurbulence type%3D'fractalNoise' baseFrequency%3D'0.006' numOctaves%3D'2' seed%3D'12' stitchTiles%3D'stitch'%2F%3E%0A    %3CfeColorMatrix type%3D'matrix' %0A      values%3D'1 0.10 0 0 0   0.85 0.75 0 0 0   0.05 0.05 0.55 0 0   0 0 0 .35 0'%2F%3E%0A    %3CfeGaussianBlur stdDeviation%3D'22'%2F%3E%0A  %3C%2Ffilter%3E%0A%3C%2Fdefs%3E%0A%3Crect width%3D'100%' height%3D'100%' fill%3D'url(%23wash)'%2F%3E%0A%3Crect width%3D'100%' height%3D'100%' filter%3D'url(%23aurora)' opacity%3D'0.50'%2F%3E%0A%3C%2Fsvg%3E"),
-      /* 4) Base wash driven by vars */
-      linear-gradient(
-        180deg,
-        hsl(var(--bg-hue) var(--bg-sat) calc(var(--bg-light) + 2%)),
-        hsl(var(--bg-hue) var(--bg-sat) calc(var(--bg-light) - 4%))
-      );
-  }
+    /* 3) Gold aurora tile — keep, but don't tile */
+    url("data:image/svg+xml;utf8,%3Csvg xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width%3D'512' height%3D'512'%3E%0A%3Cdefs%3E%0A  %3ClinearGradient id%3D'wash' x1%3D'0' y1%3D'0' x2%3D'1' y2%3D'1'%3E%0A    %3Cstop offset%3D'0%' stop-color%3D'hsl(45, 18%, 12%)'%2F%3E%0A    %3Cstop offset%3D'100%' stop-color%3D'hsl(45, 18%, 7%)'%2F%3E%0A  %3C%2FlinearGradient%3E%0A  %3Cfilter id%3D'aurora' x%3D'-20%' y%3D'-20%' width%3D'140%' height%3D'140%'%3E%0A    %3CfeTurbulence type%3D'fractalNoise' baseFrequency%3D'0.006' numOctaves%3D'2' seed%3D'12' stitchTiles%3D'stitch'%2F%3E%0A    %3CfeColorMatrix type%3D'matrix' %0A      values%3D'1 0.10 0 0 0   0.85 0.75 0 0 0   0.05 0.05 0.55 0 0   0 0 0 .35 0'%2F%3E%0A    %3CfeGaussianBlur stdDeviation%3D'22'%2F%3E%0A  %3C%2Ffilter%3E%0A%3C%2Fdefs%3E%0A%3Crect width%3D'100%' height%3D'100%' fill%3D'url(%23wash)'%2F%3E%0A%3Crect width%3D'100%' height%3D'100%' filter%3D'url(%23aurora)' opacity%3D'0.50'%2F%3E%0A%3C%2Fsvg%3E"),
+    /* 4) Base wash */
+    linear-gradient(
+      180deg,
+      hsl(var(--bg-hue) var(--bg-sat) calc(var(--bg-light) + 2%)),
+      hsl(var(--bg-hue) var(--bg-sat) calc(var(--bg-light) - 4%))
+    );
+
+  /* kill any repeating/tile seams */
+  background-repeat: no-repeat, no-repeat;
+  background-size: cover, 100% 100%;
+  background-position: center top, center top;
+  background-attachment: fixed; /* optional: keeps the wash steady while scrolling */
+}
 
   /* Topbar + logo */
   html:not(.light) .topbar {
