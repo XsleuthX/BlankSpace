@@ -482,7 +482,9 @@
       justify-content: center;
       z-index: 9999;
       backdrop-filter: blur(4px);
-    }
+    
+      pointer-events: none; /* avoid capturing drag events to prevent flicker */
+}
     .drop-overlay.active {
       display: flex;
     }
@@ -1388,6 +1390,18 @@
 }
 </style>
 
+<style id="tjs-inline-css">
+/* === TogetherJS floating button === */
+#tjsStarter{
+  position: fixed; right: 14px; bottom: 14px; z-index: 99999;
+  padding: 10px 14px; border-radius: 12px; border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.55); color: #fff; font: 600 13px/1 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  box-shadow: 0 10px 24px rgba(0,0,0,.4); cursor: pointer;
+  backdrop-filter: blur(8px) saturate(140%);
+}
+#tjsStarter:hover{ filter: brightness(1.1); }
+#tjsStarter.running{ background: rgba(16,185,129,.85); border-color: rgba(255,255,255,.3); }
+</style>
 </head>
 <body>
   <header class="topbar">
@@ -1858,23 +1872,45 @@
         e.stopPropagation();
       }
       
-      // Highlight drop area
-      ['dragenter', 'dragover'].forEach(eventName => {
-        document.addEventListener(eventName, highlight, false);
+      // Highlight drop area — replaced by dragCounter approach
+      /* old listeners removed */
+      
+      // Robust anti-flicker DnD overlay logic
+      let __dragCounter = 0;
+      function __showOverlay(){ dropOverlay.classList.add('active'); }
+      function __hideOverlay(){ dropOverlay.classList.remove('active'); __dragCounter = 0; }
+
+      // Use capture phase to catch events consistently
+      document.addEventListener('dragenter', function(e){
+        // Only consider real drags (files or URLs/text)
+        const types = (e.dataTransfer && e.dataTransfer.types) || [];
+        if (types.length === 0) return;
+        __dragCounter++;
+        __showOverlay();
+      }, true);
+
+      document.addEventListener('dragover', function(e){
+        // Required to allow drop
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+      }, true);
+
+      document.addEventListener('dragleave', function(e){
+        // Some browsers fire many dragleave events as you cross children.
+        // Only hide when counter returns to zero.
+        __dragCounter = Math.max(0, __dragCounter - 1);
+        if (__dragCounter === 0) __hideOverlay();
+      }, true);
+
+      document.addEventListener('drop', function(e){
+        __hideOverlay();
+      }, true);
+
+      // Safety: reset overlay if page visibility changes mid-drag
+      document.addEventListener('visibilitychange', function(){
+        if (document.hidden) __hideOverlay();
       });
-      
-      ['dragleave', 'drop'].forEach(eventName => {
-        document.addEventListener(eventName, unhighlight, false);
-      });
-      
-      function highlight() {
-        dropOverlay.classList.add('active');
-      }
-      
-      function unhighlight() {
-        dropOverlay.classList.remove('active');
-      }
-      
+
       // Handle dropped files
       document.addEventListener('drop', handleDrop, false);
       
@@ -5887,6 +5923,74 @@ function downloadDataUrl(dataUrl, filename){
     positionMinimized(urlPanel, savePanel);
   });
 })();
+</script>
+
+
+<!-- TogetherJS Launcher -->
+<button id="tjsStarter" title="Start shared session">Start Together</button>
+
+
+<!-- TogetherJS embed -->
+<script src="https://togetherjs.com/togetherjs-min.js"></script>
+<script>
+  // Config
+  window.TogetherJSConfig_toolName = "Collaborate";
+  window.TogetherJSConfig_autoStart = false;
+  window.TogetherJSConfig_getUserName = function () {
+    try {
+      var n = localStorage.getItem("togetherjs_name");
+      if (!n) {
+        n = prompt("Display name for collaboration:", "") || "";
+        if (n) localStorage.setItem("togetherjs_name", n);
+      }
+      return n || "Guest";
+    } catch(e){ return "Guest"; }
+  };
+
+  (function(){
+    function byId(id){ return document.getElementById(id); }
+    function ensureBtn(){
+      if (!byId('tjsStarter')) {
+        var b = document.createElement('button');
+        b.id = 'tjsStarter';
+        b.textContent = 'Start Together';
+        b.title = 'Start shared session';
+        document.body.appendChild(b);
+        wire(b);
+      }
+    }
+    function wire(btn){
+      btn.addEventListener('click', function(){
+        if (window.TogetherJS && window.TogetherJS.running){
+          window.TogetherJS(); // toggle off
+          btn.classList.remove('running');
+          btn.textContent = 'Start Together';
+          return;
+        }
+        if (!window.TogetherJS) return alert('TogetherJS script not loaded.');
+        TogetherJS(this);
+        TogetherJS.hub.on('ready', function(){
+          btn.classList.add('running');
+          btn.textContent = 'In Session — Click to Stop';
+          try {
+            var link = TogetherJS.shareUrl();
+            if (navigator.clipboard && link) navigator.clipboard.writeText(link);
+          } catch(e){}
+        });
+        TogetherJS.hub.on('close', function(){
+          btn.classList.remove('running');
+          btn.textContent = 'Start Together';
+        });
+      });
+    }
+    if (document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', function(){
+        ensureBtn(); wire(document.getElementById('tjsStarter'));
+      });
+    } else {
+      ensureBtn(); wire(document.getElementById('tjsStarter'));
+    }
+  })();
 </script>
 
 </body>
