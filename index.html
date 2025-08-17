@@ -3384,7 +3384,16 @@ function saveBoard(){
             nodeData.meta
           );
           
-          node.title = nodeData.title;
+          
+          // Preserve original node id for wiring
+          try {
+            const savedId = nodeData.id || nodeData.nodeId || nodeData.nid || null;
+            if (savedId) {
+              const prevId = node.id;
+              node.id = savedId;
+              if (node.el) node.el.dataset.id = savedId;
+            }
+          } catch(_e){}node.title = nodeData.title;
           node.el.querySelector('.title').textContent = node.title;
         }
       }
@@ -3427,13 +3436,24 @@ function saveBoard(){
       // Restore checklist nodes
       if(boardData.checklists && window.addChecklistNodeAt) {
         boardData.checklists.forEach(checklistData => {
-          window.addChecklistNodeAt(
+          let __createdChecklist;
+__createdChecklist = window.addChecklistNodeAt(
             checklistData.x,
             checklistData.y,
             checklistData.text,
             checklistData.checked
           );
-        });
+        
+          if (__createdChecklist && __createdChecklist.element) {
+            try {
+              const savedId = checklistData.id;
+              if (savedId) {
+                __createdChecklist.id = savedId;
+                __createdChecklist.element.dataset.id = savedId;
+              }
+            } catch(_e){}
+          }
+            });
       }
     }
 
