@@ -39,19 +39,11 @@
       --wire-stroke: rgba(17,17,17,.9) !important;
       --wire-shadow: rgba(0,0,0,.18) !important;
       --handle-bg: #fff !important;
-      --handle-border: rgba(0,0,0,.55) !important;
+      --handle-border: var(--accent) !important;
       --handle-icon: rgba(0,0,0,.9) !important;
       --connect-hover-outline: #3b82f6 !important;
     }
-    /* Dark theme explicit (redundant but ensures consistency) */
-    [data-theme="dark"], .theme-dark, body.dark {
-      --wire-stroke: rgba(255,255,255,.95);
-      --wire-shadow: rgba(0,0,0,.6);
-      --handle-bg: rgba(255,255,255,.15);
-      --handle-border: rgba(255,255,255,.8);
-      --handle-icon: rgba(255,255,255,.95);
-      --connect-hover-outline: #60a5fa;
-    }
+  
     /* === Wires layer sits BELOW nodes === */
     #wires {
       position:absolute; left:0; top:0;
@@ -704,10 +696,10 @@
     --shadow-3: 0 40px 80px rgba(0,0,0,.65);
     /* reset previous goldy wiring */
     --handle-bg: rgba(255,255,255,.06);
-    --handle-border: rgba(255,255,255,.22);
+    --handle-border: var(--accent);
     --handle-bg-strong: rgba(255,255,255,.12);
     --handle-icon: rgba(255,255,255,.9);
-    --wire-stroke: rgba(255,255,255,.12);
+    --wire-stroke: var(--text);
     --wire-shadow: rgba(0,0,0,.65);
     --connect-hover-outline: #7a7a7a;
   }
