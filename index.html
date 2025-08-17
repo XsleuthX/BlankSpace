@@ -18,7 +18,7 @@
       --bg-hue: 220;          /* 200–260 = blue/purple Apple vibe */
       --bg-sat: 28%;          /* overall saturation */
       --bg-light: 12%;        /* base lightness (darker for dark theme) */
-      --tile: 4096px;          /* 256/512/1024 */
+      --tile: 4098px;          /* 256/512/1024 */
       --grid-gap: 24px;       /* spacing of the micro dot grid */
       --grain-strength: 0.15; /* 0–0.15 suggested */
       --glow-opacity: 0.55;   /* intensity of aurora layer */
@@ -43,7 +43,15 @@
       --handle-icon: rgba(0,0,0,.9) !important;
       --connect-hover-outline: #3b82f6 !important;
     }
-  
+    /* Dark theme explicit (redundant but ensures consistency) */
+    [data-theme="dark"], .theme-dark, body.dark {
+      --wire-stroke: rgba(255,255,255,.95);
+      --wire-shadow: rgba(0,0,0,.6);
+      --handle-bg: rgba(255,255,255,.15);
+      --handle-border: rgba(255,255,255,.8);
+      --handle-icon: rgba(255,255,255,.95);
+      --connect-hover-outline: #60a5fa;
+    }
     /* === Wires layer sits BELOW nodes === */
     #wires {
       position:absolute; left:0; top:0;
@@ -244,7 +252,7 @@
     .node:active{cursor:grabbing}
     .node.selected{outline:2px solid var(--accent)}
     .node .content{width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.02)}
-    .node .toolbar{position:absolute; top:6px; right:6px; display:flex; gap:6px; z-index:1000}
+    .node .toolbar{position:absolute; top:6px; right:6px; display:flex; gap:6px; z-index:5}
     .node .toolbar button{padding:4px 8px; font-size:12px}
 
     /* Node title styling - minimal like groups */
@@ -280,7 +288,7 @@
       word-break: break-word;
       text-align: left;
       font-size: 18px;
-      line-height: 1.2;
+      line-height: 1.5;
       resize: both;
       overflow: auto;
       scrollbar-color: var(--accent) var(--handle-bg);
@@ -413,7 +421,7 @@
     .textbox .tb-resizer{
       position:absolute; width:12px; height:12px; right:-6px; bottom:-6px; 
       background:var(--handle-bg); border:2px solid var(--handle-border); 
-      border-radius:50%; cursor:nwse-resize; z-index: 1700;
+      border-radius:50%; cursor:nwse-resize; z-index: 10;
       transition: all 0.2s ease;
       opacity: 0.6;
     }
@@ -681,179 +689,6 @@
 
 </style>
 
-<style id="oscar-black-gold">
-  /* === Oscar Black & Gold — Dark Mode Overrides === */
-  html:not(.light) {
-    --bg:#0b0b10;
-    --panel:#111114;
-    --text:#F8F5EC;
-    --muted:#C8B88A;
-    --chip: rgba(241,200,72,.06);
-    --shadow: 0 10px 30px rgba(0,0,0,.6);
-    --accent:#D4AF37;        /* metallic gold */
-    --group:#B08900;
-    --danger:#f05252;
-    --node-border: rgba(212,175,55,.22);
-    --handle-bg: rgba(212,175,55,.18);
-    --handle-border: rgba(212,175,55,.75);
-    --handle-bg-strong: rgba(212,175,55,.28);
-    --handle-icon: rgba(255,239,180,.95);
-    --wire-stroke: rgba(255,215,96,.95);
-    --wire-shadow: rgba(0,0,0,.7);
-    --connect-hover-outline: #FFD35B;
-
-    /* Warm background tuning */
-    --bg-hue: 46;
-    --bg-sat: 18%;
-    --bg-light: 10%;
-  }
-
- /* Clean dark background — no gridlines */
-html:not(.light) body {
-  /* keep your HSL vars for the base wash */
-  background-image:
-    /* 1) Micro dot grid */
-    radial-gradient(rgba(255,215,128,.08) 1px, transparent 1.5px),
-      /* 2) Fine diagonal fiber */
-      repeating-linear-gradient(135deg, rgba(255,220,160,.03) 0 2px, transparent 2px 4px),
-    /* 3) Gold aurora tile — keep, but don't tile */
-    url("data:image/svg+xml;utf8,%3Csvg xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width%3D'512' height%3D'512'%3E%0A%3Cdefs%3E%0A  %3ClinearGradient id%3D'wash' x1%3D'0' y1%3D'0' x2%3D'1' y2%3D'1'%3E%0A    %3Cstop offset%3D'0%' stop-color%3D'hsl(45, 18%, 12%)'%2F%3E%0A    %3Cstop offset%3D'100%' stop-color%3D'hsl(45, 18%, 7%)'%2F%3E%0A  %3C%2FlinearGradient%3E%0A  %3Cfilter id%3D'aurora' x%3D'-20%' y%3D'-20%' width%3D'140%' height%3D'140%'%3E%0A    %3CfeTurbulence type%3D'fractalNoise' baseFrequency%3D'0.006' numOctaves%3D'2' seed%3D'12' stitchTiles%3D'stitch'%2F%3E%0A    %3CfeColorMatrix type%3D'matrix' %0A      values%3D'1 0.10 0 0 0   0.85 0.75 0 0 0   0.05 0.05 0.55 0 0   0 0 0 .35 0'%2F%3E%0A    %3CfeGaussianBlur stdDeviation%3D'22'%2F%3E%0A  %3C%2Ffilter%3E%0A%3C%2Fdefs%3E%0A%3Crect width%3D'100%' height%3D'100%' fill%3D'url(%23wash)'%2F%3E%0A%3Crect width%3D'100%' height%3D'100%' filter%3D'url(%23aurora)' opacity%3D'0.50'%2F%3E%0A%3C%2Fsvg%3E"),
-    /* 4) Base wash */
-    linear-gradient(
-      180deg,
-      hsl(var(--bg-hue) var(--bg-sat) calc(var(--bg-light) + 2%)),
-      hsl(var(--bg-hue) var(--bg-sat) calc(var(--bg-light) - 4%))
-    );
-
-  /* kill any repeating/tile seams */
-  background-repeat: no-repeat, no-repeat;
-  background-size: cover, 100% 100%;
-  background-position: center top, center top;
-  background-attachment: fixed; /* optional: keeps the wash steady while scrolling */
-}
-
-  /* Topbar + logo */
-  html:not(.light) .topbar {
-    background: linear-gradient(180deg, rgba(212,175,55,.25), rgba(0,0,0,0));
-  }
-  html:not(.light) .logo {
-    background: linear-gradient(135deg,#2a2000,#D4AF37);
-    box-shadow: 0 6px 18px rgba(212,175,55,.25), inset 0 0 0 1px rgba(255,255,255,.05);
-  }
-
-  /* Buttons, selects, menus */
-  html:not(.light) button,
-  html:not(.light) select {
-    background: var(--panel);
-    color: var(--text);
-    border: 1px solid rgba(212,175,55,.28);
-    box-shadow: 0 12px 30px rgba(0,0,0,.45);
-  }
-  html:not(.light) button:hover,
-  html:not(.light) select:hover {
-    filter: none;
-    box-shadow: 0 0 0 1px rgba(212,175,55,.35) inset, 0 0 24px rgba(212,175,55,.12);
-  }
-  html:not(.light) button.danger {
-    background: rgba(240,82,82,.12);
-    border-color: rgba(240,82,82,.35);
-  }
-
-  /* Menus */
-  html:not(.light) .menu {
-    border-color: rgba(212,175,55,.22);
-  }
-  html:not(.light) .menu button:hover {
-    background: rgba(212,175,55,.12);
-  }
-  html:not(.light) .menu hr {
-    border-top-color: rgba(212,175,55,.25);
-  }
-
-  /* Nodes, groups, titles */
-  html:not(.light) .node {
-    border-color: var(--node-border);
-  }
-  html:not(.light) .node .title {
-    border-color: rgba(212,175,55,.25);
-    background: rgba(212,175,55,.06);
-  }
-  html:not(.light) .group {
-    border-color: var(--group);
-    background: rgba(212,175,55,.06);
-  }
-
-  /* Textboxes — subtle golden glass */
-  html:not(.light) .textbox {
-    border-color: rgba(212,175,55,.45);
-    background: rgba(255,255,255,0.06);
-    box-shadow:
-      inset 0 1px 0 rgba(255,245,200,0.35),
-      inset 0 -1px 0 rgba(212,175,55,0.18),
-      0 8px 30px rgba(0,0,0,0.45),
-      0 0 24px rgba(212,175,55,0.10);
-  }
-  html:not(.light) .textbox:hover {
-    border-color: rgba(212,175,55,.6);
-    box-shadow:
-      inset 0 1px 0 rgba(255,245,200,0.45),
-      inset 0 -1px 0 rgba(212,175,55,0.25),
-      0 10px 40px rgba(0,0,0,0.5),
-      0 0 36px rgba(212,175,55,0.14);
-  }
-  html:not(.light) .textbox.selected {
-    box-shadow:
-      inset 0 1px 0 rgba(255,245,200,0.45),
-      inset 0 -1px 0 rgba(212,175,55,0.18),
-      0 8px 24px rgba(0,0,0,.5),
-      0 0 0 2px var(--accent);
-  }
-
-  /* Check node hover */
-  html:not(.light) .checknode:hover {
-    border-color: rgba(212,175,55,.35);
-    box-shadow: 0 6px 20px rgba(0,0,0,.35);
-  }
-
-  /* Contextual overlays */
-  html:not(.light) .drop-overlay {
-    background: rgba(212,175,55, 0.10);
-    border-color: var(--accent);
-  }
-  html:not(.light) .drop-message {
-    border-color: var(--accent);
-  }
-
-  /* Scale bar */
-  html:not(.light) .scale-bar {
-    background: rgba(212,175,55,.12);
-    border: 1px solid rgba(212,175,55,.25);
-  }
-
-  /* Spotlight search */
-  html:not(.light) #spotlightOverlay {
-    background: rgba(0,0,0,.5);
-  }
-  html:not(.light) .spotlight-card {
-    background: rgba(20,18,12,.92);
-    border: 1px solid rgba(212,175,55,.28);
-  }
-  html:not(.light) .spotlight-input {
-    border: 1px solid rgba(212,175,55,.35);
-    background: rgba(212,175,55,.06);
-    color: var(--text);
-  }
-  html:not(.light) .spotlight-input:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(212,175,55,.45);
-    border-color: var(--accent);
-  }
-  html:not(.light) .spotlight-btn {
-    background: var(--accent);
-    color: #121212;
-  }
-</style>
-
 <style id="oscar-black-gold-rim">
   /* === Oscar — Black Canvas, Gold Rim (Dark Mode Only) === */
   html:not(.light) {
@@ -1012,7 +847,6 @@ html:not(.light) body {
 .save-card .row{ display:flex; gap:6px; }
 .save-card button{ flex:1; padding:6px 8px; font-size:12px; border-radius:8px; cursor:pointer; }
 </style>
-
 <style id="no-sheen-patch">
 /* Disable sheen & micro shimmer on textboxes to prevent stutter */
 .textbox::before,
@@ -1121,8 +955,47 @@ html:not(.light) body {
 #zoomMinus:active, #zoomPlus:active{ transform: translateY(1px); }
 #zoomLabel{ min-width:60px; text-align:center; font-variant-numeric: tabular-nums; }
 </style>
+<style id="zoom-bottom-left-css">
+/* Ensure zoom controls stay bottom-left on all viewports */
+.scale-bar{
+  position: fixed !important;
+  left: 12px !important;
+  bottom: 12px !important;
+  z-index: 1500 !important;
+}
+</style>
+<style id="zoom-safearea-css">
+/* Keep zoom controls within visible window & safe areas */
+:root{
+  /* fallback values if env() not supported */
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+.scale-bar{
+  position: fixed !important;
+  left: calc(var(--safe-left) + 12px) !important;
+  bottom: calc(var(--safe-bottom) + 12px) !important;
+  max-width: calc(100vw - 24px) !important;
+  z-index: 2000 !important;
+}
+</style>
+<style id="center-zoom-and-panel-toggle-css">
+/* Bottom-center zoom controls, respecting safe areas */
+:root{
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --zoom-bottom-offset: 20px; /* Will be adjusted by JS */
+}
+.scale-bar{
+  position: fixed !important;
+  left: 50% !important;
+  transform: translateX(-50%);
+  bottom: var(--zoom-bottom-offset) !important;
+  z-index: 2000 !important;
+  max-width: calc(100vw - (var(--safe-left) + var(--safe-right)) - 24px);
+}
 
-<style>
 /* Minimalistic panel toggles */
 .url-panel, .save-panel{
   position: relative;
@@ -1457,6 +1330,7 @@ html:not(.light) body {
   <menu id="nodeMenu" class="menu">
     <button data-action="open">Open / Play</button>
     <hr/>
+
     <button data-action="toggle-metadata">Show metadata</button>
     <!-- INSERT THESE TWO LINES -->
     <button data-action="connect">Connect</button>
@@ -1492,7 +1366,7 @@ html:not(.light) body {
     console.log('Script starting...');
     
     // v4.8 — Fixed textbox loading with proper state management
-    const state = {
+    const state = { wires: [], 
       zoom: 1,
       origin: {x: 0, y: 0},
       nodes: [],
@@ -1505,7 +1379,6 @@ html:not(.light) body {
       originStart: {x:0,y:0}
     };
 
-    const board = document.getElementById('board');
     board.addEventListener('click', (e)=>{ if(e.button===0 && typeof closeMenus==='function') closeMenus(); });
     const viewport = document.getElementById('viewport');
     const canvasMenu = document.getElementById('canvasMenu');
@@ -2265,7 +2138,7 @@ html:not(.light) body {
           t.element.style.top = (start.y + dy) + 'px';
         });
         // <— add this
-        if (window.updateAllWires) window.updateAllWires();
+        try { if (window.updateAllWires) updateAllWires(); } catch(_){ }
       }
       
       function mouseup(){
@@ -2443,7 +2316,7 @@ html:not(.light) body {
           window.removeWireById(wireId);
         }
         if(window.updateAllWires && typeof window.updateAllWires === 'function') {
-          window.updateAllWires();
+          try { updateAllWires(); } catch(_) {}
         }
         console.log('Wire disconnected successfully');
         return;
@@ -2462,7 +2335,7 @@ html:not(.light) body {
           
           // Call update functions
           if(window.updateAllWires && typeof window.updateAllWires === 'function') {
-            window.updateAllWires();
+            try { updateAllWires(); } catch(_) {}
           }
           console.log('Wire disconnected via container group');
           return;
@@ -2479,7 +2352,7 @@ html:not(.light) body {
         immediateGroup.remove();
         
         if(window.updateAllWires && typeof window.updateAllWires === 'function') {
-          window.updateAllWires();
+          try { updateAllWires(); } catch(_) {}
         }
         console.log('Wire disconnected via immediate group fallback');
         return;
@@ -2491,7 +2364,7 @@ html:not(.light) body {
         wireElement.remove();
         
         if(window.updateAllWires && typeof window.updateAllWires === 'function') {
-          window.updateAllWires();
+          try { updateAllWires(); } catch(_) {}
         }
         console.log('Wire element removed directly');
         return;
@@ -3070,7 +2943,7 @@ const toolbar = document.createElement('div');
           }
         });
         // <— add this
-        if (window.updateAllWires) window.updateAllWires();
+        try { if (window.updateAllWires) updateAllWires(); } catch(_){ }
       }
       function up(){ 
         window.removeEventListener('mousemove', mm); 
@@ -3164,6 +3037,14 @@ const toolbar = document.createElement('div');
     function getGroupById(id){ return state.groups.find(g=>g.id===id); }
     function getTextboxById(id){ return state.textboxes.find(t=>t.id===id); }
     function getTextboxByElement(element){ return state.textboxes.find(t=>t.element===element); }
+    function getIdForEl(el){
+  if (!el) return null;
+  // If this element has the id itself
+  if (el.dataset && el.dataset.id) return el.dataset.id;
+  // Otherwise, walk up to the nearest node/textbox/checknode shell
+  const host = el.closest?.('.node, .textbox, .checknode');
+  return (host && host.dataset && host.dataset.id) ? host.dataset.id : null;
+}
 
     function deleteNode(node){ 
       node.el.remove(); 
@@ -3341,86 +3222,87 @@ function saveBoard(){
     }
 
     async function exportBoardDataWithFiles() {
-      const processedNodes = await Promise.all(state.nodes.map(async (node) => {
-        const processedNode = {...node};
-        
-        delete processedNode.el;
-        delete processedNode.metaTextbox;
-        
-        if(node.assetUrl && node.assetUrl.startsWith('blob:')) {
-          try {
-            const base64Data = await blobUrlToBase64(node.assetUrl);
-            processedNode.assetUrl = base64Data;
-            processedNode.isFileNode = true;
-            processedNode.hasBase64Data = true;
-          } catch (error) {
-            console.error('Error converting file to base64:', error);
-            processedNode.assetUrl = '[FILE_CONVERSION_ERROR]';
-            processedNode.isFileNode = true;
-            processedNode.hasBase64Data = false;
-          }
-        }
-        
-        return processedNode;
-      }));
+  // Nodes (with base64 for blob: assets)
+  const processedNodes = await Promise.all((state.nodes || []).map(async (node) => {
+    const processedNode = { ...node };
+    delete processedNode.el;
+    delete processedNode.metaTextbox;
 
-      // Fixed textbox processing with proper state saving
-      const processedTextboxes = state.textboxes.map(textbox => {
-        const el = textbox.element;
-        
-        // Get the actual content, handling placeholder text properly
-        let content = '';
-        let hasActualContent = false;
-        
-        if (!textbox.hasPlaceholder && textbox.element.textContent.trim() !== '') {
-          content = el.innerHTML;
-          hasActualContent = true;
-        }
-        
-        return {
-          id: textbox.id,
-          content: content,
-          hasPlaceholder: textbox.hasPlaceholder,
-          hasActualContent: hasActualContent,
-          left: el.style.left,
-          top: el.style.top,
-          width: el.style.width,
-          height: el.style.height
-        };
-      });
-
-      const processedGroups = state.groups.map(group => {
-        const processedGroup = {...group};
-        delete processedGroup.el;
-        return processedGroup;
-      });
-      
-      // Process checklist nodes for saving
-      const processedChecklists = window.checklistNodes ? window.checklistNodes.map(checklist => {
-        return {
-          id: checklist.id,
-          x: checklist.x,
-          y: checklist.y,
-          text: checklist.text,
-          checked: checklist.checked
-        };
-      }) : [];
-
-      return {
-        version: '4.8',
-        timestamp: new Date().toISOString(),
-        hasBase64Files: true,
-        viewport: {
-          zoom: state.zoom,
-          origin: state.origin
-        },
-        nodes: processedNodes,
-        groups: processedGroups,
-        textboxes: processedTextboxes,
-        checklists: processedChecklists,
-        nextId: state.nextId
-      };
+    if (node.assetUrl && String(node.assetUrl).startsWith('blob:')) {
+      try {
+        const base64Data = await blobUrlToBase64(node.assetUrl);
+        processedNode.assetUrl = base64Data;
+        processedNode.isFileNode = true;
+        processedNode.hasBase64Data = true;
+      } catch (error) {
+        console.error('Error converting file to base64:', error);
+        processedNode.assetUrl = '[FILE_CONVERSION_ERROR]';
+        processedNode.isFileNode = true;
+        processedNode.hasBase64Data = false;
+      }
     }
+    return processedNode;
+  }));
+
+  // Textboxes
+  const processedTextboxes = (state.textboxes || []).map(textbox => {
+    const el = textbox.element;
+    let content = '';
+    let hasActualContent = false;
+    if (!textbox.hasPlaceholder && textbox.element.textContent.trim() !== '') {
+      content = el.innerHTML;
+      hasActualContent = true;
+    }
+    return {
+      id: textbox.id,
+      content,
+      hasPlaceholder: textbox.hasPlaceholder,
+      hasActualContent,
+      left: el.style.left,
+      top: el.style.top,
+      width: el.style.width,
+      height: el.style.height
+    };
+  });
+
+  // Groups
+  const processedGroups = (state.groups || []).map(group => {
+    const g = { ...group };
+    delete g.el;
+    return g;
+  });
+
+  // Checklists
+  const processedChecklists = (window.checklistNodes || []).map(ch => ({
+    id: ch.id, x: ch.x, y: ch.y, text: ch.text, checked: ch.checked
+  }));
+
+  // Wires (endpoints + control points)
+  const processedWires = (state.wires || []).map(w => ({
+    fromId: getIdForEl(w.fromEl),
+    toId:   getIdForEl(w.toEl),
+    c1: { x: (w.c1 && w.c1.x) || 0, y: (w.c1 && w.c1.y) || 0 },
+    c2: { x: (w.c2 && w.c2.x) || 0, y: (w.c2 && w.c2.y) || 0 }
+  })).filter(w => w.fromId && w.toId);
+
+  return {
+    version: '4.8',
+    timestamp: new Date().toISOString(),
+    hasBase64Files: true,
+    viewport: {
+      zoom: state.zoom,
+      origin: state.origin
+    },
+    nodes: processedNodes,
+    groups: processedGroups,
+    textboxes: processedTextboxes,
+    checklists: processedChecklists,
+    wires: processedWires,
+    nextId: state.nextId
+  };
+}
+
+
 
     function blobUrlToBase64(blobUrl) {
       return new Promise((resolve, reject) => {
@@ -3579,6 +3461,14 @@ function saveBoard(){
         window.checklistNodes.length = 0;
       }
       
+      
+      // Clear wires
+      if (state.wires && state.wires.length){
+        state.wires.forEach(w => { try{ w.g && w.g.remove(); }catch(e){} });
+        state.wires = [];
+      }
+      var wiresLayer = document.getElementById('wires');
+      if (wiresLayer) wiresLayer.innerHTML = '';
       clearSelection();
     }
 
@@ -3648,10 +3538,8 @@ function saveBoard(){
       }
     }
   };
-}
-
-
-    function loadSavedBoard(name) {
+    }
+function loadSavedBoard(name) {
       const savedBoards = JSON.parse(localStorage.getItem('moodboards') || '{}');
       const boardInfo = savedBoards[name];
       
@@ -3736,7 +3624,7 @@ function saveBoard(){
           tb.style.left = (startLeft + dx) + 'px';
           tb.style.top  = (startTop  + dy) + 'px';
           // <— add this
-          if (window.updateAllWires) window.updateAllWires();
+          try { if (window.updateAllWires) updateAllWires(); } catch(_){ }
         }
         function onUp(){
           window.removeEventListener('mousemove', onMove);
@@ -3752,8 +3640,11 @@ function saveBoard(){
 </script>
 
 <script>
-(function(){
-  const board = document.querySelector('#board, .board, #canvas, .canvas') || document.body;
+
+const board =
+  document.getElementById('board') ||
+  document.querySelector('.board, #canvas, .canvas') ||
+  document.body;
 
   // ---- Helpers: Bezier math ----
   function bezierPoint(a,c1,c2,b,t){
@@ -3871,6 +3762,14 @@ function saveBoard(){
         }
         updateWire(wire);
       }
+
+      function updateAllWires(){
+         (state.wires || []).forEach(w => {
+         try { updateWire(w); } catch (e) { /* ignore a broken wire during deletes */ }
+        });
+      }
+      window.updateAllWires = updateAllWires; // used from movers/zoom wrappers
+
       function up(){
         window.removeEventListener('mousemove', move, true);
         window.removeEventListener('mouseup', up, true);
@@ -3912,8 +3811,10 @@ function saveBoard(){
     wire.h2.setAttribute('transform', `translate(${P2.x} ${P2.y}) rotate(${a2})`);
   }
 
-  function updateAllWires(){ state.wires.slice().forEach(updateWire); }
-  window.updateAllWires = updateAllWires;
+  ;
+  state.wires.forEach(function(w){
+    try { updateWire(w); } catch(e){}
+  });
 
   // ---- Connection mode (block node actions while connecting) ----
   function startConnectFrom(el){
@@ -3987,14 +3888,14 @@ function saveBoard(){
     const __apply = window.applyTransform;
     window.applyTransform = function(...args){
       const r = __apply.apply(this, args);
-      if (window.updateAllWires) window.updateAllWires();
+      try { if (window.updateAllWires) updateAllWires(); } catch(_){ }
       return r;
     };
   }
 
   // Ensure layer order on first run
   ensureWiresLayer();
-})();
+
 </script>
 
 <script>
@@ -4131,7 +4032,7 @@ function saveBoard(){
             const c = (window.checklistNodes||[]).find(c=>c.id===sid); if(c && c.element){ c.x = sp.x + dx; c.y = sp.y + dy; c.element.style.left = c.x+'px'; c.element.style.top = c.y+'px'; }
           }
         });
-        if (window.updateAllWires) window.updateAllWires();
+        try { if (window.updateAllWires) updateAllWires(); } catch(_){ }
       }
       function endDrag(ev){
         if (ev){ ev.preventDefault(); ev.stopPropagation(); }
@@ -4589,7 +4490,6 @@ function createTwitterNode(originalUrl, at){
   goBtn.addEventListener('click', (e)=>{ e.preventDefault(); searchNow(); });
 })();
 </script>
-
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 // ==== Canvas → PNG snapshot + utilities ====
@@ -4820,8 +4720,12 @@ function downloadDataUrl(dataUrl, filename){
   const plusBtn = document.querySelector('#zoomControls [data-zoom-dir="+"]');
 
   function updateZoomDisplay(){
-    if(zoomPctEl) zoomPctEl.textContent = Math.round(state.zoom*100) + '%';
-  }
+  try {
+    var z = (window.state && typeof state.zoom === 'number') ? state.zoom : 1;
+    var el = document.getElementById('zoomDisplay') || document.querySelector('[data-zoom-display]');
+    if (el) el.textContent = Math.round(z * 100) + '%';
+  } catch(_) { /* ignore */ }
+}
 
   function setZoomTo(value, anchorPx){
     const MIN = levels[0], MAX = levels[levels.length-1];
@@ -4862,7 +4766,7 @@ function downloadDataUrl(dataUrl, filename){
   if(plusBtn) plusBtn.addEventListener('click', ()=> stepZoom('+'));
 
   // keep % updated when zoom changes elsewhere
-  const _applyTransform = applyTransform;
+  const _applyTransform = window.applyTransform || function(){};
   window.applyTransform = function(){
     _applyTransform();
     updateZoomDisplay();
@@ -5036,6 +4940,41 @@ function downloadDataUrl(dataUrl, filename){
 </script>
 <script id="center-zoom-and-panel-toggle-js">
 (function(){
+  // --- Position zoom above the footer hint by 25px ---
+  function findFooterHint(){
+    // Try an id first if exists, else search by text
+    let el = document.getElementById('footerHint');
+    if(el) return el;
+    const all = Array.from(document.querySelectorAll('div,footer,section,span,p'));
+    const needle = 'Google Search Shortcut (Left Ctrl + Space)';
+    for(const n of all){
+      if(n && n.textContent && n.textContent.trim().includes(needle)){
+        return n;
+      }
+    }
+    return null;
+  }
+
+  function updateZoomBottom(){
+    const hint = findFooterHint();
+    const safeBottom = 0; // env() is used in CSS; we just offset relative to viewport here
+    let offset = 20; // default
+    if(hint){
+      const r = hint.getBoundingClientRect();
+      const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+      // Distance from bottom of viewport to be 25px above the hint's top edge
+      const fromBottom = Math.max(12, (vh - r.top) + 25);
+      offset = fromBottom;
+    } else {
+      offset = 32; // fallback
+    }
+    // write to root variable so CSS takes it
+    document.documentElement.style.setProperty('--zoom-bottom-offset', offset + 'px');
+  }
+
+  window.addEventListener('resize', updateZoomBottom, {passive:true});
+  window.addEventListener('orientationchange', updateZoomBottom);
+  document.addEventListener('DOMContentLoaded', updateZoomBottom);
 
   // --- Install minimalistic collapse/expand toggles on panels ---
   function makePanelCollapsible(panel){
@@ -5483,10 +5422,6 @@ function downloadDataUrl(dataUrl, filename){
 })();
 </script>
 
-
-
-
-
 <script id="panel-collapse-to-button-js">
 (function(){
   function snapshotStyles(panel){
@@ -5790,6 +5725,238 @@ function downloadDataUrl(dataUrl, filename){
   });
 })();
 </script>
+
+<script>
+
+/* === Wire ID helpers (for export/import) === */
+function getIdForEl(el){
+  if (!el) return null;
+  if (el.dataset && el.dataset.id) return el.dataset.id;
+  const n = (state.nodes || []).find(n => n.el === el); if (n) return n.id;
+  const t = (state.textboxes || []).find(t => t.element === el); if (t) return t.id;
+  if (window.checklistNodes){
+    const c = window.checklistNodes.find(c => c.element === el); if (c) return c.id;
+  }
+  return null;
+}
+function resolveElementById(id){
+  if (!id) return null;
+  const n = (state.nodes || []).find(n => n.id === id); if (n && n.el) return n.el;
+  const t = (state.textboxes || []).find(t => t.id === id); if (t && t.element) return t.element;
+  if (window.checklistNodes){
+    const c = window.checklistNodes.find(c => c.id === id); if (c && c.element) return c.element;
+  }
+  return document.querySelector('[data-id=\"' + id + '\"]');
+}
+
+</script>
+
+<script>
+  (function(){
+    'use strict';
+  
+    /* ---------- Small polyfills / guards ---------- */
+    if (!window.CSS) window.CSS = {};
+    if (typeof CSS.escape !== 'function') {
+      CSS.escape = function (s) {
+        return String(s).replace(/[^a-zA-Z0-9_\-]/g, '\\$&');
+      };
+    }
+  
+    /* ---------- Wire layer + drawing (keeps your semantics) ---------- */
+    if (typeof window.ensureWiresLayer !== 'function') {
+      window.ensureWiresLayer = function ensureWiresLayer(){
+        var svg = document.getElementById('wires');
+        if (svg) return svg;
+        var host = document.getElementById('viewport') || document.body;
+        svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.id = 'wires';
+        svg.setAttribute('width','50000');
+        svg.setAttribute('height','50000');
+        svg.style.position = 'absolute';
+        svg.style.left = '0px';
+        svg.style.top = '0px';
+        svg.style.pointerEvents = 'none';
+        host.insertBefore(svg, host.firstChild);
+        return svg;
+      };
+    }
+  
+    function centerOf(el){
+      if (!el) return {x:0,y:0};
+      var vp = document.getElementById('viewport') || document.body;
+      var vr = vp.getBoundingClientRect();
+      var r  = el.getBoundingClientRect();
+      return { x: (r.left + r.width/2) - vr.left, y: (r.top + r.height/2) - vr.top };
+    }
+  
+    function pathEl(cls, w){
+      var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('class', cls);
+      p.setAttribute('fill', 'none');
+      p.setAttribute('stroke-width', String(w));
+      p.setAttribute('stroke-linecap', 'round');
+      p.setAttribute('stroke-linejoin', 'round');
+      return p;
+    }
+  
+    if (typeof window.makeWire !== 'function') {
+      window.makeWire = function makeWire(fromEl, toEl){
+        var svg = ensureWiresLayer();
+        var g   = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  
+        var path = pathEl('wire-path', 2);  path.setAttribute('stroke', '#ffffffA0');
+        var hit  = pathEl('wire-hit-area', 14); hit.setAttribute('stroke', 'transparent'); hit.style.pointerEvents = 'stroke';
+  
+        g.appendChild(path);
+        g.appendChild(hit);
+        svg.appendChild(g);
+  
+        var wire = { fromEl: fromEl, toEl: toEl, c1: null, c2: null, g: g, path: path, hit: hit };
+  
+        try {
+          g.dataset.fromId = (fromEl && fromEl.dataset && fromEl.dataset.id) || '';
+          g.dataset.toId   = (toEl   && toEl.dataset   && toEl.dataset.id)   || '';
+        } catch (_){}
+  
+        if (!window.state) window.state = {};
+        if (!Array.isArray(state.wires)) state.wires = [];
+        state.wires.push(wire);
+  
+        updateWire(wire);
+        return wire;
+      };
+    }
+  
+    if (typeof window.updateWire !== 'function') {
+      window.updateWire = function updateWire(w){
+        if (!w || !w.fromEl || !w.toEl) return;
+        var p0 = centerOf(w.fromEl);
+        var p3 = centerOf(w.toEl);
+        var c1 = (w.c1 && Number.isFinite(w.c1.x)) ? w.c1 : { x: p0.x + (p3.x - p0.x) * 0.33, y: p0.y };
+        var c2 = (w.c2 && Number.isFinite(w.c2.x)) ? w.c2 : { x: p3.x - (p3.x - p0.x) * 0.33, y: p3.y };
+        var d  = "M " + p0.x + " " + p0.y + " C " + c1.x + " " + c1.y + ", " + c2.x + " " + c2.y + ", " + p3.x + " " + p3.y;
+        if (w.path && typeof w.path.setAttribute === 'function') w.path.setAttribute('d', d);
+        if (w.hit  && typeof w.hit.setAttribute  === 'function') w.hit.setAttribute('d', d);
+      };
+    }
+  
+    if (typeof window.updateAllWires !== 'function') {
+      window.updateAllWires = function updateAllWires(){
+        if (!window.state || !Array.isArray(state.wires)) return;
+        state.wires = state.wires.filter(function(w){ return w && w.fromEl && w.toEl; });
+        for (var i=0; i<state.wires.length; i++){
+          try { updateWire(state.wires[i]); } catch (_){}
+        }
+      };
+      window.addEventListener('resize', function(){ try { updateAllWires(); } catch(_){} });
+    }
+  
+    /* ---------- Anchor fallback for missing endpoints ---------- */
+    if (typeof window.createWireAnchor !== 'function') {
+      window.createWireAnchor = function createWireAnchor(x, y){
+        var vp = document.getElementById('viewport') || document.body;
+        var el = document.createElement('div');
+        el.className = 'wire-anchor';
+        el.style.position = 'absolute';
+        el.style.left = (x||0) + 'px';
+        el.style.top  = (y||0) + 'px';
+        el.style.width = '2px';
+        el.style.height = '2px';
+        el.style.pointerEvents = 'none';
+        if (!window.state) window.state = {};
+        if (typeof state.nextId !== 'number') state.nextId = 100000;
+        el.dataset.id = 'anchor-' + (state.nextId++);
+        vp.appendChild(el);
+        return el;
+      };
+    }
+  
+    /* ---------- Robust ID resolver across nodes/textboxes/checklists ---------- */
+    function resolveById(id){
+      if (!id) return null;
+  
+      // Prefer your app's helpers if present
+      if (typeof window.getElement === 'function'){
+        var e1 = window.getElement(id);
+        if (e1) return e1;
+      }
+      if (typeof window.resolveElementById === 'function'){
+        var e2 = window.resolveElementById(id);
+        if (e2) return e2;
+      }
+  
+      // Fallback to [data-id="..."]
+      try {
+        return document.querySelector('[data-id="' + CSS.escape(id) + '"]');
+      } catch (_){
+        // ultra-safe fallback without CSS.escape
+        return document.querySelector('[data-id="' + String(id).replace(/"/g, '\\"') + '"]');
+      }
+    }
+  
+    /* ---------- Unified, safe restore (this is your replacement) ---------- */
+    function restoreWiresFromBoardData(boardData){
+      var list = (boardData && boardData.wires) ? boardData.wires : [];
+      if (!list.length) { console.log('[Wires] No wires to restore.'); return; }
+  
+      // Defer to next frame so layout & dataset ids are ready
+      requestAnimationFrame(function(){
+        var restored = 0;
+  
+        for (var i=0; i<list.length; i++){
+          var wd = list[i];
+  
+          // Resolve endpoints by ID, regardless of type (node/textbox/checklist)
+          var fromEl = resolveById(wd.fromId);
+          var toEl   = resolveById(wd.toId);
+  
+          // Fallback to anchor positions if provided in JSON
+          if (!fromEl && wd.fromAt) fromEl = createWireAnchor(wd.fromAt.x || 0, wd.fromAt.y || 0);
+          if (!toEl   && wd.toAt)   toEl   = createWireAnchor(wd.toAt.x   || 0, wd.toAt.y   || 0);
+  
+          if (!fromEl || !toEl) {
+            console.warn('[Wires] Skipping, endpoint missing', wd);
+            continue;
+          }
+  
+          var wire = makeWire(fromEl, toEl);
+  
+          // Respect saved bezier handles (only fall back if absent)
+          if (wd.c1 && Number.isFinite(wd.c1.x) && Number.isFinite(wd.c1.y)) wire.c1 = { x: wd.c1.x, y: wd.c1.y };
+          if (wd.c2 && Number.isFinite(wd.c2.x) && Number.isFinite(wd.c2.y)) wire.c2 = { x: wd.c2.x, y: wd.c2.y };
+  
+          updateWire(wire);
+          restored++;
+          try { console.log('[Wires] Restored', wd.fromId, '→', wd.toId, wire); } catch(_){}
+        }
+  
+        try { updateAllWires(); } catch(_){}
+        console.log('[Wires] Done. Restored:', restored);
+      });
+    }
+  
+    // Export the unified restore (overwrites older duplicates)
+    window.restoreWiresFromBoardData = restoreWiresFromBoardData;
+  
+    /* ---------- Optional: ensure restore runs after loadBoardData ---------- */
+    if (!window.__patchedLoadBoardData && typeof window.loadBoardData === 'function') {
+      var __orig = window.loadBoardData;
+      window.loadBoardData = async function(boardData){
+        try { console.log('Importing board: wires=', (boardData && boardData.wires && boardData.wires.length) || 0); } catch(_){}
+        var res = await __orig.call(this, boardData);
+        try {
+          requestAnimationFrame(function(){
+            try { restoreWiresFromBoardData(boardData); } catch(e){ console.warn('[Wires] restore error:', e); }
+          });
+        } catch(e){ console.warn('[Wires] rAF missing:', e); }
+        return res;
+      };
+      window.__patchedLoadBoardData = true;
+    }
+  })();
+  </script>
+  
 
 </body>
 </html>
