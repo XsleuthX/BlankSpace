@@ -131,7 +131,61 @@
       backface-visibility: hidden;
     }
     
-    /* Light theme background override */
+</style>
+
+<style id="retro-theme-css">
+/* === Retro Theme (warm paper + pastel accents) === */
+:root.retro, [data-theme="retro"], .theme-retro, body.retro{
+  --bg:#FFF7F0;
+  --panel:#FFFFFF;
+  --text:#1B1B1B;
+  --muted:#727272;
+  --chip:rgba(0,0,0,.06);
+  --radius:18px;
+  --shadow:0 10px 25px rgba(0,0,0,.12);
+  --accent:#61C0BF;          /* Teal */
+  --accent-2:#E0C3F6;        /* Lavender */
+  --accent-3:#FCC5B3;        /* Peach */
+  --node-border: rgba(0,0,0,.15);
+  --handle-bg: rgba(0,0,0,.08);
+  --handle-border: #61C0BF;
+  --handle-bg-strong: rgba(0,0,0,.16);
+  --handle-icon: #1B1B1B;
+  --wire-stroke: rgba(17,17,17,.9);
+  --wire-shadow: rgba(0,0,0,.15);
+  --connect-hover-outline: #61C0BF;
+
+  --bg-hue: 24;
+  --bg-sat: 40%;
+  --bg-light: 96%;
+  --tile: 2048px;
+  --grid-gap: 22px;
+}
+
+:root.retro body{
+  background-image:
+    radial-gradient(rgba(0,0,0,.06) 1px, transparent 1.6px),
+    repeating-linear-gradient(135deg, rgba(0,0,0,.02) 0 2px, transparent 2px 4px),
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1024' height='1024'%3E%3Cdefs%3E%3Cfilter id='gn'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='1' stitchTiles='stitch'/%3E%3C/feTurbulence%3E%3C/filter%3E%3C/defs%3E%3Crect width='100%25' height='100%25' filter='url(%23gn)' opacity='.035'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #FFF9F3, #FFEFE3);
+  background-size:
+    var(--grid-gap) var(--grid-gap),
+    var(--tile) var(--tile),
+    var(--tile) var(--tile),
+    cover;
+  background-position: 0 0, 0 0, 0 0, 0 0;
+  background-repeat: repeat, repeat, repeat, no-repeat;
+  background-attachment: fixed;
+}
+
+:root.retro button:hover,
+:root.retro .panel-toggle:hover{ border-color: rgba(97,192,191,.6); }
+
+:root.retro .checknode input[type="checkbox"]{ accent-color: var(--accent); }
+</style>
+
+<style>
+   /* Light theme background override */
     :root.light body{
       background-image:
         /* 1) Micro dot grid (ultra‑subtle) */
@@ -158,13 +212,53 @@
     .subtitle{font-size:12px; color:var(--muted)}
     .actions{display:flex; gap:8px}
     button{
-      background:var(--panel); color:var(--text); border:1px solid rgba(255,255,255,.08);
+      background:var(--panel); color:var(--text); border:1px solid rgba(255,255,255,.08); border-color: var(--accent);
       border-radius:10px; padding:8px 12px; box-shadow:var(--shadow); cursor:pointer;
     }
     button:hover{filter:brightness(1.1)}
     button:active{transform:translateY(1px)}
     button.danger{background:rgba(239,68,68,.15); border-color:rgba(239,68,68,.35)}
-    select{background:var(--panel); color:var(--text); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:8px 12px}
+
+/* Unique capsule select for the Theme control */
+#theme {
+  /* reset */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+
+  /* layout */
+  display: inline-block;
+  padding: 10px 44px 10px 44px;   /* room for color dots on the left */
+  background-color: var(--panel);
+  border-radius: 999px;
+  font-weight: 700;
+  line-height: 1;
+
+  /* palette (inherits from your vars) */
+  --ts-bg:    var(--panel, #fff);
+  --ts-ink:   var(--text, #1B1B1B);
+  --ts-ring:  var(--accent, #61C0BF);
+  --ts-shadow: var(--shadow, 0 10px 25px rgba(0,0,0,.12));
+
+  color: var(--ts-ink);
+  border: 1.5px solid var(--ts-ring);
+  box-shadow: var(--ts-shadow);
+  cursor: pointer;
+}
+#theme:hover { filter: brightness(1.02); }
+#theme:focus-visible { box-shadow: 0 0 0 3px color-mix(in oklab, var(--ts-ring), transparent 75%); }
+#theme::-ms-expand { display: none; }  /* hide IE arrow */
+#theme option { background: var(--ts-bg); color: var(--ts-ink); }
+
+/* ===== Retro mode: stronger outline + offset pastel drop-shadows ===== */
+html.retro #theme {
+  border-color: #1B1B1B;
+  box-shadow:
+    0 0 0 1.5px #1B1B1B,          /* crisp ink outline */
+    8px 10px 0 #FCC5B3,           /* peach offset */
+    -2px -2px 0 #61C0BF;          /* teal offset */
+}
 
     /* URL Import Panel */
     .url-panel{
@@ -476,7 +570,7 @@
     
     .marquee{position:absolute; border:5px dashed var(--accent); background:rgba(255,255,255,.1); pointer-events:none; z-index:2000}
 
-    .menu{position:absolute; display:none; flex-direction:column; background:var(--panel); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:6px; z-index:2000}
+    .menu{position:absolute; display:none; flex-direction:column; background:var(--panel); border:1px var(--panel-border); border-radius:10px; padding:6px; z-index:2000; }
     .menu.open{display:flex}
     .menu button{background:transparent; border:none; text-align:left; padding:8px 12px; border-radius:8px}
     .menu button:hover{background:rgba(255,255,255,.06)}
@@ -712,7 +806,7 @@
 
 <style id="oscar-black-gold-rim">
   /* === Oscar — Black Canvas, Gold Rim (Dark Mode Only) === */
-  html:not(.light) {
+  html:not(.light):not(.retro) {
     --bg:#0a0a0b;
     --panel:#111214;
     --text:#ECEDEF;
@@ -734,7 +828,7 @@
   }
 
   /* Pure black canvas w/ subtle vignette + grain; remove gold aurora */
-  html:not(.light) body {
+  html:not(.light):not(.retro) body {
     background-image:
       radial-gradient(1200px 600px at 30% -10%, rgba(255,255,255,.06), transparent 60%),
       radial-gradient(1600px 900px at 80% -20%, rgba(255,255,255,.04), transparent 65%),
@@ -744,7 +838,7 @@
   }
 
   /* Topbar and navigation: black glass with realistic shadow */
-  html:not(.light) .topbar {
+  html:not(.light):not(.retro) .topbar {
     background: rgba(14,14,16,.85);
     backdrop-filter: blur(6px);
     border-bottom: 1px solid var(--panel-border);
@@ -752,10 +846,10 @@
   }
 
   /* Panels / sidebars / docks — gold rim only */
-  html:not(.light) .panel,
-  html:not(.light) .sidebar,
-  html:not(.light) .dock,
-  html:not(.light) .inspector {
+  html:not(.light):not(.retro) .panel,
+  html:not(.light):not(.retro) .sidebar,
+  html:not(.light):not(.retro) .dock,
+  html:not(.light):not(.retro) .inspector {
     background: var(--panel);
     color: var(--text);
     border: 1px solid var(--panel-border);
@@ -763,7 +857,7 @@
   }
 
   /* Nodes — black glass with gold rim */
-  html:not(.light) .group {
+  html:not(.light):not(.retro) .group {
     background: rgba(37, 37, 37, 0.88); 
     border: 1px solid var(--node-border);
     box-shadow:
@@ -772,82 +866,82 @@
   }
 
 
-  html:not(.light) .node,
-  html:not(.light) .textbox {
+  html:not(.light):not(.retro) .node,
+  html:not(.light):not(.retro) .textbox {
     background: rgba(20,21,24,.88);
     border: 1px solid var(--node-border);
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,.03),
       var(--shadow-1), var(--shadow-2);
   }
-  html:not(.light) .node:hover,
-  html:not(.light) .group:hover,
-  html:not(.light) .textbox:hover {
+  html:not(.light):not(.retro) .node:hover,
+  html:not(.light):not(.retro) .group:hover,
+  html:not(.light):not(.retro) .textbox:hover {
     border-color: rgba(212,175,55,.40);
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,.05),
       0 4px 8px rgba(0,0,0,.35),
       0 18px 40px rgba(0,0,0,.6);
   }
-  html:not(.light) .textbox.selected,
-  html:not(.light) .node.selected,
-  html:not(.light) .group.selected {
+  html:not(.light):not(.retro) .textbox.selected,
+  html:not(.light):not(.retro) .node.selected,
+  html:not(.light):not(.retro) .group.selected {
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,.05),
       0 0 0 1px rgba(212,175,55,.55),
       0 24px 60px rgba(0,0,0,.65);
   }
 
-  /* Menus: neutral; keep gold on rim only */
-  html:not(.light) .menu {
-    background: rgba(18,18,20,.96);
-    border: 1px solid var(--panel-border);
+  /* Menus: accent rim override */
+  .menu {
+    background: var(--panel);
+    border: 1px solid var(--accent);
     box-shadow: var(--shadow-1), var(--shadow-2);
   }
-  html:not(.light) .menu button:hover {
-    background: rgba(255,255,255,.06);
+  .menu button:hover {
+    background: var(--bg);
   }
-  html:not(.light) .menu hr { border-top-color: rgba(255,255,255,.08); }
+  .menu hr { border-top-color: var(--accent); }
 
   /* Buttons, inputs — neutral greys */
-  html:not(.light) button,
-  html:not(.light) select,
-  html:not(.light) input[type="text"],
-  html:not(.light) input[type="search"] {
+  html:not(.light):not(.retro) button,
+  html:not(.light):not(.retro) select,
+  html:not(.light):not(.retro) input[type="text"],
+  html:not(.light):not(.retro) input[type="search"] {
     background: rgba(24,24,26,.9);
     color: var(--text);
     border: 1px solid rgba(255,255,255,.10);
     box-shadow: var(--shadow-1);
   }
-  html:not(.light) button:hover {
+  html:not(.light):not(.retro) button:hover {
     border-color: rgba(255,255,255,.18);
   }
 
   /* Handles / wires — grayscale */
-  html:not(.light) .handle {
+  html:not(.light):not(.retro) .handle {
     background: var(--handle-bg);
     border: 1px solid var(--handle-border);
   }
-  html:not(.light) .wire {
+  html:not(.light):not(.retro) .wire {
     stroke: var(--wire-stroke);
     filter: drop-shadow(0 2px 2px var(--wire-shadow));
   }
 
   /* Contextual overlays */
-  html:not(.light) .drop-overlay {
+  html:not(.light):not(.retro) .drop-overlay {
     background: rgba(255,255,255,.06);
     border: 1px dashed rgba(255,255,255,.22);
   }
-  html:not(.light) .drop-message { border-color: rgba(255,255,255,.22); }
+  html:not(.light):not(.retro) .drop-message { border-color: rgba(255,255,255,.22); }
 
   /* Spotlight */
-  html:not(.light) #spotlightOverlay { background: rgba(0,0,0,.55); }
-  html:not(.light) .spotlight-card {
+  html:not(.light):not(.retro) #spotlightOverlay { background: rgba(0,0,0,.55); }
+  html:not(.light):not(.retro) .spotlight-card {
     background: rgba(16,16,18,.96);
     border: 1px solid var(--panel-border);
     box-shadow: var(--shadow-1), var(--shadow-2);
   }
-  html:not(.light) .spotlight-input {
+  html:not(.light):not(.retro) .spotlight-input {
     border: 1px solid rgba(255,255,255,.15);
     background: rgba(255,255,255,.05);
     color: var(--text);
@@ -1267,6 +1361,278 @@
 .group.locked{ cursor: default !important; outline: 1px dashed var(--accent, #6ea8fe); outline-offset: 2px; }
 </style>
 
+
+<style id="retro-theme-complete">
+/* ===================== RETRO THEME — Full Overhaul ===================== */
+/* Activate with: <html class="retro"> via the theme selector */
+:root.retro {
+  --retro-bg: #FFF7F0;
+  --retro-paper: #FFFFFF;
+  --retro-ink: #1B1B1B;
+  --retro-muted: #727272;
+  --retro-teal: #61C0BF;
+  --retro-lilac: #E0C3F6;
+  --retro-peach: #FCC5B3;
+  --retro-outline: #1B1B1B;
+  --retro-outline-weak: rgba(0,0,0,.15);
+  --retro-radius-xl: 24px;
+  --retro-radius-lg: 18px;
+  --retro-radius-md: 14px;
+  --retro-pill: 999px;
+  --retro-shadow-card: 0 0 0 1.5px var(--retro-outline);
+  --retro-offset-peach: 8px 10px 0 var(--retro-peach);
+  --retro-offset-teal: -2px -2px 0 var(--retro-teal);
+  --retro-wire: rgba(20,20,20,.9);
+}
+
+:root.retro body {
+  color: var(--retro-ink);
+  background: var(--retro-bg);
+  background-image:
+    radial-gradient(rgba(0,0,0,.06) 1px, transparent 1.6px),
+    repeating-linear-gradient(135deg, rgba(0,0,0,.02) 0 2px, transparent 2px 4px),
+    linear-gradient(180deg, #FFF9F3, #FFEFE3);
+  background-size:
+    22px 22px,
+    2048px 2048px,
+    cover;
+  background-attachment: fixed;
+}
+/* kill any dark canvas backgrounds */
+:root.retro body { background-blend-mode: normal; }
+:root.retro body, :root.retro body * { text-shadow: none; }
+
+/* --------- Generic Controls --------- */
+:root.retro button, 
+:root.retro .btn, 
+:root.retro .zoom-btn, 
+:root.retro .seg button {
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-pill);
+  background: var(--retro-paper);
+  color: var(--retro-ink);
+  box-shadow: var(--retro-shadow-card);
+  padding: .65rem 1rem;
+  font-weight: 700;
+}
+:root.retro .btn.is-teal { background: var(--retro-teal); }
+:root.retro .btn.is-lilac{ background: var(--retro-lilac); }
+:root.retro .btn.is-peach{ background: var(--retro-peach); }
+
+/* --------- Panels / Topbar / Dock --------- */
+:root.retro .panel,
+:root.retro #sidePanel,
+:root.retro .topbar,
+:root.retro #dock,
+:root.retro .url-panel {
+  background: var(--retro-paper);
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-radius-xl);
+  box-shadow: var(--retro-shadow-card);
+  filter: drop-shadow(var(--retro-offset-peach)) drop-shadow(var(--retro-offset-teal));
+}
+:root.retro .section-title,
+:root.retro .title { font-weight: 800; color: var(--retro-ink); }
+:root.retro .subtitle, :root.retro .muted { color: var(--retro-muted); }
+
+/* --------- Floating Toolbar --------- */
+:root.retro .ftb {
+  background: var(--retro-teal);
+  border: 1.5px solid var(--retro-outline);
+  border-radius: 32px;
+  padding: 8px;
+  box-shadow: var(--retro-shadow-card);
+}
+:root.retro .ftb-row { gap: 8px; }
+:root.retro .ftb-btn {
+  background:#fff;
+  border: 1.5px solid var(--retro-outline);
+  border-radius: 14px;
+  box-shadow: var(--retro-shadow-card);
+  width: 40px; height: 40px;
+}
+:root.retro .ftb-btn.active { outline: 2px solid var(--retro-lilac); }
+
+/* --------- Spotlight (search) --------- */
+:root.retro .spotlight-card {
+  background: var(--retro-paper);
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-radius-xl);
+  box-shadow: var(--retro-shadow-card);
+  filter: drop-shadow(6px 8px 0 var(--retro-teal));
+}
+:root.retro .spotlight-input {
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-pill);
+  padding: .85rem 1.1rem;
+  background: #fff;
+}
+:root.retro .spotlight-btn {
+  border:1.5px solid var(--retro-outline);
+  border-radius: 14px;
+  background:#fff;
+}
+
+/* --------- Nodes / Groups / Textboxes --------- */
+:root.retro .node,
+:root.retro .textbox,
+:root.retro .group {
+  background: var(--retro-paper);
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-radius-xl);
+  box-shadow: var(--retro-shadow-card);
+  filter: drop-shadow(var(--retro-offset-peach)) drop-shadow(var(--retro-offset-teal));
+}
+:root.retro .node.image img,
+:root.retro .node.video video,
+:root.retro .node.website iframe { border-radius: calc(var(--retro-radius-xl) - 6px); }
+
+:root.retro .node .title,
+:root.retro .textbox .title,
+:root.retro .group .title { font-weight: 800; color: var(--retro-ink); }
+
+/* Textbox content look */
+:root.retro .textbox {
+  padding: .8rem 1rem;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+/* Group header accent underline */
+:root.retro .group .title { border-bottom: 2px solid var(--retro-teal); padding-bottom:.25rem; }
+
+/* --------- Checklist --------- */
+:root.retro .checknode,
+:root.retro .checklist {
+  background: #fff;
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-radius-lg);
+  box-shadow: var(--retro-shadow-card);
+  filter: drop-shadow(4px 5px 0 var(--retro-lilac));
+  padding: 10px 12px;
+}
+:root.retro .checknode input[type="checkbox"]{
+  width:18px;height:18px;border:1.5px solid var(--retro-outline);
+  border-radius:4px; appearance:none; background:#fff; vertical-align:middle;
+}
+:root.retro .checknode input[type="checkbox"]:checked{
+  background: var(--retro-teal);
+}
+
+/* --------- URL panel buttons / chips --------- */
+:root.retro .url-buttons button,
+:root.retro .url-types .btn,
+:root.retro .chip {
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-pill);
+  background: #fff;
+  box-shadow: var(--retro-shadow-card);
+  padding: .5rem .9rem;
+  font-weight: 700;
+}
+:root.retro .url-types .btn.active { background: var(--retro-lilac); }
+
+/* --------- Wires --------- */
+:root.retro #wires .wire-path { stroke: var(--retro-wire) !important; }
+:root.retro #wires .wire-hit-area { stroke: transparent; }
+
+/* --------- Resizers / Handles --------- */
+:root.retro .resize-handle,
+:root.retro .node .handle,
+:root.retro .textbox .handle {
+  background: rgba(0,0,0,.06);
+  border: 1.5px solid var(--retro-outline);
+  border-radius: 6px;
+}
+
+/* --------- Scrollbars (optional) --------- */
+:root.retro ::-webkit-scrollbar       { height: 10px; width: 10px; }
+:root.retro ::-webkit-scrollbar-track { background: #fff; border-radius: 10px; }
+:root.retro ::-webkit-scrollbar-thumb { background: #e4e4e4; border:1px solid var(--retro-outline-weak); border-radius: 10px; }
+</style>
+
+
+<style id="retro-save-panel-patch">
+/* === Retro theme patch: Save/Load panel & saved boards === */
+:root.retro #savePanel,
+:root.retro .save-panel{
+  background: var(--retro-paper);
+  color: var(--retro-ink);
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-radius-xl);
+  box-shadow: var(--retro-shadow-card);
+  filter: drop-shadow(var(--retro-offset-peach)) drop-shadow(var(--retro-offset-teal));
+}
+:root.retro #savePanel h3,
+:root.retro .save-panel h3{
+  margin: 0 0 12px;
+  font-weight: 800;
+  letter-spacing: .2px;
+  color: var(--retro-ink);
+}
+:root.retro #savePanel .save-buttons button,
+:root.retro .save-panel .save-buttons button{
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-pill);
+  background: #fff;
+  color: var(--retro-ink);
+  box-shadow: var(--retro-shadow-card);
+  font-weight: 700;
+  padding: .55rem .9rem;
+}
+:root.retro #savePanel .save-list,
+:root.retro .save-panel .save-list{
+  background: transparent;
+  border-radius: var(--retro-radius-lg);
+  padding-right: 2px;
+}
+:root.retro #saveList .save-card,
+:root.retro .save-panel .save-card{
+  background: #fff;
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-radius-lg);
+  box-shadow: var(--retro-shadow-card);
+  filter: drop-shadow(4px 5px 0 var(--retro-lilac));
+  padding: 12px;
+}
+:root.retro #saveList .save-card img,
+:root.retro .save-panel .save-card img{
+  border: 1.5px solid var(--retro-outline);
+  border-radius: 10px;
+  background: #fff;
+}
+:root.retro #saveList .save-card .meta,
+:root.retro .save-panel .save-card .meta{ color: var(--retro-ink); }
+:root.retro #saveList .save-card .row button,
+:root.retro .save-panel .save-card .row button{
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-pill);
+  background: #fff;
+  color: var(--retro-ink);
+  font-weight: 700;
+  padding: .45rem .7rem;
+}
+:root.retro #savePanel.panel-collapsed,
+:root.retro .save-panel.panel-collapsed{
+  border: 1.5px solid var(--retro-outline) !important;
+  filter: drop-shadow(4px 5px 0 var(--retro-teal));
+}
+:root.retro #savePanel.panel-collapsed .panel-toggle,
+:root.retro .save-panel.panel-collapsed .panel-toggle{
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-pill);
+  background: #fff;
+  color: var(--retro-ink);
+  font-weight: 800;
+}
+:root.retro #savePanel ::-webkit-scrollbar,
+:root.retro .save-panel ::-webkit-scrollbar       { height: 10px; width: 10px; }
+:root.retro #savePanel ::-webkit-scrollbar-track,
+:root.retro .save-panel ::-webkit-scrollbar-track { background: #fff; border-radius: 10px; }
+:root.retro #savePanel ::-webkit-scrollbar-thumb,
+:root.retro .save-panel ::-webkit-scrollbar-thumb { background: #e4e4e4; border:1px solid var(--retro-outline-weak); border-radius: 10px; }
+</style>
+
 </head>
 <body>
   <header class="topbar">
@@ -1284,7 +1650,8 @@
       <select id="theme">
         <option value="dark" selected>Dark</option>
         <option value="light">Light</option>
-      </select>
+        <option value="retro">Retro</option>
+</select>
     </div>
   </header>
 
@@ -1367,7 +1734,7 @@
     <hr/>
     <button data-action="create-group">Create Group</button>
     <button data-action="create-textbox">Create Text Box</button>
-    <button data-action="add-checknode">➕ Add Checklist</button>
+    <button data-action="add-checknode">Create Checklist</button>
   </menu>
 
   <menu id="nodeMenu" class="menu">
@@ -1466,8 +1833,10 @@
       
       const themeSel = document.getElementById('theme');
       themeSel.addEventListener('change', ()=> {
-        if(themeSel.value==='light') document.documentElement.classList.add('light');
-        else document.documentElement.classList.remove('light');
+        const htmlEl = document.documentElement;
+        htmlEl.classList.remove('light','retro');
+        if (themeSel.value==='light') htmlEl.classList.add('light');
+        else if (themeSel.value==='retro') htmlEl.classList.add('retro');
       });
 
       // Upload triggers
@@ -6212,5 +6581,26 @@ function resolveElementById(id){
   </script>
   
 
+
+    <script id="retro-theme-persist">
+    (function(){
+      const sel = document.getElementById('theme');
+      try{
+        const saved = localStorage.getItem('blankspace-theme');
+        if (saved) {
+          document.documentElement.classList.remove('light','retro');
+          if (saved==='light') document.documentElement.classList.add('light');
+          if (saved==='retro') document.documentElement.classList.add('retro');
+          if (sel) sel.value = saved;
+        }
+        if (sel){
+          sel.addEventListener('change', function(){
+            try{ localStorage.setItem('blankspace-theme', sel.value); }catch(_){}
+          });
+        }
+      }catch(_){}
+    })();
+    </script>
+    
 </body>
 </html>
