@@ -1474,10 +1474,23 @@ html.retro #theme {
 }
 
 /* --------- Nodes / Groups / Textboxes --------- */
-:root.retro .node,
-:root.retro .textbox,
-:root.retro .group {
+:root.retro .node{
   background: var(--retro-paper);
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-radius-xl);
+  box-shadow: var(--retro-shadow-card);
+  filter: drop-shadow(var(--retro-offset-teal));
+}
+:root.retro .textbox {
+  background: var(--retro-paper);
+  border: 1.5px solid var(--retro-outline);
+  border-radius: var(--retro-radius-xl);
+  box-shadow: var(--retro-shadow-card);
+  filter: drop-shadow(var(--retro-offset-peach)); 
+}
+
+:root.retro .group {
+  background: var(--retro-teal);
   border: 1.5px solid var(--retro-outline);
   border-radius: var(--retro-radius-xl);
   box-shadow: var(--retro-shadow-card);
@@ -1499,7 +1512,10 @@ html.retro #theme {
 }
 
 /* Group header accent underline */
-:root.retro .group .title { border-bottom: 2px solid var(--retro-teal); padding-bottom:.25rem; }
+:root.retro .group .title 
+:root.retro .node .title,
+:root.retro .textbox .title
+{ border-bottom: 2px solid var(--retro-teal); padding-bottom:.25rem; }
 
 /* --------- Checklist --------- */
 :root.retro .checknode,
