@@ -49,7 +49,7 @@
       position:absolute; left:0; top:0;
       width:50000px; height:50000px;
       pointer-events:none;     /* wires never block */
-      z-index:0;               /* behind nodes (which are z-index:auto/1+) */
+      z-index:500;               /* behind nodes (which are z-index:auto/1+) */
       filter: drop-shadow(0 0 1px var(--wire-shadow));
     }
     .wire-path {
@@ -763,8 +763,16 @@
   }
 
   /* Nodes — black glass with gold rim */
+  html:not(.light) .group {
+    background: rgba(37, 37, 37, 0.88); 
+    border: 1px solid var(--node-border);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.03),
+      var(--shadow-1), var(--shadow-2);
+  }
+
+
   html:not(.light) .node,
-  html:not(.light) .group,
   html:not(.light) .textbox {
     background: rgba(20,21,24,.88);
     border: 1px solid var(--node-border);
@@ -1246,6 +1254,19 @@
 }
 </style>
 
+
+<style id="node-lock-css">
+.node.locked{ cursor: default !important; outline: 1px dashed var(--accent, #6ea8fe); outline-offset: 2px; }
+</style>
+
+<style id="tbcl-lock-css">
+.textbox.locked, .checklist.locked{ cursor: default !important; outline: 1px dashed var(--accent, #6ea8fe); outline-offset: 2px; }
+</style>
+
+<style id="group-lock-css">
+.group.locked{ cursor: default !important; outline: 1px dashed var(--accent, #6ea8fe); outline-offset: 2px; }
+</style>
+
 </head>
 <body>
   <header class="topbar">
@@ -1360,6 +1381,8 @@
     <!-- /INSERT -->
     <button data-action="duplicate">Duplicate</button>
     <hr/>
+    <button data-action="toggle-lock">Lock</button>
+    <hr/>
     <button data-action="delete" class="danger">Delete</button>
   </menu>
 
@@ -1367,6 +1390,8 @@
   <menu id="groupMenu" class="menu">
     <button data-action="rename">Rename…</button>
     <button data-action="duplicate">Duplicate</button>
+    <hr/>
+    <button data-action="toggle-lock">Lock</button>
     <hr/>
     <button data-action="delete" class="danger">Delete</button>
   </menu>
@@ -1376,6 +1401,8 @@
     <button data-action="duplicate">Duplicate</button>
     <hr/>
     <button data-action="color">Textbox color…</button>
+    <hr/>
+    <button data-action="toggle-lock">Lock</button>
     <hr/>
     <button data-action="delete" class="danger">Delete</button>
   </menu>
@@ -2174,6 +2201,74 @@
     }
 
     // Menu functions
+
+
+function openGroupMenu(x, y, group){
+  const menu = document.getElementById('groupMenu');
+  if(!menu || !group) return;
+  if (typeof closeMenus==='function') closeMenus();
+  menu.style.left = x+'px';
+  menu.style.top  = y+'px';
+  menu.classList.add('open');
+
+  const isLocked = !!(group.locked || (group.el && (group.el.dataset.locked==='1' || group.el.classList.contains('locked'))));
+  const lockBtn = menu.querySelector('button[data-action="toggle-lock"]');
+  if (lockBtn) lockBtn.textContent = isLocked ? 'Unlock' : 'Lock';
+
+  menu.onmousedown = (e)=> e.stopPropagation();
+  menu.onclick = (e)=>{
+    const act = e.target && e.target.getAttribute('data-action');
+    if(!act) return;
+    if (typeof closeMenus==='function') closeMenus();
+
+    if (act==='toggle-lock'){
+      const next = !(
+        group.locked || (group.el && (group.el.dataset.locked==='1' || group.el.classList.contains('locked')))
+      );
+      group.locked = next;
+      if (group.el){
+        group.el.classList.toggle('locked', next);
+        group.el.dataset.locked = next ? '1' : '0';
+        group.el.style.cursor = next ? 'default' : 'grab';
+      }
+      return;
+    }
+    if (act==='rename'){
+      try {
+        const title = group.el && group.el.querySelector('.title');
+        if (title){ title.click(); }
+      } catch(_){}
+      return;
+    }
+    if (act==='duplicate'){
+      const g2 = createGroup({ x: group.x + 20, y: group.y + 20 });
+      if (g2){
+        g2.w = group.w; g2.h = group.h;
+        g2.color = group.color; g2.title = (group.title || ('Group '+g2.id)) + ' copy';
+        g2.locked = !!group.locked;
+        if (g2.el){
+          g2.el.style.width  = g2.w + 'px';
+          g2.el.style.height = g2.h + 'px';
+          g2.el.style.borderColor = g2.color;
+          const tt = g2.el.querySelector('.title'); if (tt) tt.textContent = g2.title;
+          g2.el.classList.toggle('locked', !!g2.locked);
+          g2.el.dataset.locked = g2.locked ? '1' : '0';
+          g2.el.style.cursor = g2.locked ? 'default' : 'grab';
+        }
+      }
+      return;
+    }
+    if (act==='delete'){
+      if (group.el) group.el.remove();
+      if (window.state && Array.isArray(state.groups)){
+        state.groups = state.groups.filter(g => g !== group);
+      }
+      if (state && state.selection) state.selection.delete(group.id);
+      return;
+    }
+  };
+}
+
     let canvasContextPoint = {x:0,y:0};
     
     function openCanvasMenu(x,y){
@@ -2211,6 +2306,8 @@
       nodeMenu.style.left = x+'px'; 
       nodeMenu.style.top = y+'px';
       nodeMenu.classList.add('open');
+      const lockBtn = nodeMenu.querySelector('button[data-action="toggle-lock"]');
+      if (lockBtn){ lockBtn.textContent = (node.locked ? 'Unlock' : 'Lock'); }
       
       const toggleBtn = nodeMenu.querySelector('button[data-action="toggle-metadata"]');
       if(node.kind==='image'){
@@ -2227,6 +2324,18 @@
         if(!act) return;
         console.log('Node menu action:', act);
         closeMenus();
+        if(act==='toggle-lock'){
+          node.locked = !node.locked;
+          if (node.el){
+            node.el.classList.toggle('locked', node.locked);
+            node.el.dataset.locked = node.locked ? '1' : '0';
+            node.el.style.cursor = node.locked ? 'default' : 'grab';
+          }
+          const lockBtn2 = nodeMenu.querySelector('button[data-action="toggle-lock"]');
+          if (lockBtn2){ lockBtn2.textContent = node.locked ? 'Unlock' : 'Lock'; }
+          return;
+        }
+
         if (act==='connect'){
           // Begin connection mode from this node's element
           if (typeof window.__startConnectFrom === 'function') {
@@ -2263,44 +2372,69 @@
 };
     }
 
-    function openTextboxMenu(x, y, textboxObj){
-      console.log('Opening textbox menu at', x, y);
-      closeMenus();
-      textboxMenu.style.left = x + 'px';
-      textboxMenu.style.top = y + 'px';
-      textboxMenu.classList.add('open');
-      
-      textboxMenu.onmousedown = (e) => e.stopPropagation();
-      textboxMenu.onclick = (e) => {
-        const act = e.target.dataset.action;
-        const menuX = x; const menuY = y;
-        if(!act) return;
-        console.log('Textbox menu action:', act);
-        closeMenus();
-        if (act === 'color') {
-          e.stopPropagation();
-          window.__openingTextboxColor = true;
-          // Close existing menus first
-          // (textbox menu will close, then we open color in next tick)
-          if (typeof closeMenus==='function') closeMenus();
-          setTimeout(()=>{
-            if (typeof window.openTextboxColorAt === 'function') { window.openTextboxColorAt(x + 12, y + 8, textboxObj.element || textboxObj); }
-            window.__openingTextboxColor = false;
-          }, 0);
-        } else if (act === 'connect') {
-          if (typeof window.__startConnectFrom === 'function') {
-            window.__startConnectFrom(textboxObj.element);
-          }
-          return;
-        }
-        if(act === 'delete') {
-          removeTextbox(textboxObj);
-        }
-        if(act === 'duplicate') {
-          duplicateTextbox(textboxObj);
-        }
-      };
+    
+function openTextboxMenu(x, y, textboxObj){
+  console.log('Opening textbox menu at', x, y);
+  closeMenus();
+  const textboxMenu = document.getElementById('textboxMenu');
+  textboxMenu.style.left = x + 'px';
+  textboxMenu.style.top  = y + 'px';
+  textboxMenu.classList.add('open');
+
+  // Normalize to an element (support passing either object or element)
+  const el = textboxObj && (textboxObj.element || textboxObj);
+  if (!el) return;
+
+  const isLocked = (typeof textboxObj?.locked === 'boolean')
+    ? textboxObj.locked
+    : (el.dataset.locked === '1' || el.classList.contains('locked'));
+
+  const lockBtn = textboxMenu.querySelector('button[data-action="toggle-lock"]');
+  if (lockBtn) lockBtn.textContent = (isLocked ? 'Unlock' : 'Lock');
+
+  textboxMenu.onmousedown = (e)=> e.stopPropagation();
+  textboxMenu.onclick = (e)=>{
+    const act = e.target && e.target.getAttribute('data-action');
+    if(!act) return;
+    if (typeof closeMenus==='function') closeMenus();
+
+    if (act==='toggle-lock'){
+      const next = !( (typeof textboxObj?.locked === 'boolean')
+        ? textboxObj.locked
+        : (el.dataset.locked === '1' || el.classList.contains('locked')) );
+      if (textboxObj) textboxObj.locked = next;
+      el.classList.toggle('locked', next);
+      el.dataset.locked = next ? '1' : '0';
+      el.style.cursor = next ? 'default' : 'grab';
+      const lockBtn2 = textboxMenu.querySelector('button[data-action="toggle-lock"]');
+      if (lockBtn2) lockBtn2.textContent = next ? 'Unlock' : 'Lock';
+      return;
     }
+
+    if (act === 'color'){
+      e.stopPropagation();
+      window.__openingTextboxColor = true;
+      setTimeout(()=>{
+        if (typeof window.openTextboxColorAt === 'function') {
+          window.openTextboxColorAt(x + 12, y + 8, el);
+        }
+        window.__openingTextboxColor = false;
+      }, 0);
+      return;
+    }
+
+    if (act==='connect'){
+      if (typeof window.__startConnectFrom === 'function') {
+        window.__startConnectFrom(el);
+      }
+      return;
+    }
+
+    if (act==='delete'){ removeTextbox(textboxObj); return; }
+    if (act==='duplicate'){ duplicateTextbox(textboxObj); return; }
+  };
+}
+
     
     function openWireMenu(x, y, wireElement){
       console.log('Opening wire menu at', x, y);
@@ -2395,33 +2529,48 @@
       console.warn('Could not find a suitable wire element to remove');
     }
     
-    function openChecklistMenu(x, y, checklistElement){
-      console.log('Opening checklist menu at', x, y);
-      closeMenus();
-      textboxMenu.style.left = x + 'px';
-      textboxMenu.style.top = y + 'px';
-      textboxMenu.classList.add('open');
-      
-      textboxMenu.onmousedown = (e) => e.stopPropagation();
-      textboxMenu.onclick = (e) => {
-        const act = e.target.dataset.action;
-        if(!act) return;
-        console.log('Checklist menu action:', act);
-        closeMenus();
-        if (act === 'connect') {
-          if (typeof window.__startConnectFrom === 'function') {
-            window.__startConnectFrom(checklistElement);
-          }
-          return;
-        }
-        if(act === 'delete') {
-          deleteChecklistNode(checklistElement);
-        }
-        if(act === 'duplicate') {
-          duplicateChecklistNode(checklistElement);
-        }
-      };
+    
+function openChecklistMenu(x, y, checklistElement){
+  console.log('Opening checklist menu at', x, y);
+  closeMenus();
+  const textboxMenu = document.getElementById('textboxMenu');
+  textboxMenu.style.left = x + 'px';
+  textboxMenu.style.top  = y + 'px';
+  textboxMenu.classList.add('open');
+
+  const el = checklistElement;
+  const isLocked = el && (el.dataset.locked === '1' || el.classList.contains('locked'));
+
+  const lockBtn = textboxMenu.querySelector('button[data-action="toggle-lock"]');
+  if (lockBtn) lockBtn.textContent = (isLocked ? 'Unlock' : 'Lock');
+
+  textboxMenu.onmousedown = (e)=> e.stopPropagation();
+  textboxMenu.onclick = (e)=>{
+    const act = e.target && e.target.getAttribute('data-action');
+    if(!act) return;
+    if (typeof closeMenus==='function') closeMenus();
+
+    if (act==='toggle-lock'){
+      const next = !(el.dataset.locked === '1' || el.classList.contains('locked'));
+      el.classList.toggle('locked', next);
+      el.dataset.locked = next ? '1' : '0';
+      el.style.cursor = next ? 'default' : 'grab';
+      const lockBtn2 = textboxMenu.querySelector('button[data-action="toggle-lock"]');
+      if (lockBtn2) lockBtn2.textContent = next ? 'Unlock' : 'Lock';
+      return;
     }
+
+    if (act === 'connect'){
+      if (typeof window.__startConnectFrom === 'function') {
+        window.__startConnectFrom(el);
+      }
+      return;
+    }
+    if (act === 'delete'){ deleteChecklistNode(el); return; }
+    if (act === 'duplicate'){ duplicateChecklistNode(el); return; }
+  };
+}
+
     
     function closeMenus(){ 
       canvasMenu.classList.remove('open'); 
@@ -2493,7 +2642,8 @@
       const node = { 
         id, kind, x: at.x, y: at.y, w: size.w, h: size.h, assetUrl, textboxes:[], 
         meta: extraMeta||{}, metaShown:false, metaTextbox: null,
-        title: generateNodeTitle(kind, extraMeta)
+        title: generateNodeTitle(kind, extraMeta),
+        locked:false
       };
       state.nodes.push(node);
 
@@ -2502,6 +2652,8 @@
       el.dataset.id = id;
       el.style.left = node.x+'px'; el.style.top = node.y+'px';
       el.style.width = node.w+'px'; el.style.height = node.h+'px'; 
+      el.dataset.locked = node.locked ? '1' : '0';
+      el.style.cursor = node.locked ? 'default' : 'grab'; 
 
       const title = document.createElement('div'); 
       title.className='title'; 
@@ -2888,7 +3040,11 @@ const toolbar = document.createElement('div');
         if(e.button!==0) return;
         const additive = e.shiftKey || e.metaKey || e.ctrlKey;
         if(additive) toggleSelect(node.id); else selectId(node.id);
-        startDragSelection(e);
+        if (node.locked || node.el.dataset.locked === '1') {
+          startPanning(e);
+        } else {
+          startDragSelection(e);
+        }
         e.stopPropagation();
       });
     }
@@ -2898,6 +3054,8 @@ const toolbar = document.createElement('div');
       el.addEventListener('mousedown', (e)=>{
         if(e.button!==0) return;
         const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+        const __locked = (g.locked===true) || (g.el && (g.el.dataset.locked==='1' || g.el.classList.contains('locked')));
+        if (__locked){ startPanning(e); e.stopPropagation(); return; }
         if(additive) toggleSelect(g.id); else selectId(g.id);
         startDragSelection(e);
         e.stopPropagation();
@@ -2945,23 +3103,33 @@ const toolbar = document.createElement('div');
           const n = getNodeById(sid); 
           const g = getGroupById(sid);
           const t = getTextboxById(sid);
-          if(n){ 
-            n.x = startRects[sid].x + dx; 
-            n.y = startRects[sid].y + dy; 
-            n.el.style.left = n.x+'px'; 
-            n.el.style.top = n.y+'px'; 
+          if(n){
+            const __locked = (n.locked===true) || (n.el && (n.el.dataset.locked==='1' || n.el.classList.contains('locked')));
+            if(!__locked){
+              n.x = startRects[sid].x + dx;
+              n.y = startRects[sid].y + dy;
+              n.el.style.left = n.x+'px';
+              n.el.style.top = n.y+'px';
+            }
           }
-          if(g){ 
-            g.x = startRects[sid].x + dx; 
-            g.y = startRects[sid].y + dy; 
-            g.el.style.left = g.x+'px'; 
-            g.el.style.top = g.y+'px'; 
+          if(g){
+            const __locked = (g.locked===true) || (g.el && (g.el.dataset.locked==='1' || g.el.classList.contains('locked')));
+            if(!__locked){
+              g.x = startRects[sid].x + dx;
+              g.y = startRects[sid].y + dy;
+              g.el.style.left = g.x+'px';
+              g.el.style.top = g.y+'px';
+            }
           }
           if(t){
-            const newX = startRects[sid].x + dx;
-            const newY = startRects[sid].y + dy;
-            t.element.style.left = newX + 'px';
-            t.element.style.top = newY + 'px';
+            const __el = t.element || t.el || t;
+            const __locked = __el && (__el.dataset.locked==='1' || __el.classList.contains('locked'));
+            if(!__locked){
+              const newX = startRects[sid].x + dx;
+              const newY = startRects[sid].y + dy;
+              __el.style.left = newX + 'px';
+              __el.style.top  = newY + 'px';
+            }
           }
         });
         // <— add this
@@ -3376,6 +3544,12 @@ function saveBoard(){
           group.el.style.height = group.h + 'px';
           group.el.style.borderColor = group.color;
           group.el.querySelector('.title').textContent = group.title;
+          if (typeof groupData.locked !== 'undefined'){
+            group.locked = !!groupData.locked;
+            group.el.classList.toggle('locked', group.locked);
+            group.el.dataset.locked = group.locked ? '1' : '0';
+            group.el.style.cursor = group.locked ? 'default' : 'grab';
+          }
         });
       }
       
@@ -3624,6 +3798,8 @@ function loadSavedBoard(name) {
       document.addEventListener('mousedown', (e)=>{
         const tb = e.target.closest('.textbox');
         if(!tb) return;
+        const locked = tb.dataset.locked==='1' || tb.classList.contains('locked');
+        if (locked) { if (e.cancelable) e.preventDefault(); e.stopPropagation(); startPanning(e); return; }
         // Ignore the resize handle, and only act when Shift is held
         if (!e.shiftKey || e.target.classList.contains('tb-resizer')) return;
 
@@ -4022,6 +4198,8 @@ const board =
     let dragging = false;
 
     function startDrag(e){
+      const locked = node.dataset.locked==='1' || node.classList.contains('locked');
+      if (locked) { if (e.cancelable) e.preventDefault(); e.stopPropagation(); startPanning(e); return; }
       e.preventDefault();
       e.stopPropagation(); // Prevent canvas pan/selection
       bringToFront(node);
@@ -4065,9 +4243,13 @@ const board =
         selectedIds.forEach(sid=>{
           const sp = startPositions[sid]; if(!sp) return;
           if(sp.type==='node'){
-            const n = getNodeById(sid); if(n){ n.x = sp.x + dx; n.y = sp.y + dy; n.el.style.left = n.x+'px'; n.el.style.top = n.y+'px'; }
+            const n = getNodeById(sid);
+            const locked = n && (n.locked===true || (n.el && (n.el.dataset.locked==='1' || n.el.classList.contains('locked'))));
+            if(n && !locked){ n.x = sp.x + dx; n.y = sp.y + dy; n.el.style.left = n.x+'px'; n.el.style.top = n.y+'px'; }
           } else if(sp.type==='group'){
-            const g = getGroupById(sid); if(g){ g.x = sp.x + dx; g.y = sp.y + dy; g.el.style.left = g.x+'px'; g.el.style.top = g.y+'px'; }
+            const g = getGroupById(sid);
+            const locked = g && (g.locked===true || (g.el && (g.el.dataset.locked==='1' || g.el.classList.contains('locked'))));
+            if(g && !locked){ g.x = sp.x + dx; g.y = sp.y + dy; g.el.style.left = g.x+'px'; g.el.style.top = g.y+'px'; }
           } else if(sp.type==='textbox'){
             const t = getTextboxById(sid); if(t){ const nx = sp.x + dx, ny = sp.y + dy; t.element.style.left = nx+'px'; t.element.style.top = ny+'px'; }
           } else if(sp.type==='check'){
@@ -5653,9 +5835,39 @@ function downloadDataUrl(dataUrl, filename){
     groupMenu.style.top  = top + 'px';
     groupMenu.classList.add('open');
 
-    groupMenu.onclick = (e)=>{
+    
+    // Set initial Lock/Unlock label
+    (function(){
+      const el = (group && (group.el || group)) || null;
+      const isLocked = !!(el && (el.dataset.locked==='1' || el.classList.contains('locked'))) || !!group.locked;
+      const lockBtn = groupMenu.querySelector('button[data-action="toggle-lock"]');
+      if (lockBtn) lockBtn.textContent = isLocked ? 'Unlock' : 'Lock';
+    })();
+    // Prevent menu from starting drags
+    groupMenu.onmousedown = (e)=> e.stopPropagation();
+groupMenu.onclick = (e)=>{
       const act = e.target && e.target.dataset && e.target.dataset.action;
       if(!act) return;
+      if(act==='toggle-lock'){
+        // try to resolve the current group element + data
+        const el = (typeof group !== 'undefined' && (group.el || group)) || document.querySelector('.menu.open')?.__ctxEl;
+        if (!el) return;
+        const next = !(el.dataset.locked === '1' || el.classList.contains('locked'));
+        el.classList.toggle('locked', next);
+        el.dataset.locked = next ? '1' : '0';
+        el.style.cursor = next ? 'default' : 'grab';
+        // sync back to group object if available
+        if (typeof group !== 'undefined' && group && group.id){
+          try { group.locked = next; } catch(_){}
+        }
+        // flip label
+        const lockBtn = groupMenu.querySelector('button[data-action="toggle-lock"]');
+        if (lockBtn) lockBtn.textContent = next ? 'Unlock' : 'Lock';
+        // close menu after action
+        if (typeof closeMenus==='function') closeMenus();
+        return;
+      }
+
       if(act==='rename'){
         try{
           const el = group.el || group;
