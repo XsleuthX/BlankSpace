@@ -759,13 +759,13 @@ html.retro #theme {
     cursor: pointer;
   }
   .spotlight-hint {
-    margin-top: 10px; font-size: 12px; color: #b3c0cf;
+    margin-top: 10px; font-size: 12px; color: var(--accent);
     display: flex; justify-content: space-between;
   }
   .kbd { 
     display:inline-grid; place-items:center; 
     min-width: 22px; height: 22px; padding: 0 6px;
-    background: rgba(255,255,255,.14); color: #e9eef5; 
+    background: rgba(255,255,255,.14); color: var(--text); 
     border-radius: 6px; font-weight: 700; 
     border: 1px solid rgba(255,255,255,.22);
   }
@@ -1010,6 +1010,50 @@ html.retro #theme {
 }
 #tbCtxMenu .swatch button{
   width: 24px; height: 24px; border-radius:6px; border:1px solid rgba(255,255,255,.18); cursor:pointer;
+}
+
+/* === Retro-only fixes for tbCtxMenu overflow/seams === */
+.retro #tbCtxMenu,
+[data-theme="retro"] #tbCtxMenu,
+body.retro #tbCtxMenu{
+  box-sizing: border-box;
+  width: 220px;
+  max-width: 220px;
+  overflow: hidden;
+}
+
+.retro #tbCtxMenu .row,
+.retro #tbCtxMenu .seg,
+.retro #tbCtxMenu .swatch { min-width: 0; }
+
+.retro #tbCtxMenu .seg{
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+
+.retro #tbCtxMenu .swatch{
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.retro #tbCtxMenu input[type="color"]{
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Optional: hide any remaining subpixel seam cleanly */
+.retro #tbCtxMenu{
+  outline: 1px solid rgba(0,0,0,.12);
+  outline-offset: -1px;
+}
+
+/* Retro-only: force swatches to be perfect squares */
+.retro #tbCtxMenu .swatch{ grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.retro #tbCtxMenu .swatch button{
+  width: 100%;
+  height: auto;            /* let aspect-ratio control height */
+  aspect-ratio: 1 / 1;     /* perfect square */
+  box-sizing: border-box;  /* include border in box, avoids 1px distortion */
 }
 </style>
 
@@ -1465,7 +1509,7 @@ html.retro #theme {
   border: 1.5px solid var(--retro-outline);
   border-radius: var(--retro-pill);
   padding: .85rem 1.1rem;
-  background: #fff;
+  background: #fff; color: #111827;
 }
 :root.retro .spotlight-btn {
   border:1.5px solid var(--retro-outline);
@@ -2625,34 +2669,12 @@ function openGroupMenu(x, y, group){
       } catch(_){}
       return;
     }
-    if (act==='duplicate'){
-      const g2 = createGroup({ x: group.x + 20, y: group.y + 20 });
-      if (g2){
-        g2.w = group.w; g2.h = group.h;
-        g2.color = group.color; g2.title = (group.title || ('Group '+g2.id)) + ' copy';
-        g2.locked = !!group.locked;
-        if (g2.el){
-          g2.el.style.width  = g2.w + 'px';
-          g2.el.style.height = g2.h + 'px';
-          g2.el.style.borderColor = g2.color;
-          const tt = g2.el.querySelector('.title'); if (tt) tt.textContent = g2.title;
-          g2.el.classList.toggle('locked', !!g2.locked);
-          g2.el.dataset.locked = g2.locked ? '1' : '0';
-          g2.el.style.cursor = g2.locked ? 'default' : 'grab';
-        }
-      }
-      return;
-    }
-    if (act==='delete'){
-      if (group.el) group.el.remove();
-      if (window.state && Array.isArray(state.groups)){
-        state.groups = state.groups.filter(g => g !== group);
-      }
+    if (act==='duplicate'){ duplicateSelection(group.id); return; }
+    if (act==='delete'){ deleteSelection(group.id); return; }
       if (state && state.selection) state.selection.delete(group.id);
       return;
     }
   };
-}
 
     let canvasContextPoint = {x:0,y:0};
     
@@ -2728,8 +2750,8 @@ function openGroupMenu(x, y, group){
           }
           return;
         }
-        if(act==='delete'){ deleteNode(node); }
-        if(act==='duplicate'){ duplicateNode(node); }
+        if(act==='delete'){ deleteSelection(node.id); }
+        if(act==='duplicate'){ duplicateSelection(node.id); }
         if(act==='toggle-metadata'){
           if(node.metaShown){
             if(node.metaTextbox){ node.metaTextbox.remove(); node.metaTextbox = null; }
@@ -2815,8 +2837,8 @@ function openTextboxMenu(x, y, textboxObj){
       return;
     }
 
-    if (act==='delete'){ removeTextbox(textboxObj); return; }
-    if (act==='duplicate'){ duplicateTextbox(textboxObj); return; }
+    if(act==='delete'){ const __el = (textboxObj && (textboxObj.element||textboxObj)); const __id = (textboxObj && textboxObj.id) || (__el && __el.dataset && __el.dataset.id); deleteSelection(__id); return; }
+    if(act==='duplicate'){ const __el = (textboxObj && (textboxObj.element||textboxObj)); const __id = (textboxObj && textboxObj.id) || (__el && __el.dataset && __el.dataset.id); duplicateSelection(__id); return; }
   };
 }
 
@@ -2842,78 +2864,137 @@ function openTextboxMenu(x, y, textboxObj){
       };
     }
     
-    function disconnectWire(wireElement) {
-      console.log('Disconnecting wire:', wireElement);
-      
-      // Strategy 1: Look for wire group with data-wire-id
-      const wireGroup = wireElement.closest('g[data-wire-id]');
-      if(wireGroup) {
-        const wireId = wireGroup.dataset.wireId;
-        console.log('Found wire group with ID:', wireId);
-        wireGroup.remove();
-        
-        // Call wire management functions if available
-        if(window.removeWireById && typeof window.removeWireById === 'function') {
-          window.removeWireById(wireId);
+    // --- PATCH: disconnectWire removes from DOM + state.wires ---
+  function disconnectWire(wireElement) {
+  console.log('Disconnecting wire:', wireElement);
+
+  // Ensure state.wires exists
+  if (!window.state) window.state = {};
+  if (!Array.isArray(state.wires)) state.wires = [];
+
+  // Helper: remove the wire object from state by matching its elements
+  function removeWireFromState(matchElOrGroup) {
+    if (!matchElOrGroup) return false;
+
+    // find the entry whose refs equal OR are contained by the group
+    const idx = state.wires.findIndex(w => {
+      if (!w) return false;
+      // direct element matches
+      if (w.g   === matchElOrGroup) return true;
+      if (w.path=== matchElOrGroup) return true;
+      if (w.hit === matchElOrGroup) return true;
+
+      // group containment matches
+      const contains = (el) => !!(matchElOrGroup.contains && el && matchElOrGroup.contains(el));
+      return contains(w.g) || contains(w.path) || contains(w.hit);
+    });
+
+    if (idx >= 0) {
+      const w = state.wires[idx];
+
+      // detach adjacency if you track it (optional)
+      if (w && typeof getNodeById === 'function') {
+        const from = getNodeById(w.fromId);
+        const to   = getNodeById(w.toId);
+        if (from && Array.isArray(from.connections)) {
+          from.connections = from.connections.filter(cid => cid !== (w.id || w._id));
         }
-        if(window.updateAllWires && typeof window.updateAllWires === 'function') {
-          try { updateAllWires(); } catch(_) {}
+        if (to && Array.isArray(to.connections)) {
+          to.connections = to.connections.filter(cid => cid !== (w.id || w._id));
         }
-        console.log('Wire disconnected successfully');
-        return;
       }
-      
-      // Strategy 2: Look for any parent group containing wire elements
-      let wireContainer = wireElement.closest('g');
-      while(wireContainer) {
-        // Check if this group contains wire-related elements
-        const hasWirePath = wireContainer.querySelector('.wire-path, .wire-hit-area');
-        const hasWireHandle = wireContainer.querySelector('.wire-handle');
-        
-        if(hasWirePath || hasWireHandle) {
-          console.log('Found wire container group, removing:', wireContainer);
-          wireContainer.remove();
-          
-          // Call update functions
-          if(window.updateAllWires && typeof window.updateAllWires === 'function') {
-            try { updateAllWires(); } catch(_) {}
-          }
-          console.log('Wire disconnected via container group');
-          return;
-        }
-        
-        // Move up to parent group
-        wireContainer = wireContainer.parentElement?.closest('g');
-      }
-      
-      // Strategy 3: Remove the immediate parent group
-      const immediateGroup = wireElement.closest('g');
-      if(immediateGroup) {
-        console.log('Removing immediate parent group as fallback');
-        immediateGroup.remove();
-        
-        if(window.updateAllWires && typeof window.updateAllWires === 'function') {
-          try { updateAllWires(); } catch(_) {}
-        }
-        console.log('Wire disconnected via immediate group fallback');
-        return;
-      }
-      
-      // Strategy 4: Try to remove the wire element itself
-      if(wireElement.classList.contains('wire-path') || wireElement.classList.contains('wire-hit-area')) {
-        console.log('Removing wire element directly');
-        wireElement.remove();
-        
-        if(window.updateAllWires && typeof window.updateAllWires === 'function') {
-          try { updateAllWires(); } catch(_) {}
-        }
-        console.log('Wire element removed directly');
-        return;
-      }
-      
-      console.warn('Could not find a suitable wire element to remove');
+
+      // clear DOM refs + remove from state
+      try { if (w.g && w.g.remove) w.g.remove(); } catch(_) {}
+      w.g = w.path = w.hit = w.fromEl = w.toEl = null;
+      state.wires.splice(idx, 1);
+      return true;
     }
-    
+    return false;
+  }
+
+  // STRATEGY 1: nearest <g data-wire-id> (if you ever add IDs)
+  const idGroup = wireElement.closest('g[data-wire-id]');
+  if (idGroup) {
+    const wireId = idGroup.dataset.wireId;
+    console.log('Found wire group with ID:', wireId);
+
+    // remove from state by group (works even without ID)
+    const removed = removeWireFromState(idGroup);
+
+    // remove DOM group
+    try { idGroup.remove(); } catch(_) {}
+
+    // refresh
+    if (typeof updateAllWires === 'function') { try { updateAllWires(); } catch(_) {} }
+    if (typeof markDirty === 'function') markDirty('wires');
+
+    console.log(removed ? 'Wire disconnected (by ID group) and removed from state.' :
+                          'Wire disconnected (by ID group) but no state entry matched.');
+    return;
+  }
+
+  // STRATEGY 2: any parent group containing wire visuals
+  let wireContainer = wireElement.closest('g');
+  while (wireContainer) {
+    const hasWirePath   = wireContainer.querySelector('.wire-path, .wire-hit-area');
+    const hasWireHandle = wireContainer.querySelector('.wire-handle');
+
+    if (hasWirePath || hasWireHandle) {
+      console.log('Found wire container group, removing:', wireContainer);
+
+      // remove from state using the container group (this is the path in your logs)
+      const removed = removeWireFromState(wireContainer);
+
+      // remove DOM
+      try { wireContainer.remove(); } catch(_) {}
+
+      // refresh
+      if (typeof updateAllWires === 'function') { try { updateAllWires(); } catch(_) {} }
+      if (typeof markDirty === 'function') markDirty('wires');
+
+      console.log(removed ? 'Wire disconnected via container group (state updated).' :
+                            'Wire disconnected via container group (no state match found).');
+      return;
+    }
+    wireContainer = wireContainer.parentElement?.closest('g');
+  }
+
+  // STRATEGY 3: remove the immediate parent group (fallback)
+  const immediateGroup = wireElement.closest('g');
+  if (immediateGroup) {
+    console.log('Removing immediate parent group as fallback');
+
+    const removed = removeWireFromState(immediateGroup);
+    try { immediateGroup.remove(); } catch(_) {}
+
+    if (typeof updateAllWires === 'function') { try { updateAllWires(); } catch(_) {} }
+    if (typeof markDirty === 'function') markDirty('wires');
+
+    console.log(removed ? 'Wire disconnected via immediate group (state updated).' :
+                          'Wire disconnected via immediate group (no state match found).');
+    return;
+  }
+
+  // STRATEGY 4: remove the element itself (path/hit)
+  if (wireElement.classList &&
+      (wireElement.classList.contains('wire-path') || wireElement.classList.contains('wire-hit-area'))) {
+    console.log('Removing wire element directly');
+
+    const removed = removeWireFromState(wireElement);
+    try { wireElement.remove(); } catch(_) {}
+
+    if (typeof updateAllWires === 'function') { try { updateAllWires(); } catch(_) {} }
+    if (typeof markDirty === 'function') markDirty('wires');
+
+    console.log(removed ? 'Wire element removed directly (state updated).' :
+                          'Wire element removed directly (no state match found).');
+    return;
+  }
+
+  console.warn('Could not find a suitable wire element to remove');
+}
+// --- END PATCH --- //
     
 function openChecklistMenu(x, y, checklistElement){
   console.log('Opening checklist menu at', x, y);
@@ -2951,8 +3032,8 @@ function openChecklistMenu(x, y, checklistElement){
       }
       return;
     }
-    if (act === 'delete'){ deleteChecklistNode(el); return; }
-    if (act === 'duplicate'){ duplicateChecklistNode(el); return; }
+    if (act === 'delete'){ deleteSelection(el && el.dataset && el.dataset.id); return; }
+    if (act==='duplicate'){ duplicateSelection(el && el.dataset && el.dataset.id); return; }
   };
 }
 
@@ -3007,19 +3088,25 @@ function openChecklistMenu(x, y, checklistElement){
       }
     }
     
-    function duplicateChecklistNode(checklistElement) {
-      const checklistId = checklistElement.dataset.id;
-      
-      // Find the checklist data
-      const checklistData = window.checklistNodes ? window.checklistNodes.find(c => c.id === checklistId) : null;
-      
-      if(checklistData && window.addChecklistNodeAt) {
-        // Create duplicate at offset position
-        const newX = checklistData.x + 20;
-        const newY = checklistData.y + 20;
-        window.addChecklistNodeAt(newX, newY, checklistData.text, checklistData.checked);
-      }
-    }
+    
+function duplicateChecklistNode(checklistElement) {
+  const checklistId = checklistElement.dataset.id;
+  const checklistData = window.checklistNodes ? window.checklistNodes.find(c => c.id === checklistId) : null;
+  if(checklistData && window.addChecklistNodeAt) {
+    const newX = checklistData.x + 20;
+    const newY = checklistData.y + 20;
+    const nodeEl = checklistData.element;
+    const textEl = nodeEl ? nodeEl.querySelector('.checktext') : null;
+    const w = nodeEl ? (nodeEl.style.width || nodeEl.offsetWidth) : null;
+    const h = nodeEl ? (nodeEl.style.height || nodeEl.offsetHeight) : null;
+    const bg = nodeEl && nodeEl.style.backgroundColor || null;
+    const border = nodeEl && nodeEl.style.borderColor || null;
+    const color = nodeEl && nodeEl.style.color || null;
+    const fontSize = textEl && (textEl.style.fontSize || null);
+    const html = textEl ? sanitizeHtml(textEl.innerHTML) : null;
+    window.addChecklistNodeAt(newX, newY, checklistData.text, checklistData.checked, w, h, {bg, border, color, html}, null, fontSize);
+  }
+}
 
     // Node creation
     function createNode(kind, assetUrl, size, at, extraMeta){
@@ -3468,65 +3555,122 @@ const toolbar = document.createElement('div');
     }
 
     function startDragSelection(e){
-      const start = {x:e.clientX, y:e.clientY};
-      const selected = Array.from(state.selection);
-      const startRects = {};
-      
-      selected.forEach(sid=>{
-        const n = getNodeById(sid); 
-        const g = getGroupById(sid);
-        const t = getTextboxById(sid);
-        if(n) startRects[sid] = {x:n.x, y:n.y};
-        if(g) startRects[sid] = {x:g.x, y:g.y};
-        if(t) startRects[sid] = {x:parseFloat(t.element.style.left), y:parseFloat(t.element.style.top)};
-      });
-      
-      function mm(ev){
-        const dx = (ev.clientX-start.x)/state.zoom;
-        const dy = (ev.clientY-start.y)/state.zoom;
-        selected.forEach(sid=>{
-          const n = getNodeById(sid); 
-          const g = getGroupById(sid);
-          const t = getTextboxById(sid);
-          if(n){
-            const __locked = (n.locked===true) || (n.el && (n.el.dataset.locked==='1' || n.el.classList.contains('locked')));
-            if(!__locked){
-              n.x = startRects[sid].x + dx;
-              n.y = startRects[sid].y + dy;
-              n.el.style.left = n.x+'px';
-              n.el.style.top = n.y+'px';
-            }
-          }
-          if(g){
-            const __locked = (g.locked===true) || (g.el && (g.el.dataset.locked==='1' || g.el.classList.contains('locked')));
-            if(!__locked){
-              g.x = startRects[sid].x + dx;
-              g.y = startRects[sid].y + dy;
-              g.el.style.left = g.x+'px';
-              g.el.style.top = g.y+'px';
-            }
-          }
-          if(t){
-            const __el = t.element || t.el || t;
-            const __locked = __el && (__el.dataset.locked==='1' || __el.classList.contains('locked'));
-            if(!__locked){
-              const newX = startRects[sid].x + dx;
-              const newY = startRects[sid].y + dy;
-              __el.style.left = newX + 'px';
-              __el.style.top  = newY + 'px';
-            }
-          }
-        });
-        // <— add this
-        try { if (window.updateAllWires) updateAllWires(); } catch(_){ }
-      }
-      function up(){ 
-        window.removeEventListener('mousemove', mm); 
-        window.removeEventListener('mouseup', up); 
-      }
-      window.addEventListener('mousemove', mm); 
-      window.addEventListener('mouseup', up);
+  const start = { x: e.clientX, y: e.clientY };
+  const selected = Array.from(state.selection);
+  const startRects = {};
+
+  // Helper: robust checklist getter (works whether you have getChecklistById or just an array)
+  const _getChecklistById = (id) => {
+    if (typeof getChecklistById === 'function') return getChecklistById(id);
+    const list = (window.checklistNodes || window.checklists || []);
+    return Array.isArray(list) ? list.find(c => c && c.id === id) : null;
+  };
+
+  // Capture starting positions for all selected items (nodes, groups, textboxes, checklists)
+  selected.forEach(sid => {
+    const n = getNodeById(sid);
+    const g = getGroupById(sid);
+    const t = getTextboxById(sid);
+    const c = _getChecklistById(sid);
+
+    if (n) startRects[sid] = { x: n.x, y: n.y, type: 'node' };
+    if (g) startRects[sid] = { x: g.x, y: g.y, type: 'group' };
+    if (t) {
+      const el = t.element || t.el || t;
+      startRects[sid] = { 
+        x: parseFloat(el.style.left) || 0, 
+        y: parseFloat(el.style.top)  || 0, 
+        type: 'textbox' 
+      };
     }
+    if (c) {
+      // Prefer model x/y if present, else fall back to DOM style
+      const cel = c.element || c.el || c;
+      const cx = Number.isFinite(c.x) ? c.x : (parseFloat(cel?.style?.left) || 0);
+      const cy = Number.isFinite(c.y) ? c.y : (parseFloat(cel?.style?.top)  || 0);
+      startRects[sid] = { x: cx, y: cy, type: 'check' };
+    }
+  });
+
+  function mm(ev){
+    const dx = (ev.clientX - start.x) / state.zoom;
+    const dy = (ev.clientY - start.y) / state.zoom;
+
+    selected.forEach(sid => {
+      const n = getNodeById(sid); 
+      const g = getGroupById(sid);
+      const t = getTextboxById(sid);
+      const c = _getChecklistById(sid);
+
+      if (n && startRects[sid]) {
+        const __locked = (n.locked === true) || (n.el && (n.el.dataset.locked === '1' || n.el.classList.contains('locked')));
+        if (!__locked) {
+          n.x = startRects[sid].x + dx;
+          n.y = startRects[sid].y + dy;
+          if (n.el) {
+            n.el.style.left = n.x + 'px';
+            n.el.style.top  = n.y + 'px';
+          }
+        }
+      }
+
+      if (g && startRects[sid]) {
+        const __locked = (g.locked === true) || (g.el && (g.el.dataset.locked === '1' || g.el.classList.contains('locked')));
+        if (!__locked) {
+          g.x = startRects[sid].x + dx;
+          g.y = startRects[sid].y + dy;
+          if (g.el) {
+            g.el.style.left = g.x + 'px';
+            g.el.style.top  = g.y + 'px';
+          }
+        }
+      }
+
+      if (t && startRects[sid]) {
+        const __el = t.element || t.el || t;
+        const __locked = __el && (__el.dataset.locked === '1' || __el.classList.contains('locked'));
+        if (!__locked) {
+          const newX = startRects[sid].x + dx;
+          const newY = startRects[sid].y + dy;
+          __el.style.left = newX + 'px';
+          __el.style.top  = newY + 'px';
+        }
+      }
+
+      // ✅ NEW: move checklists along with the selection
+      if (c && startRects[sid]) {
+        const cel = c.element || c.el || c;
+        const __locked = cel && (cel.dataset?.locked === '1' || cel.classList?.contains('locked') || c.locked === true);
+        if (!__locked) {
+          const newX = startRects[sid].x + dx;
+          const newY = startRects[sid].y + dy;
+          // Update model (if used)
+          c.x = newX;
+          c.y = newY;
+          // Update DOM
+          if (cel && cel.style) {
+            cel.style.left = newX + 'px';
+            cel.style.top  = newY + 'px';
+          }
+        }
+      }
+    });
+
+    // If your app has a wire/edge redraw, call it here safely:
+    if (typeof refreshWires === 'function') refreshWires();
+    else if (typeof redrawWires === 'function') redrawWires();
+    else if (typeof scheduleRender === 'function') scheduleRender();
+  }
+
+  function up(){
+    window.removeEventListener('mousemove', mm);
+    // Optional: commit history / snap / persist after drag ends
+    if (typeof onDragSelectionEnd === 'function') onDragSelectionEnd();
+  }
+
+  window.addEventListener('mousemove', mm);
+  window.addEventListener('mouseup', up, { once: true });
+}
 
     function beginMarquee(e){
       clearSelection();
@@ -3535,32 +3679,56 @@ const toolbar = document.createElement('div');
       rectEl.className='marquee'; 
       board.appendChild(rectEl);
       
-      function mm(ev){
-        const cur = screenToWorld(ev.clientX, ev.clientY);
-        const x = Math.min(start.x, cur.x), y=Math.min(start.y, cur.y);
-        const w = Math.abs(cur.x-start.x), h=Math.abs(cur.y-start.y);
-        rectEl.style.left=x+'px'; rectEl.style.top=y+'px'; 
-        rectEl.style.width=w+'px'; rectEl.style.height=h+'px';
-        clearSelection();
-        let anyNode=false;
-        state.nodes.forEach(n=>{ 
-          if(intersects({x,y,w,h}, n)){ selectId(n.id, true); anyNode=true; } 
-        });
-        if(window.checklistNodes){ window.checklistNodes.forEach(c=>{ const cw=c.element?c.element.offsetWidth:0; const ch=c.element?c.element.offsetHeight:0; if(intersects({x,y,w,h},{x:c.x,y:c.y,w:cw,h:ch})) { selectId(c.id, true); anyNode=true; } }); }
-        if(!anyNode) {
-          state.groups.forEach(g=>{ 
-            if(intersects({x,y,w,h}, g)) selectId(g.id, true); 
-          });
-          state.textboxes.forEach(t=>{
-            const tx = parseFloat(t.element.style.left);
-            const ty = parseFloat(t.element.style.top);
-            const tw = t.element.offsetWidth;
-            const th = t.element.offsetHeight;
-            if(intersects({x,y,w,h}, {x:tx,y:ty,w:tw,h:th})) selectId(t.id, true);
-          });
-        }
-      }
-      function up(){
+      
+function mm(ev){
+  const cur = screenToWorld(ev.clientX, ev.clientY);
+  const x = Math.min(start.x, cur.x), y = Math.min(start.y, cur.y);
+  const w = Math.abs(cur.x - start.x), h = Math.abs(cur.y - start.y);
+  rectEl.style.left = x + 'px'; rectEl.style.top = y + 'px';
+  rectEl.style.width = w + 'px'; rectEl.style.height = h + 'px';
+  clearSelection();
+
+  // Nodes
+  if (Array.isArray(state.nodes)) {
+    state.nodes.forEach(n => {
+      if (intersects({x,y,w,h}, n)) selectId(n.id, true);
+    });
+  }
+
+  // Checklists
+  if (Array.isArray(window.checklistNodes)) {
+    window.checklistNodes.forEach(c => {
+      const el = c && c.element;
+      if (!el) return;
+      const cx = typeof c.x === 'number' ? c.x : parseFloat(el.style.left) || 0;
+      const cy = typeof c.y === 'number' ? c.y : parseFloat(el.style.top) || 0;
+      const cw = el.offsetWidth || parseFloat(el.style.width) || 0;
+      const ch = el.offsetHeight || parseFloat(el.style.height) || 0;
+      if (intersects({x,y,w,h}, {x:cx, y:cy, w:cw, h:ch})) selectId(c.id, true);
+    });
+  }
+
+  // Groups
+  if (Array.isArray(state.groups)) {
+    state.groups.forEach(g => {
+      if (intersects({x,y,w,h}, {x:g.x, y:g.y, w:g.w, h:g.h})) selectId(g.id, true);
+    });
+  }
+
+  // Textboxes
+  if (Array.isArray(state.textboxes)) {
+    state.textboxes.forEach(t => {
+      const el = t && t.element;
+      if (!el) return;
+      const tx = parseFloat(el.style.left) || 0;
+      const ty = parseFloat(el.style.top) || 0;
+      const tw = el.offsetWidth || parseFloat(el.style.width) || 0;
+      const th = el.offsetHeight || parseFloat(el.style.height) || 0;
+      if (intersects({x,y,w,h}, {x:tx, y:ty, w:tw, h:th})) selectId(t.id, true);
+    });
+  }
+}
+function up(){
         rectEl.remove();
         window.removeEventListener('mousemove', mm);
         window.removeEventListener('mouseup', up);
@@ -3617,7 +3785,7 @@ const toolbar = document.createElement('div');
   // If this element has the id itself
   if (el.dataset && el.dataset.id) return el.dataset.id;
   // Otherwise, walk up to the nearest node/textbox/checknode shell
-  const host = el.closest?.('.node, .textbox, .checknode');
+  const host = el.closest?.('.node, .textbox, .checknode, .group, .checklist');
   return (host && host.dataset && host.dataset.id) ? host.dataset.id : null;
 }
 
@@ -3795,17 +3963,53 @@ function saveBoard(){
       
       event.target.value = '';
     }
+// === Rich Text Sanitize Helper (global) ===
+function sanitizeHtml(inputHtml){
+  try{
+    const tmp = document.createElement('div');
+    tmp.innerHTML = inputHtml || '';
+    const allowTags = new Set(['SPAN','BR']);
+    (function walk(node){
+      const kids = Array.from(node.childNodes);
+      for(const child of kids){
+        if(child.nodeType === Node.ELEMENT_NODE){
+          if(!allowTags.has(child.tagName)){
+            while(child.firstChild){ node.insertBefore(child.firstChild, child); }
+            node.removeChild(child);
+            continue;
+          }
+          if(child.hasAttribute('style')){
+            const st = child.getAttribute('style') || '';
+            const m = /font-size\s*:\s*([^;]+);?/i.exec(st);
+            child.setAttribute('style', m ? ('font-size:'+m[1]) : '');
+            if(!m) child.removeAttribute('style');
+          }
+          walk(child);
+        } else if (child.nodeType === Node.COMMENT_NODE){
+          node.removeChild(child);
+        }
+      }
+    })(tmp);
+    return tmp.innerHTML;
+  }catch(_e){ return ''; }
+}
 
-    async function exportBoardDataWithFiles() {
-  // Nodes (with base64 for blob: assets)
+// === End sanitize ===
+async function exportBoardDataWithFiles() {
   const processedNodes = await Promise.all((state.nodes || []).map(async (node) => {
     const processedNode = { ...node };
     delete processedNode.el;
     delete processedNode.metaTextbox;
 
-    if (node.assetUrl && String(node.assetUrl).startsWith('blob:')) {
+    const url = String(node.assetUrl || '');
+
+    // Defaults so downstream code isn't dealing with "undefined"
+    processedNode.isFileNode = processedNode.isFileNode ?? false;
+    processedNode.hasBase64Data = false;
+
+    if (url.startsWith('blob:')) {
       try {
-        const base64Data = await blobUrlToBase64(node.assetUrl);
+        const base64Data = await blobUrlToBase64(url);
         processedNode.assetUrl = base64Data;
         processedNode.isFileNode = true;
         processedNode.hasBase64Data = true;
@@ -3815,11 +4019,25 @@ function saveBoard(){
         processedNode.isFileNode = true;
         processedNode.hasBase64Data = false;
       }
+    } else if (url.startsWith('data:')) {
+      // Already a data URL — keep as-is and mark as base64
+      processedNode.hasBase64Data = true;
     }
+
     return processedNode;
   }));
 
-  // Textboxes
+  // ...return your full payload that includes processedNodes
+
+  
+// Textboxes
+  // Lightweight RGBA parser for export scope
+  function __parseRGBA(str){
+    const m = String(str||'').match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([0-9.]+))?\)/i);
+    if(!m) return {r:255,g:255,b:255,a:1};
+    return { r:+m[1], g:+m[2], b:+m[3], a:(m[4]!==undefined? Math.max(0,Math.min(1,parseFloat(m[4]))) : 1) };
+  }
+
   const processedTextboxes = (state.textboxes || []).map(textbox => {
     const el = textbox.element;
     let content = '';
@@ -3828,7 +4046,20 @@ function saveBoard(){
       content = el.innerHTML;
       hasActualContent = true;
     }
-    return {
+
+  // capture inline or computed styles
+  const cs = getComputedStyle(el);
+  const style = {
+    background: el.style.background || cs.backgroundColor || '',
+    borderColor: el.style.borderColor || cs.borderColor || '',
+    color: el.style.color || cs.color || ''
+  };
+
+    
+    // derive background alpha: prefer dataset.alpha, else parse from inline/computed background
+    let __bgSeed = el.style.background || el.style.backgroundColor || cs.backgroundColor || '';
+    let __bgA = (el.dataset && el.dataset.alpha != null && !isNaN(parseFloat(el.dataset.alpha))) ? parseFloat(el.dataset.alpha) : __parseRGBA(__bgSeed).a;
+return {
       id: textbox.id,
       content,
       hasPlaceholder: textbox.hasPlaceholder,
@@ -3836,7 +4067,9 @@ function saveBoard(){
       left: el.style.left,
       top: el.style.top,
       width: el.style.width,
-      height: el.style.height
+      height: el.style.height,
+      bgAlpha: __bgA,
+      style
     };
   });
 
@@ -3847,10 +4080,30 @@ function saveBoard(){
     return g;
   });
 
-  // Checklists
-  const processedChecklists = (window.checklistNodes || []).map(ch => ({
-    id: ch.id, x: ch.x, y: ch.y, text: ch.text, checked: ch.checked
-  }));
+  
+// Checklists
+const processedChecklists = (window.checklistNodes || []).map(ch => {
+  const el = ch && ch.element;
+  const textEl = el ? el.querySelector('.checktext') : null;
+  const csNode = el ? getComputedStyle(el) : null;
+  const csText = textEl ? getComputedStyle(textEl) : null;
+  const width  = el ? (el.style.width  || (el.offsetWidth  ? (el.offsetWidth  + 'px') : '')) : '';
+  const height = el ? (el.style.height || (el.offsetHeight ? (el.offsetHeight + 'px') : '')) : '';
+  return {
+    id: ch.id,
+    x: ch.x,
+    y: ch.y,
+    width,
+    height,
+    text: ch.text,
+    checked: !!ch.checked,
+    bg:     el ? (el.style.backgroundColor || (csNode ? csNode.backgroundColor : '')) : '',
+    border: el ? (el.style.borderColor     || (csNode ? csNode.borderColor     : '')) : '',
+    color:  textEl ? (textEl.style.color   || (csText ? csText.color           : '')) : '',
+    fontSize: textEl ? (textEl.style.fontSize || (csText ? csText.fontSize : '')) : '',
+    textHtml: (function(){ try{ return sanitizeHtml(textEl ? textEl.innerHTML : (ch.textHtml || '')); }catch(_e){ return ch.textHtml || ''; } })()
+  };
+});
 
   // Wires (endpoints + control points)
   const processedWires = (state.wires || []).map(w => ({
@@ -4007,36 +4260,53 @@ function saveBoard(){
             // Empty or placeholder - ensure placeholder is shown
             setPlaceholderText(textbox);
           }
+
           
+    // Apply saved textbox colors (if present)
+if (textboxData.style) {
+    const s = textbox.element.style;
+    if (textboxData.style.background)  s.background  = textboxData.style.background;
+    if (textboxData.style.borderColor) s.borderColor = textboxData.style.borderColor;
+    if (textboxData.style.color)       s.color       = textboxData.style.color;
+    }
+
+    // If bgAlpha is provided, recompose rgba so the theme cannot override it
+    if (typeof textboxData.bgAlpha === 'number') {
+      try{
+        // get base color from style.background or fallback to computed, strip alpha, then apply bgAlpha
+        const cs2 = getComputedStyle(textbox.element);
+        const seed = (textboxData.style && (textboxData.style.background || textboxData.style.backgroundColor)) || cs2.backgroundColor || 'rgb(255,255,255)';
+        const m = String(seed).match(/rgba?\((\d+),\s*(\d+),\s*(\d+)\s*(?:,\s*([0-9.]+))?\)/i);
+        const r = m ? +m[1] : 255, g = m ? +m[2] : 255, b = m ? +m[3] : 255;
+        const a = Math.max(0, Math.min(1, textboxData.bgAlpha));
+        const rgba = 'rgba(' + r + ',' + g + ',' + b + ',' + a.toFixed(3) + ')';
+        s.backgroundColor = rgba;
+        s.background = rgba;
+        s.backgroundImage = 'none';
+        s.backgroundBlendMode = 'normal';
+        s.backgroundClip = 'padding-box';
+        s.opacity = '1';
+        s.filter = '';
+        textbox.element.dataset.alpha = String(a);
+      }catch(_e){}
+    }
           // Ensure proper state
           textbox.isEditing = false;
           textbox.element.blur();
         });
       }
       
-      // Restore checklist nodes
+      
+// Restore checklist nodes
       if(boardData.checklists && window.addChecklistNodeAt) {
-        boardData.checklists.forEach(checklistData => {
-          let __createdChecklist;
-__createdChecklist = window.addChecklistNodeAt(
-            checklistData.x,
-            checklistData.y,
-            checklistData.text,
-            checklistData.checked
-          );
-        
-          if (__createdChecklist && __createdChecklist.element) {
-            try {
-              const savedId = checklistData.id;
-              if (savedId) {
-                __createdChecklist.id = savedId;
-                __createdChecklist.element.dataset.id = savedId;
-              }
-            } catch(_e){}
-          }
-            });
+        boardData.checklists.forEach(cd => {
+          const w = cd.w || cd.width;
+          const h = cd.h || cd.height;
+          const fontSize = cd.fontSize || (cd.text && cd.text.fontSize);
+          window.addChecklistNodeAt(cd.x, cd.y, cd.text, cd.checked, w, h, {bg: cd.bg, border: cd.border, color: cd.color, html: cd.textHtml}, cd.id, fontSize);
+        });
       }
-    }
+}
 
     function clearBoard() {
       state.nodes.forEach(node => {
@@ -4516,8 +4786,8 @@ const board =
   function bringToFront(el){ el.style.zIndex = ++zTop; }
 
   // Core: create a draggable checklist node
-  function createChecklistNode(x, y, textValue = 'New item', checked = false){
-    const id = 'c' + Date.now() + Math.random().toString(36).substr(2, 9);
+  function createChecklistNode(x, y, textValue = 'New item', checked = false, opts = {}){
+    const id = (opts && opts.id) ? String(opts.id) : 'c' + Date.now() + Math.random().toString(36).substr(2, 9);
     const node = document.createElement('div');
     node.className = 'checknode';
     node.dataset.type = 'checknode';
@@ -4539,7 +4809,7 @@ const board =
     const text = document.createElement('div');
     text.className = 'checktext';
     text.contentEditable = 'true';
-    text.textContent = textValue;
+    if (opts && opts.html) { text.innerHTML = sanitizeHtml(opts.html); } else { text.textContent = textValue; }
 
     node.appendChild(grip);
     node.appendChild(cb);
@@ -4549,6 +4819,24 @@ const board =
     node.style.left = Math.round(x) + 'px';
     node.style.top  = Math.round(y) + 'px';
     bringToFront(node);
+
+// Apply provided dimensions/styles/html if given
+try {
+  if (opts) {
+    const w = opts.w || opts.width;
+    const h = opts.h || opts.height;
+    if (w) node.style.width = (typeof w === 'number') ? (w + 'px') : String(w);
+    if (h) node.style.height = (typeof h === 'number') ? (h + 'px') : String(h);
+    if (opts.bg) node.style.backgroundColor = opts.bg;
+    if (opts.border) node.style.borderColor = opts.border;
+    if (opts.color) node.style.color = opts.color;
+    const textEl = node.querySelector('.checktext');
+    const fs = opts.fontSize || (opts.text && opts.text.fontSize);
+    if (textEl && fs) textEl.style.fontSize = (typeof fs === 'number') ? (fs + 'px') : String(fs);
+    if (textEl && opts.html) textEl.innerHTML = sanitizeHtml(opts.html);
+  }
+} catch(_e){}
+
 
     // Create checklist data object
     const checklistData = {
@@ -4571,6 +4859,19 @@ const board =
     cb.addEventListener('change', syncChecked);
     syncChecked();
     
+    
+// Keep HTML and plain text in sync for per-word styles
+const syncHtml = () => {
+  const html = sanitizeHtml(text.innerHTML);
+  if (html !== checklistData.textHtml) checklistData.textHtml = html;
+  checklistData.text = text.innerText || text.textContent || '';
+};
+const __mo = new MutationObserver(syncHtml);
+__mo.observe(text, {subtree:true, childList:true, characterData:true, attributes:true, attributeFilter:['style']});
+text.addEventListener('input', syncHtml);
+text.addEventListener('blur', syncHtml);
+syncHtml();
+
     // Update data when text changes
     text.addEventListener('input', ()=> {
       checklistData.text = text.textContent;
@@ -4700,7 +5001,27 @@ const board =
   }
 
   // Public API for integration with existing canvas menu
-  window.addChecklistNodeAt = (x, y, text, checked)=> createChecklistNode(x,y,text,checked);
+  
+window.addChecklistNodeAt = (x, y, text, checked, w, h, extra, forcedId, fontSize) => {
+  if (x && typeof x === 'object' && x.x != null) {
+    const o = x;
+    return createChecklistNode(o.x, o.y, o.text, !!o.checked, {
+      id: o.id, w: o.w || o.width, h: o.h || o.height,
+      bg: o.bg || (o.style && o.style.background),
+      border: o.border || (o.style && o.style.borderColor),
+      color: o.color || (o.style && o.style.color),
+      fontSize: o.fontSize || (o.text && o.text.fontSize),
+      html: o.textHtml || o.html
+    });
+  }
+  const opts = {
+    id: forcedId, w: w, h: h,
+    bg: extra && extra.bg, border: extra && extra.border, color: extra && extra.color,
+    fontSize: fontSize, html: extra && extra.html
+  };
+  return createChecklistNode(x, y, text, !!checked, opts);
+};
+
   
   // Expose checklist nodes array for save/load integration
   window.checklistNodes = checklistNodes;
@@ -5151,7 +5472,13 @@ function downloadDataUrl(dataUrl, filename){
     <button type="button" data-prop="border">Border</button>
   </div>
   <div class="row"><input id="tbColorPicker" type="color" value="#8b5cf6" /></div>
-  <div class="row swatch" id="tbSwatches"></div>
+  
+<div class="row alpha" id="tbAlphaRow" style="display:flex;gap:8px;align-items:center;">
+  <span class="alpha-label" style="font-size:12px;color:#cfd7ff;opacity:.85;width:60px;">Opacity</span>
+  <input id="tbAlpha" type="range" min="0" max="100" value="100" style="flex:1">
+  <span id="tbAlphaVal" style="font-size:12px;color:#e8ecff;min-width:36px;text-align:right;">100%</span>
+</div>
+<div class="row swatch" id="tbSwatches"></div>
 </div>
 
 
@@ -5161,12 +5488,42 @@ function downloadDataUrl(dataUrl, filename){
   const picker = document.getElementById('tbColorPicker');
   const swatches = document.getElementById('tbSwatches');
   const propBtns = menu ? Array.from(menu.querySelectorAll('[data-prop]')) : [];
-  let currentTarget = null;
+  
+const alphaRow = document.getElementById('tbAlphaRow');
+const alpha = document.getElementById('tbAlpha');
+const alphaVal = document.getElementById('tbAlphaVal');
+let currentAlpha = 1; // 0..1
+let currentTarget = null;
   let currentProp = 'bg';
 
   const QUICK = ['#ffffff','#000000','#111827','#1f2937','#6b7280','#9ca3af','#ef4444','#f59e0b','#fbbf24','#10b981','#3b82f6','#8b5cf6'];
 
-  function ensureSwatches(){
+  
+
+function hexToRgb(hex){
+  try{
+    let h = hex.replace('#','').trim();
+    if(h.length === 3){ h = h.split('').map(c=>c+c).join(''); }
+    const num = parseInt(h, 16);
+    return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+  }catch(e){
+    return {r:139,g:92,b:246};
+  }
+}
+
+function parseRGBA(str){
+  const m = String(str||'').match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([0-9.]+))?\)/i);
+  if(!m) return {r:139,g:92,b:246,a:1};
+  return { r: +m[1], g: +m[2], b: +m[3], a: m[4]!==undefined ? Math.max(0, Math.min(1, parseFloat(m[4]))) : 1 };
+}
+
+function updateBackground(){
+  if(!currentTarget || currentProp!=='bg') return;
+  const rgb = hexToRgb(picker ? picker.value : '#8b5cf6');
+  const a = (typeof currentAlpha === 'number' ? currentAlpha : 1);
+  currentTarget.style.background = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + a.toFixed(2) + ')';
+}
+function ensureSwatches(){
     if(!swatches || swatches.childElementCount) return;
     QUICK.forEach(c=>{
       const b = document.createElement('button');
@@ -5181,32 +5538,49 @@ function downloadDataUrl(dataUrl, filename){
     if(!m) return '#8b5cf6';
     return '#' + [m[1],m[2],m[3]].map(v=> parseInt(v,10).toString(16).padStart(2,'0')).join('');
   }
-  function applyColor(hex){
-    if(!currentTarget) return;
-    if(currentProp==='bg'){
-      currentTarget.style.background = hex;
-    } else if(currentProp==='text'){
-      currentTarget.style.color = hex;
-    } else if(currentProp==='border'){
-      currentTarget.style.borderColor = hex;
-    }
+  
+
+function applyColor(hex){
+  if(!currentTarget) return;
+  if (picker && typeof hex === 'string') { try { picker.value = hex; } catch(_){} }
+  if(currentProp==='bg'){
+    updateBackground();
+  } else if(currentProp==='text'){
+    currentTarget.style.color = hex;
+  } else if(currentProp==='border'){
+    currentTarget.style.borderColor = hex;
   }
-  function setProp(prop){
+}
+
+
+  
+function setProp(prop){
     currentProp = prop || 'bg';
     if(currentTarget){
       const cs = getComputedStyle(currentTarget);
       let seed = '#8b5cf6';
-      if(currentProp==='bg' && cs.backgroundColor) seed = rgbToHex(cs.backgroundColor);
+      if(currentProp==='bg' && cs.backgroundColor){
+        const rgba = parseRGBA(cs.backgroundColor);
+        seed = '#' + [rgba.r, rgba.g, rgba.b].map(v=> v.toString(16).padStart(2,'0')).join('');
+        if(alpha){
+          currentAlpha = rgba.a;
+          alpha.value = Math.round((currentAlpha || 1)*100);
+        }
+        if(alphaVal){
+          alphaVal.textContent = Math.round((currentAlpha || 1)*100) + '%';
+        }
+        if(alphaRow){ alphaRow.style.display = 'flex'; }
+      } else {
+        if(alphaRow){ alphaRow.style.display = 'none'; }
+      }
       if(currentProp==='text' && cs.color) seed = rgbToHex(cs.color);
       if(currentProp==='border' && cs.borderColor) seed = rgbToHex(cs.borderColor);
       if(picker) picker.value = seed;
     }
     propBtns.forEach(b=> b.classList.toggle('active', (b.getAttribute('data-prop')===currentProp)));
   }
-  function openAt(x,y,target){
-    if(!menu) return;
-    ensureSwatches();
-    currentTarget = target;
+
+  function openAt(x,y,target){ if(!menu) return; ensureSwatches(); currentTarget = target; setProp(currentProp);
     menu.style.left = Math.max(8, Math.min(window.innerWidth - 240, x)) + 'px';
     menu.style.top  = Math.max(8, Math.min(window.innerHeight - 180, y)) + 'px';
     menu.style.display = 'block';
@@ -5241,6 +5615,18 @@ function downloadDataUrl(dataUrl, filename){
     }
   });
   if(menu) menu.addEventListener('contextmenu', (e)=> e.preventDefault());
+
+
+  if (alpha) {
+    alpha.addEventListener('input', function() {
+      const v = Math.max(0, Math.min(100, parseInt(this.value, 10) || 0));
+      currentAlpha = v / 100;
+      if (alphaVal) alphaVal.textContent = v + '%';
+      // Live update only for background
+      updateBackground();
+    });
+  }
+
 })();
 </script>
 
@@ -6596,7 +6982,163 @@ function resolveElementById(id){
   })();
   </script>
   
+<script id="unified-multidrag-checklists">
+/* Unified multi-drag when a checklist is selected */
+(function(){
+  if (!window.state || !window.getElement) return;
 
+  function screenToWorldLocal(sx, sy){
+    try{ if (typeof screenToWorld === 'function') return screenToWorld(sx, sy); }catch(_){}
+    const vp = document.getElementById('viewport') || document.body;
+    const rect = vp.getBoundingClientRect();
+    const zoom = (window.state && window.state.zoom) ? window.state.zoom : 1;
+    const origin = (window.state && window.state.origin) ? window.state.origin : {x:0,y:0};
+    return { x: (sx - rect.left - origin.x) / zoom, y: (sy - rect.top - origin.y) / zoom };
+  }
+
+  function getChecklistById(id){
+    const arr = (window.checklistNodes || []);
+    for (let i=0;i<arr.length;i++){
+      if (arr[i].id === id) return arr[i];
+    }
+    return null;
+  }
+
+  function anyChecklistSelected(){
+    const ids = Array.from(window.state.selection || []);
+    for (const id of ids){
+      const el = window.getElement(id);
+      if (el && el.classList && el.classList.contains('checknode')) return true;
+    }
+    return false;
+  }
+
+  function buildStartMap(){
+    const map = new Map();
+    const ids = Array.from(window.state.selection || []);
+    ids.forEach((sid)=>{
+      // Node
+      const n = (typeof getNodeById==='function') ? getNodeById(sid) : null;
+      if (n && n.el){ map.set(sid, {type:'node', x:n.x, y:n.y, w:n.w, h:n.h, el:n.el}); return; }
+      // Group
+      const g = (typeof getGroupById==='function') ? getGroupById(sid) : null;
+      if (g && g.el){ map.set(sid, {type:'group', x:g.x, y:g.y, w:g.w, h:g.h, el:g.el}); return; }
+      // Textbox
+      const t = (typeof getTextboxById==='function') ? getTextboxById(sid) : null;
+      if (t && t.element){
+        const lx = parseFloat(t.element.style.left)||0;
+        const ly = parseFloat(t.element.style.top)||0;
+        const lw = t.element.offsetWidth || parseFloat(t.element.style.width) || 0;
+        const lh = t.element.offsetHeight || parseFloat(t.element.style.height) || 0;
+        map.set(sid, {type:'textbox', x:lx, y:ly, w:lw, h:lh, el:t.element});
+        return;
+      }
+      // Checklist
+      const c = getChecklistById(sid);
+      if (c && c.element){
+        const cx = parseFloat(c.element.style.left)||c.x||0;
+        const cy = parseFloat(c.element.style.top)||c.y||0;
+        const cw = c.element.offsetWidth || parseFloat(c.element.style.width) || 0;
+        const ch = c.element.offsetHeight || parseFloat(c.element.style.height) || 0;
+        map.set(sid, {type:'check', x:cx, y:cy, w:cw, h:ch, el:c.element});
+        return;
+      }
+    });
+    return map;
+  }
+
+  function startUnifiedDrag(e, hostEl){
+    // Only run when selection includes a checklist (avoid fighting existing handlers)
+    if (!anyChecklistSelected()) return false;
+
+    // For textboxes: require Shift unless clicking chrome (so normal typing stays)
+    if (hostEl && hostEl.classList.contains('textbox')){
+      const isContentEditable = e.target.closest('.textbox');
+      const isResizer = e.target.classList && e.target.classList.contains('tb-resizer');
+      if (isContentEditable && !e.shiftKey && !isResizer){
+        return false;
+      }
+    }
+
+    // Skip controls that shouldn't initiate override
+    if (e.target.closest('.tb-resizer, input, textarea, [contenteditable="true"]')) return false;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startWorld = screenToWorldLocal(e.clientX, e.clientY);
+    const startMap   = buildStartMap();
+
+    // Feedback
+    const prevCursor = hostEl && hostEl.style ? hostEl.style.cursor : '';
+    if (hostEl && hostEl.style) hostEl.style.cursor = 'grabbing';
+
+    const prevUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = 'none';
+
+    function onMove(ev){
+      const w = screenToWorldLocal(ev.clientX, ev.clientY);
+      const dx = w.x - startWorld.x;
+      const dy = w.y - startWorld.y;
+
+      startMap.forEach((sp, sid)=>{
+        if (sp.type==='node'){
+          const x = sp.x + dx, y = sp.y + dy;
+          const n = (typeof getNodeById==='function') ? getNodeById(sid) : null;
+          if (n){ n.x = x; n.y = y; }
+          if (sp.el){ sp.el.style.left = x+'px'; sp.el.style.top = y+'px'; }
+        } else if (sp.type==='group'){
+          const x = sp.x + dx, y = sp.y + dy;
+          const g = (typeof getGroupById==='function') ? getGroupById(sid) : null;
+          if (g){ g.x = x; g.y = y; }
+          if (sp.el){ sp.el.style.left = x+'px'; sp.el.style.top = y+'px'; }
+        } else if (sp.type==='textbox'){
+          const x = sp.x + dx, y = sp.y + dy;
+          if (sp.el){ sp.el.style.left = x+'px'; sp.el.style.top = y+'px'; }
+        } else if (sp.type==='check'){
+          const x = sp.x + dx, y = sp.y + dy;
+          const c = getChecklistById(sid);
+          if (c){ c.x = x; c.y = y; }
+          if (sp.el){ sp.el.style.left = x+'px'; sp.el.style.top = y+'px'; }
+        }
+      });
+
+      try{ if (typeof updateAllWires==='function') updateAllWires(); }catch(_){}
+    }
+
+    function onUp(){
+      window.removeEventListener('mousemove', onMove, {passive:false});
+      window.removeEventListener('mouseup', onUp,   {passive:false});
+      if (hostEl && hostEl.style) hostEl.style.cursor = prevCursor || '';
+      document.body.style.userSelect = prevUserSelect;
+    }
+
+    window.addEventListener('mousemove', onMove, {passive:false});
+    window.addEventListener('mouseup', onUp,   {passive:false});
+    return true;
+  }
+
+  // Capture early so we can cancel the app's native node/group drag when needed
+  document.addEventListener('mousedown', function(e){
+    const host = e.target.closest('.node, .group, .textbox');
+    if (!host) return;
+    if (e.button !== 0) return; // left only
+    if (!window.state || !(window.state.selection && window.state.selection.size)) return;
+
+    // If clicked item isn't yet in selection, add it without clearing
+    const hid = (host && host.dataset && host.dataset.id) ? host.dataset.id : null;
+    if (hid && !window.state.selection.has(hid)) {
+      try{ window.state.selection.add(hid); host.classList.add('selected'); }catch(_){}
+    }
+
+    // Only take over when at least one checklist is part of the selection
+    if (!anyChecklistSelected()) return;
+
+    // Start unified drag and block the native handler
+    startUnifiedDrag(e, host);
+  }, true); // capture
+})();
+</script>
 
     <script id="retro-theme-persist">
     (function(){
@@ -6616,7 +7158,433 @@ function resolveElementById(id){
         }
       }catch(_){}
     })();
-    </script>
     
+
+// --- PATCH: reusable duplication helpers ---
+
+// --- PATCH: reusable deletion helpers ---
+function deleteGroupObject(group){
+  if (!group) return;
+  if (state && state.selection) state.selection.delete(group.id);
+  if (group.el && group.el.remove) try { group.el.remove(); } catch(_){}
+  if (window.state && Array.isArray(state.groups)){
+    state.groups = state.groups.filter(g => g !== group);
+  }
+}
+
+function deleteSelection(anchorId){
+  if (!window.state) return;
+  const selection = (state && state.selection) ? state.selection : new Set();
+  const ids = (selection.size > 1 && selection.has(anchorId))
+    ? Array.from(selection)
+    : [anchorId];
+
+  ids.forEach((sid)=>{
+    // remove sid from active selection
+    if (state && state.selection) state.selection.delete(sid);
+
+    // Node
+    if (typeof getNodeById === 'function'){
+      const n = getNodeById(sid);
+      if (n && typeof deleteNode === 'function'){ deleteNode(n); return; }
+    }
+    // Group (inline behavior from group menu)
+    if (typeof getGroupById === 'function'){
+      const g = getGroupById(sid);
+      if (g){ deleteGroupObject(g); return; }
+    }
+    // Textbox
+    if (typeof getTextboxById === 'function'){
+      const t = getTextboxById(sid);
+      if (t && typeof removeTextbox === 'function'){ removeTextbox(t); return; }
+    }
+    // Checklist
+    if (Array.isArray(window.checklistNodes)){
+      const c = window.checklistNodes.find(x => x && x.id === sid);
+      if (c && c.element && typeof deleteChecklistNode === 'function'){
+        deleteChecklistNode(c.element); return;
+      }
+      // fallback: query by data-id
+      const el = document.querySelector(`[data-id="${CSS.escape(String(sid))}"].checknode`);
+      if (el && typeof deleteChecklistNode === 'function'){ deleteChecklistNode(el); return; }
+    }
+  });
+
+  if (typeof updateAllWires === 'function'){
+    try { updateAllWires(); } catch(_) {}
+  }
+  if (typeof markDirty === 'function') markDirty('delete');
+}
+
+
+// Reuse the same behavior your group menu already performs for a single group
+function duplicateGroup(group){
+  if (!group || typeof createGroup !== 'function') return null;
+  const g2 = createGroup({ x: group.x + 20, y: group.y + 20 });
+  if (g2){
+    g2.w = group.w; g2.h = group.h;
+    g2.color = group.color; g2.title = (group.title || ('Group '+g2.id)) + ' copy';
+    g2.locked = !!group.locked;
+    if (g2.el){
+      g2.el.style.width  = g2.w + 'px';
+      g2.el.style.height = g2.h + 'px';
+      g2.el.style.borderColor = g2.color;
+      const tt = g2.el.querySelector('.title'); if (tt) tt.textContent = g2.title;
+      g2.el.classList.toggle('locked', !!g2.locked);
+      g2.el.dataset.locked = g2.locked ? '1' : '0';
+      g2.el.style.cursor = g2.locked ? 'default' : 'grab';
+    }
+  }
+  return g2;
+}
+
+// Duplicate either the entire selection (if the anchor is selected and multiple are selected)
+// or just the anchor itself.
+function duplicateSelection(anchorId){
+  if (!window.state) return;
+  const selection = (state && state.selection) ? state.selection : new Set();
+  const ids = (selection.size > 1 && selection.has(anchorId))
+    ? Array.from(selection)
+    : [anchorId];
+
+  ids.forEach((sid)=>{
+    // Node
+    if (typeof getNodeById === 'function'){
+      const n = getNodeById(sid);
+      if (n && typeof duplicateNode === 'function'){ duplicateNode(n); return; }
+    }
+    // Group
+    if (typeof getGroupById === 'function'){
+      const g = getGroupById(sid);
+      if (g){ duplicateGroup(g); return; }
+    }
+    // Textbox
+    if (typeof getTextboxById === 'function'){
+      const t = getTextboxById(sid);
+      if (t && typeof duplicateTextbox === 'function'){ duplicateTextbox(t); return; }
+    }
+    // Checklist
+    if (Array.isArray(window.checklistNodes)){
+      const c = window.checklistNodes.find(x => x && x.id === sid);
+      if (c && c.element && typeof duplicateChecklistNode === 'function'){
+        duplicateChecklistNode(c.element);
+        return;
+      }
+    }
+  });
+}
+
+</script>
+    
+
+<!-- === PATCH: Copy / Paste (Ctrl/Cmd+C, Ctrl/Cmd+V) + duplicateSelection fallback === -->
+<script>
+(function(){
+  // Avoid intercepting when the user is typing in inputs or contenteditable
+  function isTyping(e){
+    const ae = document.activeElement;
+    if (!ae) return false;
+    const tag = (ae.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea') return true;
+    if (ae.isContentEditable) return true;
+    return false;
+  }
+
+  // Safe accessors that defer to existing app helpers if present
+  const _getNodeById = (typeof window.getNodeById === 'function')
+    ? window.getNodeById
+    : function(id){ try { return (window.state && state.nodes || []).find(n => n.id === id); } catch(_){ return null; } };
+
+  const _getGroupById = (typeof window.getGroupById === 'function')
+    ? window.getGroupById
+    : function(id){ try { return (window.state && state.groups || []).find(g => g.id === id); } catch(_){ return null; } };
+
+  const _getTextboxById = (typeof window.getTextboxById === 'function')
+    ? window.getTextboxById
+    : function(id){ try { return (window.state && state.textboxes || []).find(t => t.id === id); } catch(_){ return null; } };
+
+  function _getElementById(id){
+    try { return document.querySelector(`[data-id="${CSS.escape(String(id))}"]`); }
+    catch(_){ return document.querySelector(`[data-id="${id}"]`); }
+  }
+
+  // Checklists live outside state.*; try both registry + DOM
+  function resolveChecklistById(id){
+    try{
+      if (Array.isArray(window.checklistNodes)) {
+        const match = window.checklistNodes.find(c => c && (c.id === id || (c.element && c.element.dataset && c.element.dataset.id === String(id))));
+        if (match) return match;
+      }
+    }catch(_){}
+    const el = _getElementById(id) || document.querySelector(`.checknode[data-id="${id}"]`);
+    if (!el) return null;
+    const textEl = el.querySelector('.checktext');
+    return {
+      id: String(id),
+      x: parseFloat(el.style.left) || (el.offsetLeft || 0),
+      y: parseFloat(el.style.top)  || (el.offsetTop  || 0),
+      w: parseFloat(el.style.width)  || el.offsetWidth  || undefined,
+      h: parseFloat(el.style.height) || el.offsetHeight || undefined,
+      text: (textEl && textEl.innerHTML) || '',
+      checked: el.classList.contains('checked'),
+      element: el,
+    };
+  }
+
+  function getSelectionIds(){
+    const sel = (window.state && state.selection) ? state.selection : new Set();
+    return Array.from(sel);
+  }
+
+  function captureSelectionToClipboard(){
+    const ids = getSelectionIds();
+    if (!ids.length) return null;
+
+    const items = [];
+    let minX = Infinity, minY = Infinity;
+
+    ids.forEach(id => {
+      let recorded = false;
+
+      // Node
+      const n = _getNodeById(id);
+      if (n && n.el){
+        const payload = {
+          kind: n.kind,
+          assetUrl: n.assetUrl,
+          w: n.w, h: n.h,
+          x: n.x, y: n.y,
+          meta: (n.meta ? JSON.parse(JSON.stringify(n.meta)) : {}),
+          title: n.title || ''
+        };
+        items.push({type:'node', payload});
+        minX = Math.min(minX, payload.x || 0);
+        minY = Math.min(minY, payload.y || 0);
+        recorded = true;
+      }
+
+      if (recorded) return;
+
+      // Group
+      const g = _getGroupById(id);
+      if (g && g.el){
+        const color = (g.color) || (g.el && getComputedStyle(g.el).borderColor);
+        const payload = {
+          x: g.x, y: g.y, w: g.w, h: g.h,
+          title: g.title || '',
+          color: color,
+          locked: !!g.locked
+        };
+        items.push({type:'group', payload});
+        minX = Math.min(minX, payload.x || 0);
+        minY = Math.min(minY, payload.y || 0);
+        recorded = true;
+      }
+
+      if (recorded) return;
+
+      // Textbox
+      const t = _getTextboxById(id);
+      if (t && t.element){
+        const payload = {
+          x: parseFloat(t.element.style.left) || 0,
+          y: parseFloat(t.element.style.top)  || 0,
+          w: parseFloat(t.element.style.width)  || t.element.offsetWidth,
+          h: parseFloat(t.element.style.height) || t.element.offsetHeight,
+          html: t.element.innerHTML,
+          hasPlaceholder: !!t.hasPlaceholder
+        };
+        items.push({type:'textbox', payload});
+        minX = Math.min(minX, payload.x || 0);
+        minY = Math.min(minY, payload.y || 0);
+        recorded = true;
+      }
+
+      if (recorded) return;
+
+      // Checklist
+      const c = resolveChecklistById(id);
+      if (c){
+        const nodeEl = c.element;
+        const textEl = nodeEl ? nodeEl.querySelector('.checktext') : null;
+        const payload = {
+          x: c.x, y: c.y,
+          w: c.w, h: c.h,
+          text: (textEl && textEl.innerHTML) || c.text || '',
+          checked: !!c.checked || (nodeEl && nodeEl.classList.contains('checked')),
+          styles: {
+            bg: nodeEl ? nodeEl.style.backgroundColor : undefined,
+            border: nodeEl ? nodeEl.style.borderColor   : undefined,
+            color: nodeEl ? nodeEl.style.color          : undefined
+          },
+          fontSize: (textEl && parseFloat(getComputedStyle(textEl).fontSize)) || undefined
+        };
+        items.push({type:'checklist', payload});
+        minX = Math.min(minX, payload.x || 0);
+        minY = Math.min(minY, payload.y || 0);
+      }
+    });
+
+    const clip = { items, anchor:{x:minX, y:minY}, ts: Date.now() };
+    window.__mbClipboard = clip;
+
+    // Best-effort: also drop a lightweight JSON onto the system clipboard (safe to fail)
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        const portable = JSON.stringify({__moodboardClip: clip});
+        navigator.clipboard.writeText(portable).catch(()=>{});
+      }
+    } catch(_) {}
+
+    return clip;
+  }
+
+  function pasteFromClipboard(offset){
+    const clip = window.__mbClipboard;
+    if (!clip || !Array.isArray(clip.items) || clip.items.length === 0) return [];
+
+    const createdIds = [];
+    const dx = (offset && typeof offset.dx === 'number') ? offset.dx : 24;
+    const dy = (offset && typeof offset.dy === 'number') ? offset.dy : 24;
+    const minX = (clip.anchor && typeof clip.anchor.x === 'number') ? clip.anchor.x : 0;
+    const minY = (clip.anchor && typeof clip.anchor.y === 'number') ? clip.anchor.y : 0;
+
+    clip.items.forEach(it => {
+      const p = it.payload || {};
+
+      if (it.type === 'node' && typeof window.createNode === 'function'){
+        const at = { x: (p.x - minX) + (minX + dx), y: (p.y - minY) + (minY + dy) };
+        const node = createNode(p.kind, p.assetUrl, {w:p.w, h:p.h}, at, p.meta);
+        if (node){
+          if (p.title != null) node.title = p.title;
+          createdIds.push(node.id);
+        }
+        return;
+      }
+
+      if (it.type === 'group' && typeof window.createGroup === 'function'){
+        const group = createGroup({x: p.x + dx, y: p.y + dy});
+        if (group){
+          if (group.el){
+            group.el.style.width  = (typeof p.w === 'number') ? (p.w + 'px') : p.w;
+            group.el.style.height = (typeof p.h === 'number') ? (p.h + 'px') : p.h;
+            group.w = p.w; group.h = p.h;
+            const titleEl = group.el.querySelector('.title');
+            if (titleEl && p.title != null) titleEl.textContent = p.title;
+            if (p.color) group.el.style.borderColor = p.color;
+            if (p.locked){ group.locked = true; group.el.classList.add('locked'); group.el.dataset.locked = '1'; group.el.style.cursor = 'default'; }
+          }
+          createdIds.push(group.id);
+        }
+        return;
+      }
+
+      if (it.type === 'textbox' && typeof window.createFloatingTextbox === 'function'){
+        const tb = createFloatingTextbox({x: p.x + dx, y: p.y + dy});
+        if (tb && tb.element){
+          tb.element.style.width  = (typeof p.w === 'number') ? (p.w + 'px') : (p.w || tb.element.style.width);
+          tb.element.style.height = (typeof p.h === 'number') ? (p.h + 'px') : (p.h || tb.element.style.height);
+          if (!p.hasPlaceholder){
+            tb.element.innerHTML = p.html;
+            tb.hasPlaceholder = false;
+            tb.element.blur();
+          }
+          createdIds.push(tb.id);
+        }
+        return;
+      }
+
+      if (it.type === 'checklist' && typeof window.addChecklistNodeAt === 'function'){
+        const node = window.addChecklistNodeAt(p.x + dx, p.y + dy, p.text, p.checked, p.w, p.h, {bg:p.styles && p.styles.bg, border:p.styles && p.styles.border, color:p.styles && p.styles.color, html:p.textHtml}, undefined, p.fontSize);
+        const nid = node && (node.id || (node.element && node.element.dataset && node.element.dataset.id));
+        if (nid) createdIds.push(nid);
+        return;
+      }
+    });
+
+    // Select the newly created items
+    try {
+      if (typeof window.clearSelection === 'function') clearSelection();
+      const sel = (window.state && state.selection) ? state.selection : new Set();
+      createdIds.forEach(id => {
+        try{
+          sel.add(id);
+          const el = _getElementById(id);
+          if (el) el.classList.add('selected');
+        }catch(_){}
+      });
+    } catch(_){}
+
+    try { if (typeof window.updateAllWires === 'function') updateAllWires(); } catch(_){}
+    try { if (typeof window.markDirty === 'function') markDirty('paste'); } catch(_){}
+
+    return createdIds;
+  }
+
+  // Expose helpers
+  window.copySelectionToClipboard = captureSelectionToClipboard;
+  window.pasteClipboard = pasteFromClipboard;
+
+  // Provide a robust multi-select duplicate if the app doesn't already define one
+  if (typeof window.duplicateSelection !== 'function'){
+    window.duplicateSelection = function(anchorId){
+      const sel = (window.state && state.selection) ? state.selection : new Set();
+
+      // If user clicked on an item that is NOT part of a multi-selection,
+      // temporarily duplicate just that one.
+      let restore = null;
+      if (!(sel.size > 1 && sel.has(anchorId))){
+        restore = new Set(sel);
+        try{
+          if (typeof window.clearSelection === 'function') clearSelection();
+          sel.add(anchorId);
+          const el = _getElementById(anchorId);
+          if (el) el.classList.add('selected');
+        }catch(_){}
+      }
+
+      const had = captureSelectionToClipboard();
+      const created = pasteFromClipboard({dx:24,dy:24});
+
+      // Restore previous selection if we changed it
+      if (restore){
+        try{
+          if (typeof window.clearSelection === 'function') clearSelection();
+          restore.forEach(id => {
+            try {
+              sel.add(id);
+              const el = _getElementById(id);
+              if (el) el.classList.add('selected');
+            }catch(_){}
+          });
+        }catch(_){}
+      }
+
+      return created;
+    };
+  }
+
+  // Keyboard bindings (capture to outrank default handlers when needed)
+  document.addEventListener('keydown', function(e){
+    const key = (e.key || '').toLowerCase();
+    const withCmd = e.metaKey || e.ctrlKey;
+
+    if (withCmd && key === 'c'){
+      if (isTyping(e)) return; // let normal copy work when typing
+      const clip = captureSelectionToClipboard();
+      if (clip){ e.preventDefault(); console.log('[Copy] Captured selection:', clip); }
+      return;
+    }
+
+    if (withCmd && key === 'v'){
+      if (isTyping(e)) return; // let normal paste work when typing
+      const created = pasteFromClipboard({dx:24,dy:24});
+      if (created && created.length){ e.preventDefault(); console.log('[Paste] Created:', created); }
+      return;
+    }
+  }, true);
+})();
+</script>
+
 </body>
 </html>
