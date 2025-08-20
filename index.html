@@ -2211,75 +2211,69 @@ body.retro #tbCtxMenu{
       // Handle dropped files
       document.addEventListener('drop', handleDrop, false);
       
-      
-function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt && dt.files ? dt.files : [];
+      function handleDrop(e) {
+const dt = e.dataTransfer;
+const files = dt && dt.files ? dt.files : [];
+const dropPos = screenToWorld(e.clientX, e.clientY);
 
-        const rect = viewport.getBoundingClientRect();
-        const dropPos = screenToWorld(e.clientX, e.clientY);
+// Files (existing behavior)
+if (files && files.length > 0) {
+  handleFiles(files, dropPos);
+}
 
-        // 1) Handle files as before
-        if (files && files.length > 0) {
-          handleFiles(files, dropPos);
-        }
+// URLs (text/uri-list, text/plain, text/html)
+let urls = [];
+try {
+  const uriList = dt.getData && dt.getData('text/uri-list') || '';
+  if (uriList) {
+    uriList.split(/\r?\n/).forEach(u => { if (u && !u.startsWith('#')) urls.push(u.trim()); });
+  }
+} catch(_) {}
 
-        // 2) Handle URLs (text/uri-list, text/plain, text/html)
-        let urls = [];
-        try {
-          const uriList = dt.getData && dt.getData('text/uri-list') || '';
-          if (uriList) {
-            uriList.split(/\r?\n/).forEach(u => { if (u && !u.startsWith('#')) urls.push(u.trim()); });
-          }
-        } catch(_) {}
+try {
+  const plain = dt.getData && dt.getData('text/plain') || '';
+  if (plain) {
+    plain.split(/\s+/).forEach(tok => {
+      if (/^(https?:|data:image\/)/i.test(tok)) urls.push(tok.trim());
+    });
+  }
+} catch(_) {}
 
-        try {
-          const plain = dt.getData && dt.getData('text/plain') || '';
-          if (plain) {
-            // Extract http(s) or data:image URLs in the text
-            plain.split(/\s+/).forEach(tok => {
-              if (/^(https?:|data:image\/)/i.test(tok)) urls.push(tok.trim());
-            });
-          }
-        } catch(_) {}
+try {
+  const html = dt.getData && dt.getData('text/html') || '';
+  if (html) {
+    const hrefs = html.match(/href\s*=\s*['"]([^'"]+)['"]/ig) || [];
+    hrefs.forEach(h => {
+      const m = h.match(/href\s*=\s*['"]([^'"]+)['"]/i);
+      if (m && m[1]) urls.push(m[1].trim());
+    });
+    const srcs = html.match(/src\s*=\s*['"]([^'"]+)['"]/ig) || [];
+    srcs.forEach(s => {
+      const m = s.match(/src\s*=\s*['"]([^'"]+)['"]/i);
+      if (m && m[1]) urls.push(m[1].trim());
+    });
+  }
+} catch(_) {}
 
-        try {
-          const html = dt.getData && dt.getData('text/html') || '';
-          if (html) {
-            const hrefs = html.match(/href\s*=\s*['"]([^'"]+)['"]/ig) || [];
-            hrefs.forEach(h => {
-              const m = h.match(/href\s*=\s*['"]([^'"]+)['"]/i);
-              if (m && m[1]) urls.push(m[1].trim());
-            });
-            const srcs = html.match(/src\s*=\s*['"]([^'"]+)['"]/ig) || [];
-            srcs.forEach(s => {
-              const m = s.match(/src\s*=\s*['"]([^'"]+)['"]/i);
-              if (m && m[1]) urls.push(m[1].trim());
-            });
-          }
-        } catch(_) {}
+const seen = new Set();
+urls = urls.filter(u => {
+  if (!u) return false;
+  if (!/^(https?:|data:image\/|blob:)/i.test(u)) return false;
+  const key = u.replace(/#.*$/, '');
+  if (seen.has(key)) return false;
+  seen.add(key);
+  return true;
+});
 
-        // De-dupe and allow only supported schemes
-        const seen = new Set();
-        urls = urls.filter(u => {
-          if (!u) return false;
-          if (!/^(https?:|data:image\/|blob:)/i.test(u)) return false;
-          const key = u.replace(/#.*$/, '');
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
-
-        if (urls.length > 0) {
-          const step = 24;
-          urls.forEach((u, i) => {
-            const at = { x: dropPos.x + (i%5)*step, y: dropPos.y + Math.floor(i/5)*step };
-            try { importFromUrl(u, at); } catch(err){ console.warn('importFromUrl failed for', u, err); }
-          });
-        }
-      }
-
-      }
+if (urls.length > 0) {
+  const step = 24;
+  urls.forEach((u, i) => {
+    const at = { x: dropPos.x + (i%5)*step, y: dropPos.y + Math.floor(i/5)*step };
+    try { importFromUrl(u, at); } catch(err){ console.warn('importFromUrl failed for', u, err); }
+  });
+}
+}
+    }
 
     function openMapModal() {
       console.log('Opening map modal...');
@@ -3330,7 +3324,7 @@ const toolbar = document.createElement('div');
 
       setupTitleRename(title, node);
 
-      if(kind==='image' || kind==='youtube' || kind==='pdf' || kind==='map' || kind==='website' || kind==='twitter'){
+      if(kind==='image' || kind==='youtube' || kind==='pdf' || kind==='map' || kind==='website' || kind==='twitter' || kind==='video'){
         const res = document.createElement('div'); 
         res.title="Resize";
         res.style.position='absolute'; res.style.width='12px'; res.style.height='12px';
@@ -3343,16 +3337,30 @@ const toolbar = document.createElement('div');
           e.stopPropagation();
           const start = {x:e.clientX, y:e.clientY, w:node.w, h:node.h};
           function mm(ev){
-                        const dx = (ev.clientX-start.x)/state.zoom;
+                                    const dx = (ev.clientX-start.x)/state.zoom;
             const dy = (ev.clientY-start.y)/state.zoom;
-            node.w = Math.max(160, start.w + dx);
-            node.h = Math.max(120, start.h + dy);
+            if (kind==='video'){
+              const aspect = (start.w > 0 && start.h > 0) ? (start.w / start.h) : (16/9);
+              let newW, newH;
+              if (Math.abs(dx) >= Math.abs(dy)){
+                newW = Math.max(160, start.w + dx);
+                newH = Math.max(1, newW / aspect);
+              } else {
+                newH = Math.max(120, start.h + dy);
+                newW = Math.max(1, newH * aspect);
+              }
+              node.w = newW;
+              node.h = newH;
+            } else {
+              node.w = Math.max(160, start.w + dx);
+              node.h = Math.max(120, start.h + dy);
+            }
+            
             el.style.width = node.w+'px'; 
             el.style.height = node.h+'px';
             if(node.metaTextbox){
               node.metaTextbox.style.left = (node.w + 16) + 'px';
-            }
-}
+            }}
           function up(){ 
             window.removeEventListener('mousemove', mm); 
             window.removeEventListener('mouseup', up); 
@@ -7334,10 +7342,9 @@ function duplicateSelection(anchorId){
 </script>
     
 
-<!-- === PATCH: Copy / Paste (Ctrl/Cmd+C, Ctrl/Cmd+V) + duplicateSelection fallback === -->
+<!-- === PATCH: Copy/Paste (Ctrl/Cmd+C, Ctrl/Cmd+V) with Paste at Cursor === -->
 <script>
 (function(){
-  // Avoid intercepting when the user is typing in inputs or contenteditable
   function isTyping(e){
     const ae = document.activeElement;
     if (!ae) return false;
@@ -7346,299 +7353,64 @@ function duplicateSelection(anchorId){
     if (ae.isContentEditable) return true;
     return false;
   }
-
-  // Safe accessors that defer to existing app helpers if present
-  const _getNodeById = (typeof window.getNodeById === 'function')
-    ? window.getNodeById
-    : function(id){ try { return (window.state && state.nodes || []).find(n => n.id === id); } catch(_){ return null; } };
-
-  const _getGroupById = (typeof window.getGroupById === 'function')
-    ? window.getGroupById
-    : function(id){ try { return (window.state && state.groups || []).find(g => g.id === id); } catch(_){ return null; } };
-
-  const _getTextboxById = (typeof window.getTextboxById === 'function')
-    ? window.getTextboxById
-    : function(id){ try { return (window.state && state.textboxes || []).find(t => t.id === id); } catch(_){ return null; } };
-
-  function _getElementById(id){
-    try { return document.querySelector(`[data-id="${CSS.escape(String(id))}"]`); }
-    catch(_){ return document.querySelector(`[data-id="${id}"]`); }
-  }
-
-  // Checklists live outside state.*; try both registry + DOM
+  const _getNodeById = (typeof window.getNodeById === 'function') ? window.getNodeById : function(id){ try { return (window.state && state.nodes || []).find(n => n.id === id); } catch(_){ return null; } };
+  const _getGroupById = (typeof window.getGroupById === 'function') ? window.getGroupById : function(id){ try { return (window.state && state.groups || []).find(g => g.id === id); } catch(_){ return null; } };
+  const _getTextboxById = (typeof window.getTextboxById === 'function') ? window.getTextboxById : function(id){ try { return (window.state && state.textboxes || []).find(t => t.id === id); } catch(_){ return null; } };
+  function _getElementById(id){ try { return document.querySelector(`[data-id="${CSS.escape(String(id))}"]`); } catch(_){ return document.querySelector(`[data-id="${id}"]`); } }
   function resolveChecklistById(id){
-    try{
-      if (Array.isArray(window.checklistNodes)) {
-        const match = window.checklistNodes.find(c => c && (c.id === id || (c.element && c.element.dataset && c.element.dataset.id === String(id))));
-        if (match) return match;
-      }
-    }catch(_){}
+    try{ if (Array.isArray(window.checklistNodes)) { const match = window.checklistNodes.find(c => c && (c.id === id || (c.element && c.element.dataset && c.element.dataset.id === String(id)))); if (match) return match; } }catch(_){}
     const el = _getElementById(id) || document.querySelector(`.checknode[data-id="${id}"]`);
-    if (!el) return null;
-    const textEl = el.querySelector('.checktext');
-    return {
-      id: String(id),
-      x: parseFloat(el.style.left) || (el.offsetLeft || 0),
-      y: parseFloat(el.style.top)  || (el.offsetTop  || 0),
-      w: parseFloat(el.style.width)  || el.offsetWidth  || undefined,
-      h: parseFloat(el.style.height) || el.offsetHeight || undefined,
-      text: (textEl && textEl.innerHTML) || '',
-      checked: el.classList.contains('checked'),
-      element: el,
-    };
+    if (!el) return null; const textEl = el.querySelector('.checktext');
+    return { id: String(id), x: parseFloat(el.style.left) || (el.offsetLeft || 0), y: parseFloat(el.style.top)  || (el.offsetTop  || 0), w: parseFloat(el.style.width)  || el.offsetWidth  || undefined, h: parseFloat(el.style.height) || el.offsetHeight || undefined, text: (textEl && textEl.innerHTML) || '', checked: el.classList.contains('checked'), element: el };
   }
-
-  function getSelectionIds(){
-    const sel = (window.state && state.selection) ? state.selection : new Set();
-    return Array.from(sel);
-  }
-
+  function getSelectionIds(){ const sel = (window.state && state.selection) ? state.selection : new Set(); return Array.from(sel); }
   function captureSelectionToClipboard(){
-    const ids = getSelectionIds();
-    if (!ids.length) return null;
-
-    const items = [];
-    let minX = Infinity, minY = Infinity;
-
+    const ids = getSelectionIds(); if (!ids.length) return null;
+    const items = []; let minX = Infinity, minY = Infinity;
     ids.forEach(id => {
       let recorded = false;
-
-      // Node
       const n = _getNodeById(id);
-      if (n && n.el){
-        const payload = {
-          kind: n.kind,
-          assetUrl: n.assetUrl,
-          w: n.w, h: n.h,
-          x: n.x, y: n.y,
-          meta: (n.meta ? JSON.parse(JSON.stringify(n.meta)) : {}),
-          title: n.title || ''
-        };
-        items.push({type:'node', payload});
-        minX = Math.min(minX, payload.x || 0);
-        minY = Math.min(minY, payload.y || 0);
-        recorded = true;
-      }
-
+      if (n && n.el){ const payload = { kind: n.kind, assetUrl: n.assetUrl, w: n.w, h: n.h, x: n.x, y: n.y, meta: (n.meta ? JSON.parse(JSON.stringify(n.meta)) : {}), title: n.title || '' }; items.push({type:'node', payload}); minX = Math.min(minX, payload.x || 0); minY = Math.min(minY, payload.y || 0); recorded = true; }
       if (recorded) return;
-
-      // Group
       const g = _getGroupById(id);
-      if (g && g.el){
-        const color = (g.color) || (g.el && getComputedStyle(g.el).borderColor);
-        const payload = {
-          x: g.x, y: g.y, w: g.w, h: g.h,
-          title: g.title || '',
-          color: color,
-          locked: !!g.locked
-        };
-        items.push({type:'group', payload});
-        minX = Math.min(minX, payload.x || 0);
-        minY = Math.min(minY, payload.y || 0);
-        recorded = true;
-      }
-
+      if (g && g.el){ const color = (g.color) || (g.el && getComputedStyle(g.el).borderColor); const payload = { x: g.x, y: g.y, w: g.w, h: g.h, title: g.title || '', color, locked: !!g.locked }; items.push({type:'group', payload}); minX = Math.min(minX, payload.x || 0); minY = Math.min(minY, payload.y || 0); recorded = true; }
       if (recorded) return;
-
-      // Textbox
       const t = _getTextboxById(id);
-      if (t && t.element){
-        const payload = {
-          x: parseFloat(t.element.style.left) || 0,
-          y: parseFloat(t.element.style.top)  || 0,
-          w: parseFloat(t.element.style.width)  || t.element.offsetWidth,
-          h: parseFloat(t.element.style.height) || t.element.offsetHeight,
-          html: t.element.innerHTML,
-          hasPlaceholder: !!t.hasPlaceholder
-        };
-        items.push({type:'textbox', payload});
-        minX = Math.min(minX, payload.x || 0);
-        minY = Math.min(minY, payload.y || 0);
-        recorded = true;
-      }
-
+      if (t && t.element){ const payload = { x: parseFloat(t.element.style.left) || 0, y: parseFloat(t.element.style.top)  || 0, w: parseFloat(t.element.style.width)  || t.element.offsetWidth, h: parseFloat(t.element.style.height) || t.element.offsetHeight, html: t.element.innerHTML, hasPlaceholder: !!t.hasPlaceholder }; items.push({type:'textbox', payload}); minX = Math.min(minX, payload.x || 0); minY = Math.min(minY, payload.y || 0); recorded = true; }
       if (recorded) return;
-
-      // Checklist
       const c = resolveChecklistById(id);
-      if (c){
-        const nodeEl = c.element;
-        const textEl = nodeEl ? nodeEl.querySelector('.checktext') : null;
-        const payload = {
-          x: c.x, y: c.y,
-          w: c.w, h: c.h,
-          text: (textEl && textEl.innerHTML) || c.text || '',
-          checked: !!c.checked || (nodeEl && nodeEl.classList.contains('checked')),
-          styles: {
-            bg: nodeEl ? nodeEl.style.backgroundColor : undefined,
-            border: nodeEl ? nodeEl.style.borderColor   : undefined,
-            color: nodeEl ? nodeEl.style.color          : undefined
-          },
-          fontSize: (textEl && parseFloat(getComputedStyle(textEl).fontSize)) || undefined
-        };
-        items.push({type:'checklist', payload});
-        minX = Math.min(minX, payload.x || 0);
-        minY = Math.min(minY, payload.y || 0);
-      }
+      if (c){ const nodeEl = c.element; const textEl = nodeEl ? nodeEl.querySelector('.checktext') : null; const payload = { x: c.x, y: c.y, w: c.w, h: c.h, text: (textEl && textEl.innerHTML) || c.text || '', checked: !!c.checked || (nodeEl && nodeEl.classList.contains('checked')), styles: { bg: nodeEl ? nodeEl.style.backgroundColor : undefined, border: nodeEl ? nodeEl.style.borderColor   : undefined, color: nodeEl ? nodeEl.style.color : undefined }, fontSize: (textEl && parseFloat(getComputedStyle(textEl).fontSize)) || undefined }; items.push({type:'checklist', payload}); minX = Math.min(minX, payload.x || 0); minY = Math.min(minY, payload.y || 0); }
     });
-
-    const clip = { items, anchor:{x:minX, y:minY}, ts: Date.now() };
-    window.__mbClipboard = clip;
-
-    // Best-effort: also drop a lightweight JSON onto the system clipboard (safe to fail)
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        const portable = JSON.stringify({__moodboardClip: clip});
-        navigator.clipboard.writeText(portable).catch(()=>{});
-      }
-    } catch(_) {}
-
+    const clip = { items, anchor:{x:minX, y:minY}, ts: Date.now() }; window.__mbClipboard = clip;
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { const portable = JSON.stringify({__moodboardClip: clip}); navigator.clipboard.writeText(portable).catch(()=>{}); } } catch(_) {}
     return clip;
   }
-
-  function pasteFromClipboard(offset){
-    const clip = window.__mbClipboard;
-    if (!clip || !Array.isArray(clip.items) || clip.items.length === 0) return [];
-
-    const createdIds = [];
-    const dx = (offset && typeof offset.dx === 'number') ? offset.dx : 24;
-    const dy = (offset && typeof offset.dy === 'number') ? offset.dy : 24;
-    const minX = (clip.anchor && typeof clip.anchor.x === 'number') ? clip.anchor.x : 0;
-    const minY = (clip.anchor && typeof clip.anchor.y === 'number') ? clip.anchor.y : 0;
-
+  function pasteFromClipboard(opts){
+    const clip = window.__mbClipboard; if (!clip || !Array.isArray(clip.items) || clip.items.length === 0) return [];
+    const createdIds = []; const dx = (opts && typeof opts.dx === 'number') ? opts.dx : 24; const dy = (opts && typeof opts.dy === 'number') ? opts.dy : 24;
+    const minX = (clip.anchor && typeof clip.anchor.x === 'number') ? clip.anchor.x : 0; const minY = (clip.anchor && typeof clip.anchor.y === 'number') ? clip.anchor.y : 0;
+    const hasAt = !!(opts && opts.at && typeof opts.at.x==='number' && typeof opts.at.y==='number'); const baseX = hasAt ? opts.at.x : (minX + dx); const baseY = hasAt ? opts.at.y : (minY + dy);
     clip.items.forEach(it => {
       const p = it.payload || {};
-
-      if (it.type === 'node' && typeof window.createNode === 'function'){
-        const at = { x: (p.x - minX) + (minX + dx), y: (p.y - minY) + (minY + dy) };
-        const node = createNode(p.kind, p.assetUrl, {w:p.w, h:p.h}, at, p.meta);
-        if (node){
-          if (p.title != null) node.title = p.title;
-          createdIds.push(node.id);
-        }
-        return;
-      }
-
-      if (it.type === 'group' && typeof window.createGroup === 'function'){
-        const group = createGroup({x: p.x + dx, y: p.y + dy});
-        if (group){
-          if (group.el){
-            group.el.style.width  = (typeof p.w === 'number') ? (p.w + 'px') : p.w;
-            group.el.style.height = (typeof p.h === 'number') ? (p.h + 'px') : p.h;
-            group.w = p.w; group.h = p.h;
-            const titleEl = group.el.querySelector('.title');
-            if (titleEl && p.title != null) titleEl.textContent = p.title;
-            if (p.color) group.el.style.borderColor = p.color;
-            if (p.locked){ group.locked = true; group.el.classList.add('locked'); group.el.dataset.locked = '1'; group.el.style.cursor = 'default'; }
-          }
-          createdIds.push(group.id);
-        }
-        return;
-      }
-
-      if (it.type === 'textbox' && typeof window.createFloatingTextbox === 'function'){
-        const tb = createFloatingTextbox({x: p.x + dx, y: p.y + dy});
-        if (tb && tb.element){
-          tb.element.style.width  = (typeof p.w === 'number') ? (p.w + 'px') : (p.w || tb.element.style.width);
-          tb.element.style.height = (typeof p.h === 'number') ? (p.h + 'px') : (p.h || tb.element.style.height);
-          if (!p.hasPlaceholder){
-            tb.element.innerHTML = p.html;
-            tb.hasPlaceholder = false;
-            tb.element.blur();
-          }
-          createdIds.push(tb.id);
-        }
-        return;
-      }
-
-      if (it.type === 'checklist' && typeof window.addChecklistNodeAt === 'function'){
-        const node = window.addChecklistNodeAt(p.x + dx, p.y + dy, p.text, p.checked, p.w, p.h, {bg:p.styles && p.styles.bg, border:p.styles && p.styles.border, color:p.styles && p.styles.color, html:p.textHtml}, undefined, p.fontSize);
-        const nid = node && (node.id || (node.element && node.element.dataset && node.element.dataset.id));
-        if (nid) createdIds.push(nid);
-        return;
-      }
+      if (it.type === 'node' && typeof window.createNode === 'function'){ const at = { x: (p.x - minX) + baseX, y: (p.y - minY) + baseY }; const node = createNode(p.kind, p.assetUrl, {w:p.w, h:p.h}, at, p.meta); if (node){ if (p.title != null) node.title = p.title; createdIds.push(node.id); } return; }
+      if (it.type === 'group' && typeof window.createGroup === 'function'){ const group = createGroup({x: (p.x - minX) + baseX, y: (p.y - minY) + baseY}); if (group){ if (group.el){ group.el.style.width  = (typeof p.w === 'number') ? (p.w + 'px') : p.w; group.el.style.height = (typeof p.h === 'number') ? (p.h + 'px') : p.h; group.w = p.w; group.h = p.h; const titleEl = group.el.querySelector('.title'); if (titleEl && p.title != null) titleEl.textContent = p.title; if (p.color) group.el.style.borderColor = p.color; if (p.locked){ group.locked = true; group.el.classList.add('locked'); group.el.dataset.locked = '1'; group.el.style.cursor = 'default'; } } createdIds.push(group.id); } return; }
+      if (it.type === 'textbox' && typeof window.createFloatingTextbox === 'function'){ const tb = createFloatingTextbox({x: (p.x - minX) + baseX, y: (p.y - minY) + baseY}); if (tb && tb.element){ tb.element.style.width  = (typeof p.w === 'number') ? (p.w + 'px') : (p.w || tb.element.style.width); tb.element.style.height = (typeof p.h === 'number') ? (p.h + 'px') : (p.h || tb.element.style.height); if (!p.hasPlaceholder){ tb.element.innerHTML = p.html; tb.hasPlaceholder = false; tb.element.blur(); } createdIds.push(tb.id); } return; }
+      if (it.type === 'checklist' && typeof window.addChecklistNodeAt === 'function'){ const node = window.addChecklistNodeAt((p.x - minX) + baseX, (p.y - minY) + baseY, p.text, p.checked, p.w, p.h, {bg:p.styles && p.styles.bg, border:p.styles && p.styles.border, color:p.styles && p.styles.color, html:p.textHtml}, undefined, p.fontSize); const nid = node && (node.id || (node.element && node.element.dataset && node.element.dataset.id)); if (nid) createdIds.push(nid); return; }
     });
-
-    // Select the newly created items
-    try {
-      if (typeof window.clearSelection === 'function') clearSelection();
-      const sel = (window.state && state.selection) ? state.selection : new Set();
-      createdIds.forEach(id => {
-        try{
-          sel.add(id);
-          const el = _getElementById(id);
-          if (el) el.classList.add('selected');
-        }catch(_){}
-      });
-    } catch(_){}
-
+    try { if (typeof window.clearSelection === 'function') clearSelection(); const sel = (window.state && state.selection) ? state.selection : new Set(); createdIds.forEach(id => { try{ sel.add(id); const el = _getElementById(id); if (el) el.classList.add('selected'); }catch(_){}}); } catch(_){}
     try { if (typeof window.updateAllWires === 'function') updateAllWires(); } catch(_){}
     try { if (typeof window.markDirty === 'function') markDirty('paste'); } catch(_){}
-
     return createdIds;
   }
-
-  // Expose helpers
-  window.copySelectionToClipboard = captureSelectionToClipboard;
-  window.pasteClipboard = pasteFromClipboard;
-
-  // Provide a robust multi-select duplicate if the app doesn't already define one
-  if (typeof window.duplicateSelection !== 'function'){
-    window.duplicateSelection = function(anchorId){
-      const sel = (window.state && state.selection) ? state.selection : new Set();
-
-      // If user clicked on an item that is NOT part of a multi-selection,
-      // temporarily duplicate just that one.
-      let restore = null;
-      if (!(sel.size > 1 && sel.has(anchorId))){
-        restore = new Set(sel);
-        try{
-          if (typeof window.clearSelection === 'function') clearSelection();
-          sel.add(anchorId);
-          const el = _getElementById(anchorId);
-          if (el) el.classList.add('selected');
-        }catch(_){}
-      }
-
-      const had = captureSelectionToClipboard();
-      const created = pasteFromClipboard({dx:24,dy:24});
-
-      // Restore previous selection if we changed it
-      if (restore){
-        try{
-          if (typeof window.clearSelection === 'function') clearSelection();
-          restore.forEach(id => {
-            try {
-              sel.add(id);
-              const el = _getElementById(id);
-              if (el) el.classList.add('selected');
-            }catch(_){}
-          });
-        }catch(_){}
-      }
-
-      return created;
-    };
-  }
-
-  // Keyboard bindings (capture to outrank default handlers when needed)
+  window.copySelectionToClipboard = captureSelectionToClipboard; window.pasteClipboard = pasteFromClipboard;
+  if (typeof window.__mbLastMouse === 'undefined') window.__mbLastMouse = {x:null, y:null, worldX:null, worldY:null, inside:false};
+  document.addEventListener('mousemove', function(e){
+    try{ const vp = document.getElementById('viewport') || window.viewport; if (!vp) return; const rect = vp.getBoundingClientRect(); const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom; window.__mbLastMouse.x = e.clientX; window.__mbLastMouse.y = e.clientY; window.__mbLastMouse.inside = inside; if (typeof window.screenToWorld === 'function'){ const w = screenToWorld(e.clientX, e.clientY); window.__mbLastMouse.worldX = w.x; window.__mbLastMouse.worldY = w.y; } }catch(_){}
+  }, true);
   document.addEventListener('keydown', function(e){
-    const key = (e.key || '').toLowerCase();
-    const withCmd = e.metaKey || e.ctrlKey;
-
-    if (withCmd && key === 'c'){
-      if (isTyping(e)) return; // let normal copy work when typing
-      const clip = captureSelectionToClipboard();
-      if (clip){ e.preventDefault(); console.log('[Copy] Captured selection:', clip); }
-      return;
-    }
-
-    if (withCmd && key === 'v'){
-      if (isTyping(e)) return; // let normal paste work when typing
-      const created = pasteFromClipboard({dx:24,dy:24});
-      if (created && created.length){ e.preventDefault(); console.log('[Paste] Created:', created); }
-      return;
-    }
+    const key = (e.key || '').toLowerCase(); const withCmd = e.metaKey || e.ctrlKey;
+    if (withCmd && key === 'c'){ if (isTyping(e)) return; const clip = captureSelectionToClipboard(); if (clip){ e.preventDefault(); console.log('[Copy] Captured selection:', clip); } return; }
+    if (withCmd && key === 'v'){ if (isTyping(e)) return; const base = (window.__mbLastMouse && window.__mbLastMouse.inside && typeof window.__mbLastMouse.worldX==='number') ? { at: { x: window.__mbLastMouse.worldX, y: window.__mbLastMouse.worldY } } : { dx:24, dy:24 }; const created = pasteFromClipboard(base); if (created && created.length){ e.preventDefault(); console.log('[Paste] Created:', created); } return; }
   }, true);
 })();
 </script>
