@@ -2211,17 +2211,75 @@ body.retro #tbCtxMenu{
       // Handle dropped files
       document.addEventListener('drop', handleDrop, false);
       
-      function handleDrop(e) {
+      
+function handleDrop(e) {
         const dt = e.dataTransfer;
-        const files = dt.files;
-        
-        if (files.length > 0) {
-          const rect = viewport.getBoundingClientRect();
-          const dropPos = screenToWorld(e.clientX, e.clientY);
+        const files = dt && dt.files ? dt.files : [];
+
+        const rect = viewport.getBoundingClientRect();
+        const dropPos = screenToWorld(e.clientX, e.clientY);
+
+        // 1) Handle files as before
+        if (files && files.length > 0) {
           handleFiles(files, dropPos);
         }
+
+        // 2) Handle URLs (text/uri-list, text/plain, text/html)
+        let urls = [];
+        try {
+          const uriList = dt.getData && dt.getData('text/uri-list') || '';
+          if (uriList) {
+            uriList.split(/\r?\n/).forEach(u => { if (u && !u.startsWith('#')) urls.push(u.trim()); });
+          }
+        } catch(_) {}
+
+        try {
+          const plain = dt.getData && dt.getData('text/plain') || '';
+          if (plain) {
+            // Extract http(s) or data:image URLs in the text
+            plain.split(/\s+/).forEach(tok => {
+              if (/^(https?:|data:image\/)/i.test(tok)) urls.push(tok.trim());
+            });
+          }
+        } catch(_) {}
+
+        try {
+          const html = dt.getData && dt.getData('text/html') || '';
+          if (html) {
+            const hrefs = html.match(/href\s*=\s*['"]([^'"]+)['"]/ig) || [];
+            hrefs.forEach(h => {
+              const m = h.match(/href\s*=\s*['"]([^'"]+)['"]/i);
+              if (m && m[1]) urls.push(m[1].trim());
+            });
+            const srcs = html.match(/src\s*=\s*['"]([^'"]+)['"]/ig) || [];
+            srcs.forEach(s => {
+              const m = s.match(/src\s*=\s*['"]([^'"]+)['"]/i);
+              if (m && m[1]) urls.push(m[1].trim());
+            });
+          }
+        } catch(_) {}
+
+        // De-dupe and allow only supported schemes
+        const seen = new Set();
+        urls = urls.filter(u => {
+          if (!u) return false;
+          if (!/^(https?:|data:image\/|blob:)/i.test(u)) return false;
+          const key = u.replace(/#.*$/, '');
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+        if (urls.length > 0) {
+          const step = 24;
+          urls.forEach((u, i) => {
+            const at = { x: dropPos.x + (i%5)*step, y: dropPos.y + Math.floor(i/5)*step };
+            try { importFromUrl(u, at); } catch(err){ console.warn('importFromUrl failed for', u, err); }
+          });
+        }
       }
-    }
+
+      }
 
     function openMapModal() {
       console.log('Opening map modal...');
@@ -2251,8 +2309,7 @@ body.retro #tbCtxMenu{
       const workingMapUrl = `https://maps.google.com/maps?q=${encodedStart}+to+${encodedDest}&output=embed`;
       
       const rect = viewport.getBoundingClientRect();
-      const pos = screenToWorld(rect.left + rect.width/2, rect.top + rect.height/2);
-      
+      const pos = (atPos && typeof atPos.x==='number' && typeof atPos.y==='number') ? atPos : screenToWorld(rect.left + rect.width/2, rect.top + rect.height/2);
       const size = { w: 560, h: 400 };
       const meta = {
         start: start,
@@ -2265,7 +2322,7 @@ body.retro #tbCtxMenu{
       return createNode('map', workingMapUrl, size, pos, meta);
     }
 
-    function importFromUrl(url){
+    function importFromUrl(url, atPos){
       console.log('Importing from URL:', url);
       
       const rect = viewport.getBoundingClientRect();
