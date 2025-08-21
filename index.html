@@ -1793,7 +1793,7 @@ body.retro #tbCtxMenu{
     <div class="url-types">
       Supports: YouTube (videos & Shorts), Instagram (posts & Reels), X/Twitter (posts), images (JPG, PNG, GIF, WEBP), video files (MP4, WEBM, OGG, HLS), and websites
     </div>
-    <input type="text" id="urlInput" placeholder="Paste URL here..." />
+    <input type="text" id="urlInput" placeholder="Paste URL here" />
     <div class="url-buttons">
       <button id="btnImportUrl">Import</button>
       <button id="btnClearUrl">Clear</button>
@@ -1835,11 +1835,11 @@ body.retro #tbCtxMenu{
       <h3>Add Google Map Route</h3>
       <div class="input-group">
         <label for="mapStart">Start Point:</label>
-        <input type="text" id="mapStart" placeholder="Enter starting location..." />
+        <input type="text" id="mapStart" placeholder="Enter starting location" />
       </div>
       <div class="input-group">
         <label for="mapDestination">Destination:</label>
-        <input type="text" id="mapDestination" placeholder="Enter destination..." />
+        <input type="text" id="mapDestination" placeholder="Enter destination" />
       </div>
       <div class="modal-buttons">
         <button id="mapCancel">Cancel</button>
@@ -1955,7 +1955,10 @@ body.retro #tbCtxMenu{
   </menu>
   <menu id="timestampMenu" class="menu">
     <button data-action="create-timezone">Time Zone</button>
-  </menu>
+  
+  <hr/>
+  <button data-action="delete" class="danger">Delete Timestamp</button>
+</menu>
 
 
 <menu id="textboxMenu" class="menu">
@@ -1975,7 +1978,7 @@ body.retro #tbCtxMenu{
   </menu>
 
   <script>
-    console.log('Script starting...');
+    console.log('Script starting');
     
     // v4.8 — Fixed textbox loading with proper state management
     const state = { wires: [], 
@@ -2001,7 +2004,7 @@ body.retro #tbCtxMenu{
     console.log('Elements found:', {board, viewport, canvasMenu, nodeMenu, textboxMenu, wireMenu});
 
     function init(){
-      console.log('Initializing...');
+      console.log('Initializing');
       resizeBoard();
       bindGlobal();
       bindUrlPanel();
@@ -2025,7 +2028,7 @@ body.retro #tbCtxMenu{
     }
 
     function bindGlobal(){
-      console.log('Binding global events...');
+      console.log('Binding global events');
       
       const themeSel = document.getElementById('theme');
       themeSel.addEventListener('change', ()=> {
@@ -2204,8 +2207,8 @@ document.addEventListener('mousedown', (e)=>{
 
     function startPanning(e) {
       state.isPanning = true;
-      state.panStart = {x:e.clientX, y:e.clientY};
-      state.originStart = {...state.origin};
+      state.panStart = { x: e.clientX, y: e.clientY };
+      state.originStart = { x: state.origin.x, y: state.origin.y }; // ← fixed
       viewport.classList.add('dragging');
       
       function move(ev){
@@ -2225,7 +2228,7 @@ document.addEventListener('mousedown', (e)=>{
     }
 
     function bindUrlPanel(){
-      console.log('Binding URL panel...');
+      console.log('Binding URL panel');
       const urlInput = document.getElementById('urlInput');
       const btnImport = document.getElementById('btnImportUrl');
       const btnClear = document.getElementById('btnClearUrl');
@@ -2248,7 +2251,7 @@ document.addEventListener('mousedown', (e)=>{
     }
 
     function bindSavePanel(){
-      console.log('Binding save panel...');
+      console.log('Binding save panel');
       document.getElementById('btnSave').addEventListener('click', saveBoard);
       document.getElementById('btnExport').addEventListener('click', exportBoard);
       document.getElementById('btnImport').addEventListener('click', ()=> document.getElementById('fileImport').click());
@@ -2256,7 +2259,7 @@ document.addEventListener('mousedown', (e)=>{
     }
 
     function bindMapModal(){
-      console.log('Binding map modal...');
+      console.log('Binding map modal');
       const modal = document.getElementById('mapModal');
       const startInput = document.getElementById('mapStart');
       const destInput = document.getElementById('mapDestination');
@@ -2366,7 +2369,7 @@ document.addEventListener('mousedown', (e)=>{
     }
 
     function openMapModal() {
-      console.log('Opening map modal...');
+      console.log('Opening map modal');
       const modal = document.getElementById('mapModal');
       const startInput = document.getElementById('mapStart');
       const destInput = document.getElementById('mapDestination');
@@ -2380,7 +2383,7 @@ document.addEventListener('mousedown', (e)=>{
     }
 
     function closeMapModal() {
-      console.log('Closing map modal...');
+      console.log('Closing map modal');
       document.getElementById('mapModal').style.display = 'none';
     }
 
@@ -2611,7 +2614,7 @@ document.addEventListener('mousedown', (e)=>{
 
     function setPlaceholderText(textboxObj) {
       const el = textboxObj.element;
-      el.innerHTML = '<span style="color: var(--muted); opacity: 0.7;">Click to start typing...</span>';
+      el.innerHTML = '<span style="color: var(--muted); opacity: 0.7;">Click to start typing</span>';
       textboxObj.hasPlaceholder = true;
       textboxObj.isEditing = false;
     }
@@ -3534,16 +3537,16 @@ const toolbar = document.createElement('div');
         return meta.isShorts ? 'YouTube Shorts' : 'YouTube Video';
       }
       if(kind === 'map' && meta && meta.start && meta.destination) {
-        const shortStart = meta.start.length > 15 ? meta.start.substring(0, 12) + "..." : meta.start;
-        const shortDest = meta.destination.length > 15 ? meta.destination.substring(0, 12) + "..." : meta.destination;
+        const shortStart = meta.start.length > 15 ? meta.start.substring(0, 12) + "" : meta.start;
+        const shortDest = meta.destination.length > 15 ? meta.destination.substring(0, 12) + "" : meta.destination;
         return `${shortStart} → ${shortDest}`;
       }
       if(kind === 'website' && meta && meta.domain) {
-        return meta.domain.length > 25 ? meta.domain.substring(0, 22) + "..." : meta.domain;
+        return meta.domain.length > 25 ? meta.domain.substring(0, 22) + "" : meta.domain;
       }
       if(meta && meta.file && meta.file.name) {
         let name = meta.file.name.replace(/\.[^/.]+$/, "");
-        return name.length > 25 ? name.substring(0, 22) + "..." : name;
+        return name.length > 25 ? name.substring(0, 22) + "" : name;
       }
       
       const kindNames = {
@@ -4059,10 +4062,10 @@ function saveBoard(){
 
 
     function exportBoard(){
-  console.log('Exporting board...');
+  console.log('Exporting board');
   const btn = document.querySelector('#btnExport');
   const originalText = btn ? btn.textContent : null;
-  if(btn) btn.textContent = 'Exporting...';
+  if(btn) btn.textContent = 'Exporting';
 
   Promise.all([ exportBoardDataWithFiles(), captureBoardSnapshot() ])
     .then(([boardData, snap]) => {
@@ -4090,7 +4093,7 @@ function saveBoard(){
 
 
     function importBoard(event){
-      console.log('Importing board...');
+      console.log('Importing board');
       const file = event.target.files[0];
       if(!file) return;
       
@@ -4143,7 +4146,7 @@ function sanitizeHtml(inputHtml){
 // === End sanitize ===
 async function exportBoardDataWithFiles() {
   const processedNodes = await Promise.all((state.nodes || []).map(async (node) => {
-    const processedNode = { ...node };
+    const processedNode = { node };
     delete processedNode.el;
     delete processedNode.metaTextbox;
 
@@ -4173,7 +4176,7 @@ async function exportBoardDataWithFiles() {
     return processedNode;
   }));
 
-  // ...return your full payload that includes processedNodes
+  // return your full payload that includes processedNodes
 
   
 // Textboxes
@@ -4221,7 +4224,7 @@ return {
 
   // Groups
   const processedGroups = (state.groups || []).map(group => {
-    const g = { ...group };
+    const g = { group };
     delete g.el;
     return g;
   });
@@ -4240,8 +4243,9 @@ return {
       border: tl.border || (tl.el ? getComputedStyle(tl.el).borderColor : ''),
       markRadius: (typeof tl.markRadius==='number' ? tl.markRadius : 12),
       markShape: tl.markShape || 'circle',
-              markFill: tl.markFill || (el && el.style && el.style.getPropertyValue && el.style.getPropertyValue('--tl-mark-fill')) || ((tl.timestamps && tl.timestamps[0] && tl.timestamps[0].el && getComputedStyle(tl.timestamps[0].el).backgroundColor) || ''),
-      markFill: tl.markFill || (tl.el && tl.el.style && tl.el.style.getPropertyValue && tl.el.style.getPropertyValue('--tl-mark-fill')) || ((tl.timestamps && tl.timestamps[0] && tl.timestamps[0].el && getComputedStyle(tl.timestamps[0].el).backgroundColor) || ''),
+              markFill: (tl.markFill)
+        || ((tl.el && tl.el.style && tl.el.style.getPropertyValue && tl.el.style.getPropertyValue('--tl-mark-fill')) || '')
+        || ((tl.timestamps && tl.timestamps[0] && tl.timestamps[0].el && getComputedStyle(tl.timestamps[0].el).backgroundColor) || ''),
       timestamps: (tl.timestamps||[]).map(m => ({
         x: parseFloat(m.el.style.left)||0,
         y: parseFloat(m.el.style.top)||0,
@@ -4384,6 +4388,13 @@ if (typeof tld.strokeWidth==='number'){
               tl.markRadius = (typeof tld.markRadius==='number') ? tld.markRadius : tl.markRadius;
               tl.markShape = tld.markShape || tl.markShape;
             } catch(_){}
+
+            // Re-assert position to ensure no layout drift after thickness/pattern changes
+            tl.x = Number.isFinite(tld.x) ? tld.x : (tl.x || 0);
+            tl.y = Number.isFinite(tld.y) ? tld.y : (tl.y || 0);
+            tl.el.style.left = tl.x + 'px';
+            tl.el.style.top  = tl.y + 'px';
+
     // Apply border pattern if present
             if (tld.pattern){
               if (tld.pattern === 'dashed'){
@@ -4721,7 +4732,7 @@ function loadSavedBoard(name) {
     }
 
     function loadSavedBoards(){
-      console.log('Loading saved boards list...');
+      console.log('Loading saved boards list');
       updateSavedBoardsList();
     }
 
@@ -4730,7 +4741,7 @@ function loadSavedBoard(name) {
     window.deleteSavedBoard = deleteSavedBoard;
 
     // Initialize the app
-    console.log('About to initialize...');
+    console.log('About to initialize');
     init();
   
     // === Shift + Drag to move textboxes (without interfering with typing) ===
@@ -5044,7 +5055,7 @@ const board =
   // Keep wires fresh on zoom/pan (wrap applyTransform if present)
   if (typeof window.applyTransform === 'function'){
     const __apply = window.applyTransform;
-    window.applyTransform = function(...args){
+    window.applyTransform = function(args){
       const r = __apply.apply(this, args);
       try { if (window.updateAllWires) updateAllWires(); } catch(_){ }
       return r;
@@ -7196,7 +7207,7 @@ function resolveElementById(id){
         if (e2) return e2;
       }
   
-      // Fallback to [data-id="..."]
+      // Fallback to [data-id=""]
       try {
         return document.querySelector('[data-id="' + CSS.escape(id) + '"]');
       } catch (_){
@@ -7753,9 +7764,38 @@ function enableTimelineInteractions(tl){
 
 window.addTimelineTimestamp = function(tl, posPx){
   const mark = document.createElement('div');
-  mark.className = 'tl-mark';
-  const size = (tl && typeof tl.markRadius==='number' ? Math.max(6, tl.markRadius)*2 : 24);
-  mark.style.width = size+'px'; mark.style.height = size+'px';
+   mark.className = 'tl-mark';
+   
+  // Inherit timeline radius & shape
+  try {
+    var r = (typeof tl.markRadius==='number' ? tl.markRadius : 12);
+    var size = Math.max(6, Math.round(r*2));
+    var isBar = (tl.markShape === 'bar');
+    if (isBar){
+      var thick = 4;
+      if (tl.direction==='h'){ mark.style.width = thick+'px'; mark.style.height = size+'px'; mark.style.top = (tl.h/2 - size/2) + 'px'; }
+      else { mark.style.width = size+'px'; mark.style.height = thick+'px'; mark.style.left = (tl.w/2 - size/2) + 'px'; }
+      mark.style.borderRadius = '2px';
+    } else {
+      mark.style.width = size+'px'; mark.style.height = size+'px';
+      if (tl.direction==='h'){ mark.style.top = (tl.h/2 - size/2) + 'px'; }
+      else { mark.style.left = (tl.w/2 - size/2) + 'px'; }
+      mark.style.borderRadius = (size/2) + 'px';
+    }
+    // Apply the current timeline shape immediately
+    if (typeof window.applyMarkShapeToEl === 'function') {
+    window.applyMarkShapeToEl(mark, tl);
+  }
+  // And keep it centered on the axis
+  if (tl.direction==='h'){
+    mark.style.top = (tl.h/2 - (mark.offsetHeight||24)/2) + 'px';
+  } else {
+    mark.style.left = (tl.w/2 - (mark.offsetWidth||24)/2) + 'px';
+  }
+  } catch(_) {}
+mark.className = 'tl-mark';
+  var _size = (typeof size!=='undefined' && isFinite(size) ? size : ((tl && typeof tl.markRadius==='number' ? Math.max(6, tl.markRadius)*2 : 24)));
+  mark.style.width = _size+'px'; mark.style.height = _size+'px';
 
   // Inherit timeline-level timestamp fill color
   try {
@@ -7766,10 +7806,10 @@ window.addTimelineTimestamp = function(tl, posPx){
     }
   } catch(_) {}
   if (tl.direction==='h'){
-    mark.style.left = (typeof posPx==='number' ? posPx : (tl.w/2 - size/2)) + 'px';
-    mark.style.top  = (tl.h/2 - size/2) + 'px';
+    mark.style.left = (typeof posPx==='number' ? posPx : (tl.w/2 - _size/2)) + 'px';
+    mark.style.top  = (tl.h/2 - _size/2) + 'px';
   } else {
-    mark.style.top  = (typeof posPx==='number' ? posPx : (tl.h/2 - size/2)) + 'px';
+    mark.style.top  = (typeof posPx==='number' ? posPx : (tl.h/2 - _size/2)) + 'px';
     mark.style.left = (tl.w/2 - size/2) + 'px';
   }const hit = document.createElement('div'); hit.className='hit'; mark.appendChild(hit);
   tl.el.appendChild(mark);
@@ -8008,110 +8048,175 @@ window.openTimestampMenu = function(x,y, tl, markEl){
   menu.onclick = (e)=>{
     const act = e.target && e.target.dataset && e.target.dataset.action;
     if (!act) return;
+
+    if (act==='delete'){
+      try{
+        // Remove this timestamp element and its model entry
+        if (Array.isArray(tl.timestamps)){
+          const idx = tl.timestamps.findIndex(m => m && m.el === markEl);
+          if (idx >= 0){
+            try { if (tl.timestamps[idx].el && tl.timestamps[idx].el.remove) tl.timestamps[idx].el.remove(); } catch(_){}
+            tl.timestamps.splice(idx, 1);
+          } else {
+            try { if (markEl && markEl.remove) markEl.remove(); } catch(_){}
+          }
+        } else {
+          try { if (markEl && markEl.remove) markEl.remove(); } catch(_){}
+        }
+        // Clear selection if selected
+        try{
+          if (markEl && markEl.dataset && markEl.dataset.id && state.selection) state.selection.delete(markEl.dataset.id);
+        }catch(_){}
+      }catch(err){ console.error('[TimestampMenu] delete failed', err); }
+      if (typeof closeMenus==='function') closeMenus();
+      return;
+    }
+
     if (act==='create-timezone'){
-      // find timestamp object
       const mobj = (tl.timestamps||[]).find(m => m && m.el === markEl);
-      if (!mobj) { closeMenus && closeMenus(); return; }
-      // create a group near this timestamp
-      let gx, gy;
+      if (!mobj) { if (typeof closeMenus==='function') closeMenus(); return; }
+      // place group near this timestamp
       const size = markEl.offsetWidth || 24;
       const left = parseFloat(markEl.style.left)||0;
       const top  = parseFloat(markEl.style.top)||0;
+      let gx, gy;
       if (tl.direction==='h'){
         const markCenter = left + size/2;
-        gx = tl.x + markCenter - 100;  // center group on mark
-        gy = tl.y - 120;                // above the line
+        gx = tl.x + markCenter - 100;   // center group on mark
+        gy = tl.y - 120;                 // above the line
       } else {
         const markCenter = top + size/2;
-        gx = tl.x + tl.w + 80;          // to the right
-        gy = tl.y + markCenter - 50;    // center vertically
+        gx = tl.x + tl.w + 80;           // to the right
+        gy = tl.y + markCenter - 50;     // center vertically
       }
       let g = null;
-      if (typeof createGroup === 'function'){
-        g = createGroup({x: gx, y: gy});
-        if (g && g.el){ g.el.style.width='200px'; g.el.style.height='100px'; }
-      }
-      if (g && g.id){ mobj.linkedGroupId = g.id; }
-      closeMenus && closeMenus();
+      try{
+        if (typeof createGroup === 'function'){
+          g = createGroup({x: gx, y: gy});
+          if (g && g.el){ g.el.style.width='200px'; g.el.style.height='100px'; }
+        }
+        if (g && g.id){ mobj.linkedGroupId = g.id; }
+      }catch(err){ console.error('[TimestampMenu] create-timezone failed', err); }
+      if (typeof closeMenus==='function') closeMenus();
+      return;
     }
   };
 };
 </script>
 
 <script>
-(function(){
-  function _num(v,d){ v=parseFloat(v); return isFinite(v)?v:(d||0); }
-  function _collectTimelinesFallback(){
-    var out=[], els=document.querySelectorAll('.timeline');
-    els.forEach(function(el){
-      try{
-        var vertical=el.classList.contains('vertical');
-        var line=el.querySelector('.timeline-line');
-        var ls=line?getComputedStyle(line):null;
-        var cs=getComputedStyle(el);
-        var tl={
-          id: el.dataset.id||null,
-          x: _num(el.style.left), y:_num(el.style.top),
-          w: _num(el.style.width), h:_num(el.style.height),
-          direction: vertical?'v':'h',
-          stroke: cs.color||'', strokeWidth: vertical?_num(cs.width):_num(cs.height),
-          fill: ls?ls.backgroundColor:'', border: cs.borderColor||'',
-          pattern: cs.borderStyle||'solid', markRadius:12, markShape:'circle',
-          timestamps: []
-        };
-        el.querySelectorAll('.tl-mark').forEach(function(mark){
-          tl.timestamps.push({
-            x:_num(mark.style.left), y:_num(mark.style.top),
-            size: mark.offsetWidth||24,
-            linkedGroupId: (mark.dataset&&mark.dataset.linkedGroupId)||null
-          });
-        });
-        out.push(tl);
-      }catch(e){}
-    });
-    return out;
-  }
-  if (typeof window.exportBoardDataWithFiles==='function' && !window.__tlWrap2){
-    window.__tlWrap2=true;
-    var _orig=window.exportBoardDataWithFiles;
-    window.exportBoardDataWithFiles=async function(){
-      var data=await _orig.apply(this, arguments);
-      try{
-        var list=(window.state&&Array.isArray(state.timelines)&&state.timelines.length)?state.timelines:_collectTimelinesFallback();
-        data.timelines=(list||[]).map(function(tl){
-          var el=tl.el||document.querySelector('.timeline[data-id="'+(tl.id||'')+'"]');
-          var cs=el?getComputedStyle(el):null;
-          var line=el?el.querySelector('.timeline-line'):null;
-          var ls=line?getComputedStyle(line):null;
-          return {
-            id: tl.id||(el&&el.dataset.id)||null,
-            x: _num(tl.x!=null?tl.x:(el&&el.style.left)), y: _num(tl.y!=null?tl.y:(el&&el.style.top)),
-            w: _num(tl.w!=null?tl.w:(el&&el.style.width)), h: _num(tl.h!=null?tl.h:(el&&el.style.height)),
-            direction: tl.direction||(el&&el.classList.contains('vertical')?'v':'h'),
-            stroke: tl.stroke||(cs?cs.color:''),
-            strokeWidth: _num(tl.strokeWidth!=null?tl.strokeWidth:(cs?(tl.direction==='h'?cs.height:cs.width):0)),
-            fill: tl.fill||(ls?ls.backgroundColor:''),
-            border: tl.border||(cs?cs.borderColor:''),
-            pattern: tl.pattern||(cs?cs.borderStyle:'solid'),
-            markRadius: (typeof tl.markRadius==='number'?tl.markRadius:12),
-            markShape: tl.markShape||'circle',
-            markFill: (tl.markFill)||((el&&el.style&&el.style.getPropertyValue&&el.style.getPropertyValue('--tl-mark-fill'))||'')||((tl.timestamps&&tl.timestamps[0]&&tl.timestamps[0].el&&getComputedStyle(tl.timestamps[0].el).backgroundColor)||''),
-            timestamps: (tl.timestamps||[]).map(function(m){
-              var mel=m.el||null;
-              return {
-                x:_num(m.x!=null?m.x:(mel&&mel.style.left)), y:_num(m.y!=null?m.y:(mel&&mel.style.top)),
-                size:_num(m.size!=null?m.size:(mel&&mel.offsetWidth))||24,
-                linkedGroupId: m.linkedGroupId||((mel&&mel.dataset)&&mel.dataset.linkedGroupId)||null
-              };
-            })
+  (function(){
+    function _num(v, d){ v = parseFloat(v); return isFinite(v) ? v : (d || 0); }
+  
+    function _collectTimelinesFallback(){
+      var out = [], els = document.querySelectorAll('.timeline');
+      els.forEach(function(el){
+        try{
+          var vertical = el.classList.contains('vertical');
+          var line = el.querySelector('.timeline-line');
+          var ls = line ? getComputedStyle(line) : null;
+          var cs = getComputedStyle(el);
+          var tl = {
+            id: el.dataset.id || null,
+            x: _num(el.style.left), y: _num(el.style.top),
+            w: _num(el.style.width), h: _num(el.style.height),
+            direction: vertical ? 'v' : 'h',
+            stroke: cs.color || '',
+            strokeWidth: vertical ? _num(cs.width) : _num(cs.height),
+            fill: ls ? ls.backgroundColor : '',
+            border: cs.borderColor || '',
+            pattern: cs.borderStyle || 'solid',
+            markRadius: 12,
+            markShape: 'circle',
+            // markFill can be recovered from CSS var if you want:
+            // markFill: el.style.getPropertyValue('--tl-mark-fill') || '',
+            timestamps: []
           };
-        });
-      }catch(e){}
-      return data;
-    };
-  }
-})();
-</script>
+          el.querySelectorAll('.tl-mark').forEach(function(mark){
+            tl.timestamps.push({
+              x: _num(mark.style.left),
+              y: _num(mark.style.top),
+              size: mark.offsetWidth || 24,
+              linkedGroupId: (mark.dataset && mark.dataset.linkedGroupId) || null
+            });
+          });
+          out.push(tl);
+        } catch(e) {}
+      });
+      return out;
+    }
+  
+    if (typeof window.exportBoardDataWithFiles === 'function' && !window.__tlWrap2){
+      window.__tlWrap2 = true;
+      var _orig = window.exportBoardDataWithFiles;
+  
+      window.exportBoardDataWithFiles = async function(){
+        var data = await _orig.apply(this, arguments);
+        try{
+          var list = (window.state && Array.isArray(state.timelines) && state.timelines.length)
+            ? state.timelines
+            : _collectTimelinesFallback();
+  
+          data.timelines = (list || []).map(function(tl){
+            var el   = tl.el || document.querySelector('.timeline[data-id="'+(tl.id||'')+'"]');
+            var cs   = el ? getComputedStyle(el) : null;
+            var line = el ? el.querySelector('.timeline-line') : null;
+            var ls   = line ? getComputedStyle(line) : null;
+  
+            return {
+              id: tl.id || (el && el.dataset.id) || null,
+              x: Number.isFinite(tl.x) ? tl.x : _num(el && el.style && el.style.left),
+              y: Number.isFinite(tl.y) ? tl.y : _num(el && el.style && el.style.top),
+              w: _num(tl.w != null ? tl.w : (el && el.style.width)),
+              h: _num(tl.h != null ? tl.h : (el && el.style.height)),
+              direction: tl.direction || ((el && el.classList.contains('vertical')) ? 'v' : 'h'),
+              stroke: tl.stroke || (cs ? cs.color : ''),
+              strokeWidth: _num(tl.strokeWidth != null ? tl.strokeWidth : (cs ? (tl.direction === 'h' ? cs.height : cs.width) : 0)),
+              fill: tl.fill || (ls ? ls.backgroundColor : ''),
+              border: tl.border || (cs ? cs.borderColor : ''),
+              pattern: tl.pattern || (cs ? cs.borderStyle : 'solid'),
+              markRadius: (typeof tl.markRadius === 'number' ? tl.markRadius : 12),
+              markShape: tl.markShape || 'circle',
+              markFill: (tl.markFill)
+                || ((el && el.style && el.style.getPropertyValue && el.style.getPropertyValue('--tl-mark-fill')) || '')
+                || ((tl.timestamps && tl.timestamps[0] && tl.timestamps[0].el && getComputedStyle(tl.timestamps[0].el).backgroundColor) || ''),
+              timestamps: (tl.timestamps || []).map(function(m){
+                var mel = m.el || null;
+  
+                // Compute per-timestamp size correctly (circle vs bar, h/v)
+                var __sz = (typeof m.size === 'number') ? m.size : null;
+                if (!__sz && mel){
+                  if ((tl.markShape || 'circle') === 'bar'){
+                    // bars: use the thick dimension depending on orientation
+                    __sz = (tl.direction === 'h')
+                      ? ((mel.offsetHeight) || parseFloat(mel.style.height) || 0)
+                      : ((mel.offsetWidth)  || parseFloat(mel.style.width)  || 0);
+                  } else {
+                    // circles: width/height is the diameter
+                    __sz = (mel.offsetWidth) || parseFloat(mel.style.width)
+                        || (mel.offsetHeight) || parseFloat(mel.style.height) || 0;
+                  }
+                }
+                if (!__sz || !isFinite(__sz)){
+                  __sz = (typeof tl.markRadius === 'number' ? tl.markRadius * 2 : 24);
+                }
+  
+                return {
+                  x: _num(m.x != null ? m.x : (mel && mel.style.left)),
+                  y: _num(m.y != null ? m.y : (mel && mel.style.top)),
+                  size: Math.round(__sz),
+                  // If you also want radius in JSON, add: radius: Math.round(__sz/2),
+                  linkedGroupId: m.linkedGroupId || ((mel && mel.dataset) ? mel.dataset.linkedGroupId : null)
+                };
+              })
+            };
+          });
+        } catch(e) {}
+        return data;
+      };
+    }
+  })();
+  </script>
 
 
 <script>
@@ -8179,48 +8284,82 @@ window.openTimestampMenu = function(x,y, tl, markEl){
 
 
 <script>
-// Ensure mark-shape changes propagate to all timestamps on a timeline
-(function(){
-  if (typeof window.applyMarkShapeToAll !== 'function'){
-    window.applyMarkShapeToAll = function(tl){
-      if (!tl || !tl.timestamps) return;
-      var shape = tl.markShape || 'circle';
-      (tl.timestamps || []).forEach(function(m){
-        var el = m && m.el;
-        if (!el) return;
-        // reset
-        try{
-          el.style.borderRadius = '';
-          el.style.clipPath = '';
-          el.style.transform = '';
-          el.style.borderWidth = el.style.borderWidth || '2px';
-        }catch(_){}
-        // apply
-        try{
-          if (shape === 'circle'){
-            el.style.borderRadius = '50%';
-          } else if (shape === 'square'){
-            el.style.borderRadius = '4px';
-          } else if (shape === 'diamond'){
-            el.style.borderRadius = '2px';
-            el.style.transform = 'rotate(45deg)';
-          } else if (shape === 'triangle'){
-            // A simple upwards triangle; remove border to avoid odd corners
-            el.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
-            el.style.borderWidth = '0px';
-          } else if (shape === 'bar'){
-            el.style.borderRadius = '2px';
-            // width/height recalc handled by the style panel's onchange code
+  (function(){
+    // Apply shape to a single mark element
+    function applyMarkShapeToEl(el, tl){
+      if (!el || !tl) return;
+      const shape = tl.markShape || 'circle';
+  
+      // Full reset to avoid malformed carry-overs
+      el.style.borderRadius = '';
+      el.style.clipPath = '';
+      el.style.transform = '';
+      el.style.transformOrigin = '50% 50%';
+      // Avoid outline artifacts for polygon shapes
+      el.style.borderWidth = '0px';
+      el.style.borderStyle = 'solid';
+  
+      // Ensure fill reflects timeline-level setting (if present)
+      if (tl.markFill) el.style.background = tl.markFill;
+  
+      if (shape === 'circle'){
+        el.style.borderRadius = '50%';
+      } else if (shape === 'square'){
+        el.style.borderRadius = '4px';
+      } else if (shape === 'diamond'){
+        el.style.borderRadius = '2px';
+        el.style.transform = 'rotate(45deg)';
+      } else if (shape === 'triangle'){
+        // Upright, equilateral-ish triangle
+        el.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
+      } else if (shape === 'star'){
+        // 5-point star polygon (good browser support)
+        // tweakable but crisp and centered
+        el.style.clipPath = 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 92%, 50% 72%, 21% 92%, 32% 57%, 2% 35%, 39% 35%)';
+      } else if (shape === 'bar'){
+        // appearance of a slim bar, oriented by timeline direction
+        const thick = 4;
+        const r = (typeof tl.markRadius==='number' ? tl.markRadius : (el.offsetWidth/2) || 12);
+        const size = Math.max(6, r * 2);
+        if (tl.direction === 'h'){
+          el.style.width = thick + 'px';
+          el.style.height = size + 'px';
+          el.style.top = (tl.h/2 - size/2) + 'px';
+        } else {
+          el.style.width = size + 'px';
+          el.style.height = thick + 'px';
+          el.style.left = (tl.w/2 - size/2) + 'px';
+        }
+        el.style.borderRadius = '2px';
+      } else {
+        // fallback = circle
+        el.style.borderRadius = '50%';
+      }
+    }
+    window.applyMarkShapeToEl = applyMarkShapeToEl;
+  
+    // Apply current tl.markShape to all marks on TL
+    if (typeof window.applyMarkShapeToAll !== 'function'){
+      window.applyMarkShapeToAll = function(tl){
+        if (!tl || !tl.timestamps) return;
+        (tl.timestamps || []).forEach(function(m){
+          if (!m || !m.el) return;
+          applyMarkShapeToEl(m.el, tl);
+        });
+  
+        // Recenter after potential size/orientation change (esp. 'bar')
+        (tl.timestamps||[]).forEach(function(m){
+          const el = m && m.el; if (!el) return;
+          if (tl.direction==='h'){
+            el.style.top = (tl.h/2 - (el.offsetHeight||24)/2) + 'px';
           } else {
-            // default fallback
-            el.style.borderRadius = '50%';
+            el.style.left = (tl.w/2 - (el.offsetWidth||24)/2) + 'px';
           }
-        }catch(_){}
-      });
-    };
-  }
-})();
-</script>
+        });
+      };
+    }
+  })();
+  </script> 
 
 
     <script>
