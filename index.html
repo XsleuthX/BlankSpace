@@ -4491,36 +4491,60 @@ return {
     };
   });
 
+  // --- Checklists (robust) ---
+const processedChecklists = (()=>{
+  try{
+    // Both names are used across versions; prefer the richer one if present
+    const list = (window.checklistNodes || window.checklists || []);
+    if (!Array.isArray(list)) return [];
+
+    function numAny(v, fb){
+      const n = (typeof v === 'number') ? v : parseFloat(v);
+      return Number.isFinite(n) ? n : (Number.isFinite(fb) ? fb : 0);
+    }
+
+    return list.filter(Boolean).map((ck)=>{
+      // DOM element + text element
+      const el = ck.element || document.querySelector(`.checknode[data-id="${ck.id}"]`) || null;
+      const textEl = el ? el.querySelector('.checktext') : null;
+      const cs = el ? getComputedStyle(el) : null;
+
+      // Geometry (prefer model x/y/w/h, fall back to inline style/offsets)
+      const x = Number.isFinite(ck.x) ? ck.x : numAny(el && el.style && el.style.left, 0);
+      const y = Number.isFinite(ck.y) ? ck.y : numAny(el && el.style && el.style.top,  0);
+      const w = Number.isFinite(ck.w) ? ck.w :
+                numAny(el && el.style && el.style.width,  el ? el.offsetWidth  : 0);
+      const h = Number.isFinite(ck.h) ? ck.h :
+                numAny(el && el.style && el.style.height, el ? el.offsetHeight : 0);
+
+      // Content (preserve HTML if you have it; sanitize if helper exists)
+      const htmlRaw = (ck.html != null) ? ck.html : (textEl ? textEl.innerHTML : '');
+      const textHtml = (typeof sanitizeHtml === 'function') ? sanitizeHtml(htmlRaw) : htmlRaw;
+      const textPlain = (ck.text != null) ? ck.text : (textEl ? textEl.textContent : '');
+
+      // Styles
+      const bg     = ck.bg     || (cs ? cs.backgroundColor : '');
+      const border = ck.border || (cs ? cs.borderColor     : '');
+      const color  = ck.color  || (cs ? cs.color           : '');
+      const fontSize = ck.fontSize || (textEl ? getComputedStyle(textEl).fontSize : '');
+
+      return {
+        id: ck.id ?? null,
+        x, y, w, h,
+        text: textPlain,
+        textHtml,
+        checked: !!ck.checked,
+        bg, border, color, fontSize
+      };
+    });
+  }catch(_e){
+    // Fail-safe: never break export even if something unexpected happens
+    return [];
+  }
+})();
 
   // Wires (endpoints + control points)
-  
-// Checklists
-const processedChecklists = (window.checklistNodes || window.checklists || []).map(function(ch){
-  const el = ch && ch.element;
-  const textEl = el ? el.querySelector('.checktext') : null;
-  const csNode = el ? getComputedStyle(el) : null;
-  const csText = textEl ? getComputedStyle(textEl) : null;
-  const width  = el ? (el.style.width  || (el.offsetWidth  ? (el.offsetWidth  + 'px') : '')) : '';
-  const height = el ? (el.style.height || (el.offsetHeight ? (el.offsetHeight + 'px') : '')) : '';
-  function safeSanitize(html){
-    try{ return sanitizeHtml ? sanitizeHtml(html||'') : (html||''); }catch(_e){ return html||''; }
-  }
-  return {
-    id: ch && ch.id,
-    x: ch && ch.x,
-    y: ch && ch.y,
-    width,
-    height,
-    text: ch && ch.text,
-    checked: !!(ch && ch.checked),
-    bg:     el ? (el.style.backgroundColor || (csNode ? csNode.backgroundColor : '')) : '',
-    border: el ? (el.style.borderColor     || (csNode ? csNode.borderColor     : '')) : '',
-    color:  textEl ? (textEl.style.color   || (csText ? csText.color           : '')) : '',
-    fontSize: textEl ? (textEl.style.fontSize || (csText ? csText.fontSize : '')) : '',
-    textHtml: safeSanitize(textEl ? textEl.innerHTML : (ch && ch.textHtml))
-  };
-});
-const processedWires = (state.wires || []).map(w => ({
+  const processedWires = (state.wires || []).map(w => ({
     fromId: getIdForEl(w.fromEl),
     toId:   getIdForEl(w.toEl),
     c1: { x: (w.c1 && w.c1.x) || 0, y: (w.c1 && w.c1.y) || 0 },
@@ -8522,4 +8546,263 @@ return {
     }
     </script>
     
+
+<!-- Copy/Paste + Selection Safety Net -->
+<script>
+(function(){
+  function isEditableTarget(t){
+    if(!t) return false;
+    if (t.isContentEditable) return true;
+    const tag = (t.tagName||'').toLowerCase();
+    if (tag === 'input' || tag === 'textarea') return true;
+    try { if (t.closest && t.closest('[contenteditable="true"]')) return true; } catch(_){}
+    return false;
+  }
+
+  // Do NOT hijack native copy/paste/cut/select-all in editables
+  window.addEventListener('keydown', function(e){
+    const k = (e.key||'').toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && (k==='c' || k==='v' || k==='x' || k==='a')){
+      if (isEditableTarget(e.target)) {
+        // let the browser handle it
+        return;
+      }
+      // If the app implements its own shortcuts elsewhere, don't block here.
+      // Intentionally no preventDefault() so system clipboard keeps working.
+    }
+  }, true); // capture so we run before other handlers
+
+  // Ensure selection gets re-enabled even if a mouseup was missed during drags
+  (function installUserSelectReset(){
+    function reset(){ try{ document.body.style.userSelect=''; }catch(_){} }
+    window.addEventListener('blur', reset, true);
+    document.addEventListener('mouseleave', reset, true);
+    document.addEventListener('mouseup', reset, true);
+    document.addEventListener('dragend', reset, true);
+    document.addEventListener('pointerup', reset, true);
+  })();
+
+  // Guard: if any global handlers call preventDefault on copy/paste/cut in editables, neutralize by early return
+  ['copy','paste','cut','keydown','keypress','keyup'].forEach(function(type){
+    window.addEventListener(type, function(e){
+      if (isEditableTarget(e.target)) {
+        // Make sure events from editables are not treated as canvas shortcuts
+        // (no-op — presence in capture phase helps avoid accidental global blocks).
+      }
+    }, true);
+  });
+})();
+</script>
+
+<!-- Canvas Copy/Paste (multi-select, paste at cursor) -->
+<script>
+  (function(){
+    let lastMouseWorld = {x:0, y:0};
+    const boardEl = document.getElementById('board') || document;
+  
+    function isEditable(el){
+      if(!el) return false;
+      if (el.isContentEditable) return true;
+      const tag = (el.tagName||'').toLowerCase();
+      return tag==='input' || tag==='textarea';
+    }
+  
+    // FIX: numeric helper that doesn’t mis-treat 0 as falsy
+    function numAny(v, fallback){
+      const n = (typeof v === 'number') ? v : parseFloat(v);
+      return Number.isFinite(n) ? n : (Number.isFinite(fallback) ? fallback : 0);
+    }
+  
+    // Track cursor in world coords
+    function screenToWorldLocal(sx, sy){
+      try{ if (typeof screenToWorld === 'function') return screenToWorld(sx, sy); }catch(_){}
+      const vp = document.getElementById('viewport') || document.body;
+      const rect = vp.getBoundingClientRect();
+      const zoom = (window.state && window.state.zoom) ? window.state.zoom : 1;
+      const origin = (window.state && window.state.origin) ? window.state.origin : {x:0,y:0};
+      return { x: (sx - rect.left - origin.x) / zoom, y: (sy - rect.top - origin.y) / zoom };
+    }
+  
+    boardEl.addEventListener('mousemove', (e)=>{
+      try{
+        const pt = screenToWorldLocal(e.clientX, e.clientY);
+        lastMouseWorld = pt;
+        window.lastMouseWorld = pt;
+      }catch(_){}
+    }, true);
+  
+    function copySelectionToClipboard(){
+      if (!window.state || !state.selection || !state.selection.size) return;
+      window._internalClipboard = { ids: Array.from(state.selection), ts: Date.now() };
+    }
+  
+    function pasteFromClipboardAt(point){
+      const clip = window._internalClipboard;
+      if (!clip || !Array.isArray(clip.ids) || !clip.ids.length) return;
+  
+      // 1) Compute selection top-left in WORLD space to align to cursor
+      let minx = Infinity, miny = Infinity;
+      clip.ids.forEach((sid)=>{
+        const n  = (typeof getNodeById==='function')      ? getNodeById(sid)      : null;
+        const g  = (typeof getGroupById==='function')     ? getGroupById(sid)     : null;
+        const t  = (typeof getTextboxById==='function')   ? getTextboxById(sid)   : null;
+        const ck = (window.checklistNodes || window.checklists || []).find(c => c && c.id === sid) || null;
+        const tl = (typeof window.getTimelineById==='function') ? window.getTimelineById(sid) : null;
+  
+        let xx = null, yy = null;
+        if (n && Number.isFinite(n.x) && Number.isFinite(n.y)) {
+          xx = n.x; yy = n.y;
+        } else if (g && Number.isFinite(g.x) && Number.isFinite(g.y)) {
+          xx = g.x; yy = g.y;
+        } else if (t && (t.element || Number.isFinite(t.x) || Number.isFinite(t.y))) {
+          const tel = t.element || null;
+          xx = numAny(tel && tel.style && tel.style.left, t && t.x);
+          yy = numAny(tel && tel.style && tel.style.top,  t && t.y);
+        } else if (ck) {
+          const cel = ck.element || null;
+          xx = numAny(cel && cel.style && cel.style.left, ck && ck.x);
+          yy = numAny(cel && cel.style && cel.style.top,  ck && ck.y);
+        } else if (tl && Number.isFinite(tl.x) && Number.isFinite(tl.y)) {
+          xx = tl.x; yy = tl.y;
+        }
+  
+        if (xx != null && yy != null) {
+          if (xx < minx) minx = xx;
+          if (yy < miny) miny = yy;
+        }
+      });
+  
+      const dx = isFinite(minx) ? (point.x - minx) : 24;
+      const dy = isFinite(miny) ? (point.y - miny) : 24;
+  
+      const newIds = [];
+  
+      // 2) Duplicate each selected item
+      clip.ids.forEach((sid)=>{
+  
+        // Node
+        if (typeof getNodeById==='function'){
+          const n = getNodeById(sid);
+          if (n && typeof createNode==='function'){
+            const at = {x: (n.x||0) + dx, y: (n.y||0) + dy};
+            const sz = {w: n.w||0, h: n.h||0};
+            const n2 = createNode(n.kind, n.assetUrl, sz, at, n.meta);
+            if (n2 && n2.id) newIds.push(n2.id);
+            return;
+          }
+        }
+  
+        // Group
+        if (typeof getGroupById==='function'){
+          const g = getGroupById(sid);
+          if (g && typeof createGroup==='function'){
+            const g2 = createGroup({x: (g.x||0) + dx, y: (g.y||0) + dy});
+            if (g2){
+              g2.w = g.w; g2.h = g.h; g2.color = g.color; g2.locked = !!g.locked;
+              if (g2.el){
+                g2.el.style.width  = (g2.w||0)+'px';
+                g2.el.style.height = (g2.h||0)+'px';
+                if (g2.color) g2.el.style.borderColor = g2.color;
+              }
+              if (g2.id) newIds.push(g2.id);
+            }
+            return;
+          }
+        }
+  
+        // Textbox
+        if (typeof getTextboxById==='function' && typeof createFloatingTextbox==='function'){
+          const tb = getTextboxById(sid);
+          if (tb && tb.element){
+            const tel = tb.element;
+            const lx = numAny(tel.style && tel.style.left,  tb.x);
+            const ly = numAny(tel.style && tel.style.top,   tb.y);
+            const w  = numAny(tel.style && tel.style.width,  tb.w || tel.offsetWidth);
+            const h  = numAny(tel.style && tel.style.height, tb.h || tel.offsetHeight);
+            const html = tel.innerHTML;
+  
+            // createFloatingTextbox expects {x,y}
+            const tb2 = createFloatingTextbox({x: lx + dx, y: ly + dy});
+            if (tb2 && tb2.element){
+              if (w) tb2.element.style.width  = w + 'px';
+              if (h) tb2.element.style.height = h + 'px';
+              try{
+                const safe = (typeof sanitizeHtml==='function') ? sanitizeHtml(html) : html;
+                tb2.element.innerHTML = safe || '';
+                tb2.hasPlaceholder = false;
+                tb2.isEditing = false;
+              }catch(_){}
+              if (tb2.id) newIds.push(tb2.id);
+              else if (tb2.element && tb2.element.dataset && tb2.element.dataset.id) newIds.push(tb2.element.dataset.id);
+            }
+            return;
+          }
+        }
+  
+        // Checklist
+        const ck = (window.checklistNodes || window.checklists || []).find(c => c && c.id === sid) || null;
+        if (ck && typeof window.addChecklistNodeAt==='function'){
+          try{
+            const nodeEl = ck.element;
+            const textEl = nodeEl ? (nodeEl.querySelector && nodeEl.querySelector('.checktext')) : null;
+            const tx = numAny(nodeEl && nodeEl.style && nodeEl.style.left, ck.x);
+            const ty = numAny(nodeEl && nodeEl.style && nodeEl.style.top,  ck.y);
+            const w  = numAny(nodeEl && nodeEl.style && nodeEl.style.width,  ck.w || (nodeEl && nodeEl.offsetWidth));
+            const h  = numAny(nodeEl && nodeEl.style && nodeEl.style.height, ck.h || (nodeEl && nodeEl.offsetHeight));
+            const bg = (nodeEl && nodeEl.style && nodeEl.style.backgroundColor) || ck.bg || '';
+            const border = (nodeEl && nodeEl.style && nodeEl.style.borderColor)  || ck.border || '';
+            const color  = (nodeEl && nodeEl.style && nodeEl.style.color)        || ck.color || '';
+            const fontSize = (textEl && textEl.style && textEl.style.fontSize) || ck.fontSize || '';
+            const htmlTxt = textEl ? (typeof sanitizeHtml==='function' ? sanitizeHtml(textEl.innerHTML) : textEl.innerHTML)
+                                   : (ck.html || ck.text || '');
+            const textPlain = ck.text || (textEl ? textEl.textContent : '');
+            const newEl = window.addChecklistNodeAt(tx + dx, ty + dy, textPlain, !!ck.checked, w, h, {bg, border, color, html: htmlTxt}, null, fontSize);
+            if (newEl && newEl.dataset && newEl.dataset.id) newIds.push(newEl.dataset.id);
+          }catch(_){}
+          return;
+        }
+  
+        // Timelines (optional; no-op if APIs missing)
+        if (typeof window.getTimelineById==='function' && typeof window.addTimeline==='function'){
+          try{
+            const tl = window.getTimelineById(sid);
+            if (tl){
+              const at = {x:(tl.x||0)+dx, y:(tl.y||0)+dy};
+              const t2 = window.addTimeline(at.x, at.y, tl.w||2, tl.h||300, tl.direction||'h', tl.stroke||'', tl.strokeWidth||1, tl.fill||'', tl.border||'', tl.pattern||'solid');
+              if (t2 && tl.timestamps && Array.isArray(tl.timestamps)){
+                tl.timestamps.forEach((m)=>{
+                  const pos = (tl.direction==='h') ? (m.x||0) : (m.y||0);
+                  const mark = window.addTimelineTimestamp(t2, pos);
+                  if (mark && m.size){ mark.style.width = m.size+'px'; mark.style.height = m.size+'px'; }
+                });
+              }
+              if (t2 && t2.id) newIds.push(t2.id);
+            }
+          }catch(_){}
+          return;
+        }
+      });
+  
+      // 3) Select new items and refresh
+      if (typeof clearSelection==='function'){ try{ clearSelection(); }catch(_){} }
+      if (typeof selectId==='function'){ newIds.forEach(id => { try{ selectId(id); }catch(_){} }); }
+      if (typeof applyTransform==='function'){ try{ applyTransform(); }catch(_){} }
+    }
+  
+    window.addEventListener('keydown', (e)=>{
+      // Don't intercept when typing in text fields or contenteditable
+      if (isEditable(document.activeElement)) return;
+      if ((e.ctrlKey||e.metaKey) && !e.shiftKey && e.key && e.key.toLowerCase()==='c'){
+        e.preventDefault();
+        copySelectionToClipboard();
+      }
+      if ((e.ctrlKey||e.metaKey) && !e.shiftKey && e.key && e.key.toLowerCase()==='v'){
+        e.preventDefault();
+        const pt = window.lastMouseWorld || lastMouseWorld || {x:0,y:0};
+        pasteFromClipboardAt(pt);
+      }
+    }, true);
+  })();  <!-- FIX: correctly close & invoke the IIFE -->
+ </script>
+  
 </body></html>
