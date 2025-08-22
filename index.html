@@ -3472,6 +3472,7 @@ function duplicateChecklistNode(checklistElement) {
     const border = nodeEl && nodeEl.style.borderColor || null;
     const color = nodeEl && nodeEl.style.color || null;
     const fontSize = textEl && (textEl.style.fontSize || null);
+  const tcs = textEl ? getComputedStyle(textEl) : null;
     const html = textEl ? sanitizeHtml(textEl.innerHTML) : null;
     window.addChecklistNodeAt(newX, newY, checklistData.text, checklistData.checked, w, h, {bg, border, color, html}, null, fontSize);
   }
@@ -4527,14 +4528,24 @@ const processedChecklists = (()=>{
       const border = ck.border || (cs ? cs.borderColor     : '');
       const color  = ck.color  || (cs ? cs.color           : '');
       const fontSize = ck.fontSize || (textEl ? getComputedStyle(textEl).fontSize : '');
+      const tcs = textEl ? getComputedStyle(textEl) : null;
 
       return {
         id: ck.id ?? null,
         x, y, w, h,
+        width: w,
+        height: h,
         text: textPlain,
         textHtml,
         checked: !!ck.checked,
-        bg, border, color, fontSize
+        bg, border, color, fontSize,
+        textStyle: {
+          fontFamily: tcs ? tcs.fontFamily : '',
+          fontWeight: tcs ? tcs.fontWeight : '',
+          lineHeight: tcs ? tcs.lineHeight : '',
+          letterSpacing: tcs ? tcs.letterSpacing : '',
+          textAlign: tcs ? tcs.textAlign : ''
+        }
       };
     });
   }catch(_e){
@@ -4826,10 +4837,52 @@ if (textboxData.style) {
 // Restore checklist nodes
       if(boardData.checklists && window.addChecklistNodeAt) {
         boardData.checklists.forEach(cd => {
-          const w = cd.w || cd.width;
-          const h = cd.h || cd.height;
-          const fontSize = cd.fontSize || (cd.text && cd.text.fontSize);
-          window.addChecklistNodeAt(cd.x, cd.y, cd.text, cd.checked, w, h, {bg: cd.bg, border: cd.border, color: cd.color, html: cd.textHtml}, cd.id, fontSize);
+          
+// Dimensions (support w/h + width/height)
+const w = (cd.w != null ? cd.w : (cd.width != null ? parseFloat(cd.width) : null));
+const h = (cd.h != null ? cd.h : (cd.height != null ? parseFloat(cd.height) : null));
+const x = (cd.x != null ? cd.x : 0);
+const y = (cd.y != null ? cd.y : 0);
+
+// Text (plain + html)
+const textPlain = (cd.text != null ? cd.text : (cd.textPlain != null ? cd.textPlain : ''));
+const textHtml  = (cd.textHtml != null ? cd.textHtml : (cd.html != null ? cd.html : ''));
+
+// Colors and font props
+const bg   = (cd.bg   != null ? cd.bg   : '');
+const border = (cd.border != null ? cd.border : '');
+const color  = (cd.color  != null ? cd.color  : '');
+const fontSize = (cd.fontSize != null ? cd.fontSize : '');
+
+// Create checklist at saved coords with size & styles
+const el = window.addChecklistNodeAt(x, y, textPlain, !!cd.checked, w, h, {bg, border, color, html: textHtml}, cd.id || null, fontSize);
+
+// Apply style aliases if only width/height string was saved
+try{
+  if (el && typeof el === 'object') {
+    if (cd.width && !w)  el.style.width  = String(cd.width);
+    if (cd.height && !h) el.style.height = String(cd.height);
+  }
+}catch(_){}
+
+// Re-apply inner text HTML & styles
+try{
+  const textEl = (el && el.querySelector) ? el.querySelector('.checktext') : null;
+  if (textEl) {
+    if (textHtml) textEl.innerHTML = textHtml;
+    if (fontSize) textEl.style.fontSize = fontSize;
+    if (color)    textEl.style.color    = color;
+    if (cd.textStyle) {
+      const ts = cd.textStyle || {};
+      if (ts.fontFamily)   textEl.style.fontFamily   = ts.fontFamily;
+      if (ts.fontWeight)   textEl.style.fontWeight   = ts.fontWeight;
+      if (ts.lineHeight)   textEl.style.lineHeight   = ts.lineHeight;
+      if (ts.letterSpacing)textEl.style.letterSpacing= ts.letterSpacing;
+      if (ts.textAlign)    textEl.style.textAlign    = ts.textAlign;
+    }
+  }
+}catch(_){}
+
         });
       }
 }
@@ -8805,4 +8858,137 @@ return {
   })();  <!-- FIX: correctly close & invoke the IIFE -->
  </script>
   
+
+<style id="resize-handle-style">
+/* Generic resize handle */
+.resize-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  right: 2px;
+  bottom: 2px;
+  border: 1px solid rgba(0,0,0,.35);
+  background: rgba(255,255,255,.85);
+  border-radius: 3px;
+  cursor: se-resize;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.20);
+  z-index: 3;
+}
+/* Make sure hosts are positioned to contain handle */
+.checknode, .node.video, .node.youtube {
+  position: absolute;
+}
+</style>
+
+<script id="resize-handles-patch">
+(function(){
+  if (window.__resizeHandlesApplied) return;
+  window.__resizeHandlesApplied = true;
+
+  function num(v, fb){ var n = parseFloat(v); return isFinite(n) ? n : (isFinite(fb) ? fb : 0); }
+  function getId(el){ return (el && el.dataset) ? el.dataset.id : null; }
+  function stop(e){ e.stopPropagation(); if (e.cancelable) e.preventDefault(); }
+
+  function ensureHandle(el, kind){
+    if (!el || el.querySelector('.resize-handle')) return;
+    var h = document.createElement('div');
+    h.className = 'resize-handle';
+    h.title = 'Drag to resize';
+    el.appendChild(h);
+
+    h.addEventListener('mousedown', function(e){
+      stop(e);
+      var startX = e.clientX, startY = e.clientY;
+      var startW = el.offsetWidth, startH = el.offsetHeight;
+      var id = getId(el);
+      var keepAR = e.shiftKey;
+      var ar = startW && startH ? (startW / startH) : 0;
+
+      var prevSel = document.body.style.userSelect;
+      document.body.style.userSelect = 'none';
+
+      function mm(ev){
+        var dx = ev.clientX - startX;
+        var dy = ev.clientY - startY;
+        var w = Math.max(60, startW + dx);
+        var h = Math.max(40, startH + dy);
+        if (keepAR && ar){
+          if (Math.abs(dx) > Math.abs(dy)) h = Math.round(w / ar);
+          else w = Math.round(h * ar);
+        }
+        el.style.width = w + 'px';
+        el.style.height = h + 'px';
+
+        // Update model
+        try{
+          if (kind === 'checklist'){
+            var list = (window.checklistNodes || window.checklists || []);
+            for (var i=0;i<list.length;i++){
+              var ck = list[i];
+              if (ck && String(ck.id) === String(id)){
+                ck.w = w; ck.h = h;
+                // optional aliases for export robustness
+                ck.width = w; ck.height = h;
+                break;
+              }
+            }
+          } else if (kind === 'video' || kind === 'youtube'){
+            if (typeof getNodeById === 'function'){
+              var n = getNodeById(id);
+              if (n){ n.w = w; n.h = h; }
+            }
+          }
+        }catch(_){}
+        try{ if (typeof applyTransform==='function') applyTransform(); }catch(_){}
+      }
+
+      function up(){
+        window.removeEventListener('mousemove', mm, true);
+        window.removeEventListener('mouseup', up, true);
+        document.body.style.userSelect = prevSel;
+        try{ if (typeof markDirty==='function') markDirty('resize'); }catch(_){}
+      }
+
+      window.addEventListener('mousemove', mm, true);
+      window.addEventListener('mouseup', up, true);
+    });
+  }
+
+  function scan(){
+    // Checklists
+    var cks = document.querySelectorAll('.checknode[data-id]');
+    for (var i=0;i<cks.length;i++){ ensureHandle(cks[i], 'checklist'); }
+    // Video nodes (and YouTube embeds if desired)
+    var vids = document.querySelectorAll('.node.video[data-id], .node.youtube[data-id]');
+    for (var j=0;j<vids.length;j++){ ensureHandle(vids[j], vids[j].classList.contains('youtube') ? 'youtube' : 'video'); }
+  }
+
+  // Initial scan
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', scan, { once: true });
+  } else { scan(); }
+
+  // Observe future additions
+  var mo = new MutationObserver(function(muts){
+    for (var m=0;m<muts.length;m++){
+      var rec = muts[m];
+      if (!rec.addedNodes) continue;
+      for (var k=0;k<rec.addedNodes.length;k++){
+        var nd = rec.addedNodes[k];
+        if (!(nd instanceof HTMLElement)) continue;
+        if (nd.matches && nd.matches('.checknode[data-id]')) ensureHandle(nd, 'checklist');
+        if (nd.matches && (nd.matches('.node.video[data-id]') || nd.matches('.node.youtube[data-id]'))){
+          ensureHandle(nd, nd.classList.contains('youtube') ? 'youtube' : 'video');
+        }
+        // Also check descendants
+        var innerCks = nd.querySelectorAll ? nd.querySelectorAll('.checknode[data-id]') : [];
+        for (var a=0;a<innerCks.length;a++){ ensureHandle(innerCks[a], 'checklist'); }
+        var innerV = nd.querySelectorAll ? nd.querySelectorAll('.node.video[data-id], .node.youtube[data-id]') : [];
+        for (var b=0;b<innerV.length;b++){ ensureHandle(innerV[b], innerV[b].classList.contains('youtube') ? 'youtube' : 'video'); }
+      }
+    }
+  });
+  mo.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
 </body></html>
