@@ -627,7 +627,7 @@ html.retro #theme {
       background:var(--panel);
       border-radius:.5rem;
       box-shadow:var(--shadow);
-      user-select:none;
+      user-select:(none);
       color:var(--text);
       cursor:default;
       transition:box-shadow 0.2s ease, border-color 0.2s ease;
@@ -656,10 +656,12 @@ html.retro #theme {
     }
     .checknode .drag-handle:active { cursor:grabbing; }
     .checknode .drag-handle:hover { opacity:.9; }
+
     .checknode input[type="checkbox"]{
       width:1rem; height:1rem; margin:0; flex:0 0 auto; pointer-events:auto;
-      accent-color:var(--accent);
+      accent-color:var(--accent); background-color: var(--bg);
     }
+
     .checknode .checktext{
       outline:none; min-width:2ch; max-width:36ch;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
@@ -804,149 +806,295 @@ html.retro #theme {
 
 </style>
 
+
 <style id="oscar-black-gold-rim">
-  /* === Oscar — Black Canvas, Gold Rim (Dark Mode Only) === */
-  html:not(.light):not(.retro) {
-    --bg:#0a0a0b;
-    --panel:#111214;
-    --text:#ECEDEF;
-    --muted:#B8BDC7;
-    --accent:#D4AF37; /* gold only for rims */
-    --node-border: rgba(212,175,55,.28);
-    --panel-border: rgba(212,175,55,.22);
-    --shadow-1: 0 2px 4px rgba(0,0,0,.35);
-    --shadow-2: 0 12px 28px rgba(0,0,0,.55);
-    --shadow-3: 0 40px 80px rgba(0,0,0,.65);
-    /* reset previous goldy wiring */
-    --handle-bg: rgba(255,255,255,.06);
-    --handle-border: var(--accent);
-    --handle-bg-strong: rgba(255,255,255,.12);
-    --handle-icon: rgba(255,255,255,.9);
-    --wire-stroke: var(--text);
-    --wire-shadow: rgba(0,0,0,.65);
-    --connect-hover-outline: #7a7a7a;
-  }
+/* ======================================================================
+   OSCAR → "Nebula Slate" Dark Neumorphic Theme
+   A full revamp to match the reference dashboard: soft surfaces, depth,
+   subtle texture, teal/blue accents, and crisp typography.
+   ====================================================================== */
+:root{ color-scheme: dark; }
 
-  /* Pure black canvas w/ subtle vignette + grain; remove gold aurora */
-  html:not(.light):not(.retro) body {
-    background-image:
-      radial-gradient(1200px 600px at 30% -10%, rgba(255,255,255,.06), transparent 60%),
-      radial-gradient(1600px 900px at 80% -20%, rgba(255,255,255,.04), transparent 65%),
-      url("data:image/svg+xml;utf8,%3Csvg xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width%3D'1024' height%3D'1024'%3E%0A%3Cfilter id%3D'n'%3E%3CfeTurbulence type%3D'fractalNoise' baseFrequency%3D'0.9' numOctaves%3D'1' stitchTiles%3D'stitch'%2F%3E%3C%2Ffilter%3E%0A%3Crect width%3D'100%' height%3D'100%' filter%3D'url(%23n)' opacity%3D'.035'%2F%3E%0A%3C%2Fsvg%3E"),
-      linear-gradient(180deg, #0b0b0d, #0a0a0b);
-    background-blend-mode: normal, normal, overlay, normal;
-  }
+/* ---------- Core palette & tokens ---------- */
+html:not(.light):not(.retro){
+  --bg:#0e141c;             /* page background (very deep slate) */
+  --bg-2:#111a24;           /* slightly lighter layer */
+  --panel:#1a2330;          /* main card surface */
+  --panel-2:#18202b;        /* deeper surface for contrast */
+  --panel-3:#141b25;        /* darkest inset surface */
+  --text:#e8edf7;           /* primary text */
+  --text-dim:#a6b2c7;       /* secondary text */
+  --text-faint:#7d8ba3;     /* tertiary */
+  --hairline:rgba(255,255,255,.06);
+  --hairline-strong:rgba(255,255,255,.12);
+  --rim-dark:rgba(0,0,0,.45);
 
-  /* Topbar and navigation: black glass with realistic shadow */
-  html:not(.light):not(.retro) .topbar {
-    background: rgba(14,14,16,.85);
-    backdrop-filter: blur(6px);
-    border-bottom: 1px solid var(--panel-border);
-    box-shadow: var(--shadow-1), var(--shadow-2);
-  }
+  /* Accent system (derived from reference) */
+  --cyan:#22d3ee;
+  --blue:#60a5fa;
+  --purple:#a78bfa;
+  --yellow:#f59e0b;
+  --green:#22c55e;
+  --danger:#ef4444;
 
-  /* Panels / sidebars / docks — gold rim only */
-  html:not(.light):not(.retro) .panel,
-  html:not(.light):not(.retro) .sidebar,
-  html:not(.light):not(.retro) .dock,
-  html:not(.light):not(.retro) .inspector {
-    background: var(--panel);
-    color: var(--text);
-    border: 1px solid var(--panel-border);
-    box-shadow: var(--shadow-1), var(--shadow-2), var(--shadow-3);
-  }
+  /* Depth & glow */
+  --sh-1:0 1px 2px rgba(0,0,0,.35);
+  --sh-2:0 8px 22px rgba(0,0,0,.55);
+  --sh-3:0 24px 64px rgba(0,0,0,.6);
+  --inset-1:inset 0 1px 0 rgba(255,255,255,.05);
+  --inset-2:inset 0 -1px 0 rgba(0,0,0,.45);
 
-  /* Nodes — black glass with gold rim */
-  html:not(.light):not(.retro) .group {
-    background: rgba(37, 37, 37, 0.88); 
-    border: 1px solid var(--node-border);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.03),
-      var(--shadow-1), var(--shadow-2);
-  }
+  /* Controls */
+  --input-bg:rgba(255,255,255,.06);
+  --input-bd:rgba(255,255,255,.12);
+  --input-hover:rgba(255,255,255,.08);
+  --focus: color-mix(in srgb, var(--cyan) 60%, transparent);
+}
 
+/* ---------- Page background with vignette + micro texture ---------- */
+html:not(.light):not(.retro) body{
+  margin:0;
+  color:var(--text);
+  background:
+    radial-gradient(1200px 700px at 25% -10%, rgba(255,255,255,.05), transparent 60%),
+    radial-gradient(1600px 900px at 90% -20%, rgba(255,255,255,.04), transparent 65%),
+    linear-gradient(180deg, #0f1720 0%, #0e141c 60%, #0d131b 100%);
+  position:relative;
+  overflow-x:hidden;
+}
 
-  html:not(.light):not(.retro) .node,
-  html:not(.light):not(.retro) .textbox {
-    background: rgba(20,21,24,.88);
-    border: 1px solid var(--node-border);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.03),
-      var(--shadow-1), var(--shadow-2);
-  }
-  html:not(.light):not(.retro) .node:hover,
-  html:not(.light):not(.retro) .group:hover,
-  html:not(.light):not(.retro) .textbox:hover {
-    border-color: rgba(212,175,55,.40);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.05),
-      0 4px 8px rgba(0,0,0,.35),
-      0 18px 40px rgba(0,0,0,.6);
-  }
-  html:not(.light):not(.retro) .textbox.selected,
-  html:not(.light):not(.retro) .node.selected,
-  html:not(.light):not(.retro) .group.selected {
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.05),
-      0 0 0 1px rgba(212,175,55,.55),
-      0 24px 60px rgba(0,0,0,.65);
-  }
+/* Subtle grain using CSS-only noise dither (no external assets) */
+html:not(.light):not(.retro) body::before{
+  content:"";
+  position:fixed; inset:0;
+  pointer-events:none;
+  opacity:.18;
+  background-image:
+    repeating-conic-gradient(from 0deg, rgba(255,255,255,.012) 0% 0.25%, transparent 0.25% 0.5%);
+  mix-blend-mode:soft-light;
+  filter:contrast(120%) brightness(105%);
+  z-index:0;
+}
 
-  /* Menus: accent rim override */
-  .menu {
-    background: var(--panel);
-    border: 1px solid var(--accent);
-    box-shadow: var(--shadow-1), var(--shadow-2);
-  }
-  .menu button:hover {
-    background: var(--bg);
-  }
-  .menu hr { border-top-color: var(--accent); }
+/* ---------- Universal panels / containers ---------- */
+html:not(.light):not(.retro) .panel,
+html:not(.light):not(.retro) .sidebar,
+html:not(.light):not(.retro) .dock,
+html:not(.light):not(.retro) .inspector{
+  background:
+    radial-gradient(120% 140% at 70% 0%, rgba(255,255,255,.06), rgba(255,255,255,0) 60%),
+    var(--panel);
+  border:1px solid var(--hairline);
+  border-radius:20px;
+  box-shadow: var(--inset-1), var(--sh-1), var(--sh-2);
+  color:var(--text);
+  position:relative;
+  z-index:1;
+}
 
-  /* Buttons, inputs — neutral greys */
-  html:not(.light):not(.retro) button,
-  html:not(.light):not(.retro) select,
-  html:not(.light):not(.retro) input[type="text"],
-  html:not(.light):not(.retro) input[type="search"] {
-    background: rgba(24,24,26,.9);
-    color: var(--text);
-    border: 1px solid rgba(255,255,255,.10);
-    box-shadow: var(--shadow-1);
-  }
-  html:not(.light):not(.retro) button:hover {
-    border-color: rgba(255,255,255,.18);
-  }
+/* Title bars, headers, and search strip */
+html:not(.light):not(.retro) .topbar,
+html:not(.light):not(.retro) .header{
+  background:linear-gradient(180deg, rgba(9,13,19,.7), rgba(9,13,19,.35));
+  backdrop-filter: blur(8px);
+  border-bottom:1px solid var(--hairline);
+  box-shadow: var(--sh-1);
+}
 
-  /* Handles / wires — grayscale */
-  html:not(.light):not(.retro) .handle {
-    background: var(--handle-bg);
-    border: 1px solid var(--handle-border);
-  }
-  html:not(.light):not(.retro) .wire {
-    stroke: var(--wire-stroke);
-    filter: drop-shadow(0 2px 2px var(--wire-shadow));
-  }
+/* ---------- Node & card system ---------- */
+html:not(.light):not(.retro) .node,
+html:not(.light):not(.retro) .textbox,
+html:not(.light):not(.retro) .group{
+  background:
+    radial-gradient(120% 160% at 85% -10%, rgba(255,255,255,.07), rgba(255,255,255,0) 55%),
+    var(--panel-2);
+  border:1px solid var(--hairline);
+  border-radius:18px;
+  box-shadow: var(--inset-1), var(--inset-2), var(--sh-1), var(--sh-2);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+html:not(.light):not(.retro) .node:hover,
+html:not(.light):not(.retro) .textbox:hover,
+html:not(.light):not(.retro) .group:hover{
+  transform: translateY(-1px);
+  border-color: var(--hairline-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 2px 0 rgba(0,0,0,.35),
+    0 10px 26px rgba(0,0,0,.5),
+    0 26px 70px rgba(0,0,0,.55);
+}
+html:not(.light):not(.retro) .node.selected,
+html:not(.light):not(.retro) .textbox.selected,
+html:not(.light):not(.retro) .group.selected{
+  outline:2px solid var(--focus);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--cyan) 45%, transparent),
+    0 24px 64px rgba(0,0,0,.6);
+}
 
-  /* Contextual overlays */
-  html:not(.light):not(.retro) .drop-overlay {
-    background: rgba(255,255,255,.06);
-    border: 1px dashed rgba(255,255,255,.22);
-  }
-  html:not(.light):not(.retro) .drop-message { border-color: rgba(255,255,255,.22); }
+/* Node titles as frosted pills */
+html:not(.light):not(.retro) .node .title{
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+  border:1px solid var(--hairline-strong);
+  color:var(--text);
+  border-radius:12px;
+  padding:4px 10px;
+}
 
-  /* Spotlight */
-  html:not(.light):not(.retro) #spotlightOverlay { background: rgba(0,0,0,.55); }
-  html:not(.light):not(.retro) .spotlight-card {
-    background: rgba(16,16,18,.96);
-    border: 1px solid var(--panel-border);
-    box-shadow: var(--shadow-1), var(--shadow-2);
-  }
-  html:not(.light):not(.retro) .spotlight-input {
-    border: 1px solid rgba(255,255,255,.15);
-    background: rgba(255,255,255,.05);
-    color: var(--text);
-  }
+/* ---------- Inputs & buttons ---------- */
+html:not(.light):not(.retro) button,
+html:not(.light):not(.retro) .btn,
+html:not(.light):not(.retro) select,
+html:not(.light):not(.retro) input[type="text"],
+html:not(.light):not(.retro) input[type="search"],
+html:not(.light):not(.retro) textarea{
+  background:var(--input-bg);
+  border:1px solid var(--input-bd);
+  color:var(--text);
+  border-radius:12px;
+  box-shadow: var(--inset-1), var(--sh-1);
+  transition: background .15s ease,border-color .15s ease, box-shadow .15s ease;
+}
+html:not(.light):not(.retro) button:hover,
+html:not(.light):not(.retro) .btn:hover{ background:var(--input-hover); }
+html:not(.light):not(.retro) input[type="text"]:focus,
+html:not(.light):not(.retro) input[type="search"]:focus,
+html:not(.light):not(.retro) textarea:focus,
+html:not(.light):not(.retro) select:focus{
+  outline:2px solid var(--focus);
+  border-color: color-mix(in srgb, var(--cyan) 35%, var(--input-bd));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--cyan) 25%, transparent);
+}
+
+/* Primary CTA button */
+html:not(.light):not(.retro) .btn.primary,
+html:not(.light):not(.retro) button.primary{
+  background:linear-gradient(180deg, color-mix(in srgb, var(--cyan) 35%, #0b1924), #0b1e27);
+  border-color: color-mix(in srgb, var(--cyan) 45%, #0a1a22);
+  box-shadow: 0 8px 18px rgba(34,211,238,.25), var(--sh-1);
+}
+html:not(.light):not(.retro) .btn.primary:hover{ filter:brightness(1.05); }
+
+/* Toggle / switch */
+html:not(.light):not(.retro) .switch{ background:var(--panel-3); border:1px solid var(--hairline); }
+html:not(.light):not(.retro) .switch .thumb{ background:var(--text); box-shadow: var(--sh-1); }
+html:not(.light):not(.retro) .switch.on{ border-color: color-mix(in srgb, var(--cyan) 45%, var(--hairline)); }
+html:not(.light):not(.retro) .switch.on .thumb{ background:var(--cyan); }
+
+/* ---------- Menus, popovers, tooltips ---------- */
+html:not(.light):not(.retro) .menu,
+html:not(.light):not(.retro) .context,
+html:not(.light):not(.retro) .popover{
+  background:var(--panel-2);
+  border:1px solid var(--hairline);
+  border-radius:14px;
+  box-shadow: var(--sh-1), var(--sh-2);
+}
+html:not(.light):not(.retro) .menu button:hover{ background:rgba(255,255,255,.06); }
+html:not(.light):not(.retro) .tooltip{
+  background:#0c1219;
+  color:var(--text);
+  border:1px solid var(--hairline);
+  box-shadow: var(--sh-1);
+  border-radius:8px;
+}
+
+/* ---------- Drag & Drop states ---------- */
+html:not(.light):not(.retro) .drop-overlay{
+  background: rgba(34,211,238,.10);
+  border:3px dashed color-mix(in srgb, var(--cyan) 70%, transparent);
+  border-radius:16px;
+}
+html:not(.light):not(.retro) .drop-message{
+  border-color: color-mix(in srgb, var(--cyan) 45%, rgba(255,255,255,.12));
+  color:var(--text-dim);
+}
+
+/* ---------- Connectors & handles ---------- */
+html:not(.light):not(.retro) .wire{ stroke: rgba(255,255,255,.9); filter: drop-shadow(0 2px 2px rgba(0,0,0,.65)); }
+html:not(.light):not(.retro) .handle{
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.28);
+  box-shadow: var(--sh-1);
+}
+
+/* ---------- Zoom pill ---------- */
+html:not(.light):not(.retro) .scale-bar{
+  background:rgba(255,255,255,.06) !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  border-radius:12px !important;
+  box-shadow: var(--sh-1);
+}
+html:not(.light):not(.retro) #zoomMinus,
+html:not(.light):not(.retro) #zoomPlus{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.14);
+  color:#e7ecf6;
+  border-radius:10px;
+}
+
+/* ---------- Scrollbars (slim, modern) ---------- */
+html:not(.light):not(.retro) *::-webkit-scrollbar{ height:10px; width:10px; }
+html:not(.light):not(.retro) *::-webkit-scrollbar-track{ background:transparent; }
+html:not(.light):not(.retro) *::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.10));
+  border:2px solid transparent;
+  background-clip:padding-box;
+  border-radius:999px;
+}
+html:not(.light):not(.retro) *::-webkit-scrollbar-thumb:hover{
+  background:linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.14));
+}
+
+/* ---------- Mini chart & progress styles (for cards) ---------- */
+html:not(.light):not(.retro) .stat-bar .bar,
+html:not(.light):not(.retro) .chart .bar{
+  background: linear-gradient(180deg, var(--cyan), var(--blue));
+  border-radius:6px 6px 0 0;
+  box-shadow: 0 8px 18px rgba(96,165,250,.25);
+}
+html:not(.light):not(.retro) .progress.cyan{ background:linear-gradient(180deg, var(--cyan), var(--blue)); }
+html:not(.light):not(.retro) .progress.purple{ background:linear-gradient(180deg, var(--purple), #6d28d9); }
+html:not(.light):not(.retro) .progress.yellow{ background:linear-gradient(180deg, var(--yellow), #c2410c); }
+
+/* ---------- Badges, pills ---------- */
+html:not(.light):not(.retro) .badge{
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--hairline);
+  color:var(--text-dim);
+  border-radius:999px;
+  padding:4px 10px;
+}
+html:not(.light):not(.retro) .badge.accent{ color:#001217; background:var(--cyan); border-color:transparent; }
+
+/* ---------- Tables ---------- */
+html:not(.light):not(.retro) table{
+  background:var(--panel);
+  color:var(--text);
+  border-collapse:separate;
+  border-spacing:0;
+  border:1px solid var(--hairline);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow: var(--sh-1);
+}
+html:not(.light):not(.retro) th, 
+html:not(.light):not(.retro) td{ border-bottom:1px solid rgba(255,255,255,.06); }
+html:not(.light):not(.retro) tr:hover td{ background:rgba(255,255,255,.04); }
+
+/* ---------- Code, selection ---------- */
+html:not(.light):not(.retro) ::selection{
+  background:color-mix(in srgb, var(--cyan) 35%, #0b121a);
+  color:var(--text);
+}
+
+/* ---------- Utility accent rings (like sample cards) ---------- */
+.ring-purple{ color:var(--purple); }
+.ring-yellow{ color:var(--yellow); }
+.ring-blue{ color:var(--blue); }
 </style>
+
 
 <style id="checklist-select-fix">
 
@@ -1722,14 +1870,14 @@ body.retro #tbCtxMenu{
 
 /* Timeline menu tabbed panel - robust visibility */
 #timelineMenu { min-width: 280px; }
-#timelineMenu .panel { display: none !important; padding: 8px 10px; gap: 8px;}
+#timelineMenu .panel { display: none !important; padding: 8px 10px; gap: 8px; }
 #timelineMenu .panel.active { display: flex !important; flex-direction: column; }
 #timelineMenu .tabs { display:flex; gap:6px; padding:6px; background:var(--panel); border-bottom:1px solid var(--accent); }
-#timelineMenu .tabs .tab { padding:6px 10px; border-radius:6px; background:var(--panel); border:1px solid var(--panel-border);; cursor:pointer; user-select:none; }
+#timelineMenu .tabs .tab { padding:6px 10px; border-radius:6px; background:var(--panel); border:1px solid var(--panel-border); cursor:pointer; user-select:none; }
 #timelineMenu .tabs .tab.active { background:var(--panel); border:2px solid var(--accent); }
-#timelineMenu .row { display:flex; align-items:center; gap:8px; }
+#timelineMenu .row { display:flex; align-items:center; gap:8px;}
 #timelineMenu .row label { min-width:110px; font-size:12px; color:var(--text); }
-#timelineMenu input[type="color"], #timelineMenu input[type="number"], #timelineMenu select { padding:2px 4px; }
+#timelineMenu input[type="color"], #timelineMenu input[type="number"], #timelineMenu select { padding:2px 4px; background: var(--accent); border:1px solid var(--panel-border);}
 
 
 /* Timeline mark SVG shape helper */
@@ -4302,77 +4450,84 @@ return {
   });
 
   
-
   // Timelines
-  const processedTimelines = (state.timelines || []).map(tl => {
-    const o = {
-      id: tl.id,
-      x: tl.x, y: tl.y, w: tl.w, h: tl.h,
-      direction: tl.direction || (tl.el && tl.el.classList.contains('vertical') ? 'v' : 'h'),
-      stroke: tl.stroke || (tl.el ? getComputedStyle(tl.el).color : ''),
-      strokeWidth: tl.strokeWidth || (tl.direction==='h' ? tl.h : tl.w),
-      fill: tl.fill || (tl.line ? getComputedStyle(tl.line).backgroundColor : ''),
-      border: tl.border || (tl.el ? getComputedStyle(tl.el).borderColor : ''),
-      markRadius: (typeof tl.markRadius==='number' ? tl.markRadius : 12),
-      markShape: tl.markShape || 'circle',
-              markFill: tl.markFill || (el && el.style && el.style.getPropertyValue && el.style.getPropertyValue('--tl-mark-fill')) || ((tl.timestamps && tl.timestamps[0] && tl.timestamps[0].el && getComputedStyle(tl.timestamps[0].el).backgroundColor) || ''),
-      markFill: tl.markFill || (tl.el && tl.el.style && tl.el.style.getPropertyValue && tl.el.style.getPropertyValue('--tl-mark-fill')) || ((tl.timestamps && tl.timestamps[0] && tl.timestamps[0].el && getComputedStyle(tl.timestamps[0].el).backgroundColor) || ''),
-      timestamps: (tl.timestamps||[]).map(m => ({
-        x: parseFloat(m.el.style.left)||0,
-        y: parseFloat(m.el.style.top)||0,
-        size: m.el.offsetWidth||24,
-        linkedGroupId: m.linkedGroupId || null
-      }))
+  const processedTimelines = (state.timelines || []).map(function(tl){
+    // Guard element references
+    var el = (tl && tl.el) || document.querySelector('.timeline[data-id="'+(tl && tl.id || '')+'"]') || null;
+    var cs = el ? getComputedStyle(el) : null;
+    var line = (tl && tl.line) || (el ? el.querySelector('.timeline-line') : null);
+    var ls = line ? getComputedStyle(line) : null;
+    var firstTsEl = (tl && tl.timestamps && tl.timestamps[0] && tl.timestamps[0].el) ? tl.timestamps[0].el : null;
+
+    function _num(v,d){ v = parseFloat(v); return isFinite(v)?v:(d||0); }
+
+    return {
+      id: (tl && tl.id) || (el && el.dataset && el.dataset.id) || null,
+      x: _num(tl && tl.x != null ? tl.x : (el && el.style && el.style.left)),
+      y: _num(tl && tl.y != null ? tl.y : (el && el.style && el.style.top)),
+      w: _num(tl && tl.w != null ? tl.w : (el && el.style && el.style.width)),
+      h: _num(tl && tl.h != null ? tl.h : (el && el.style && el.style.height)),
+      direction: (tl && tl.direction) || ((el && el.classList && el.classList.contains('vertical')) ? 'v' : 'h'),
+      stroke: (tl && tl.stroke) || (cs ? cs.color : ''),
+      strokeWidth: _num(
+        (tl && tl.strokeWidth != null) ? tl.strokeWidth :
+        (cs ? (( (tl && tl.direction) === 'h') ? cs.height : cs.width) : 0)
+      ),
+      fill: (tl && tl.fill) || (ls ? ls.backgroundColor : ''),
+      border: (tl && tl.border) || (cs ? cs.borderColor : ''),
+      pattern: (tl && tl.pattern) || (cs ? cs.borderStyle : 'solid'),
+      markRadius: (typeof (tl && tl.markRadius) === 'number') ? tl.markRadius : 12,
+      markShape: (tl && tl.markShape) || 'circle',
+      markFill: (tl && tl.markFill) || (firstTsEl ? getComputedStyle(firstTsEl).backgroundColor : ''),
+      timestamps: ((tl && tl.timestamps) || []).map(function(m){
+        var mel = (m && m.el) || null;
+        return {
+          x: _num(m && m.x != null ? m.x : (mel && mel.style && mel.style.left)),
+          y: _num(m && m.y != null ? m.y : (mel && mel.style && mel.style.top)),
+          size: _num(m && m.size != null ? m.size : (mel && mel.offsetWidth)) || 24,
+          linkedGroupId: (m && m.linkedGroupId) || (mel && mel.dataset && mel.dataset.linkedGroupId) || null
+        };
+      })
     };
-    return o;
   });
+
+
+  // Wires (endpoints + control points)
+  
 // Checklists
-const processedChecklists = (window.checklistNodes || []).map(ch => {
+const processedChecklists = (window.checklistNodes || window.checklists || []).map(function(ch){
   const el = ch && ch.element;
   const textEl = el ? el.querySelector('.checktext') : null;
   const csNode = el ? getComputedStyle(el) : null;
   const csText = textEl ? getComputedStyle(textEl) : null;
   const width  = el ? (el.style.width  || (el.offsetWidth  ? (el.offsetWidth  + 'px') : '')) : '';
   const height = el ? (el.style.height || (el.offsetHeight ? (el.offsetHeight + 'px') : '')) : '';
+  function safeSanitize(html){
+    try{ return sanitizeHtml ? sanitizeHtml(html||'') : (html||''); }catch(_e){ return html||''; }
+  }
   return {
-    id: ch.id,
-    x: ch.x,
-    y: ch.y,
+    id: ch && ch.id,
+    x: ch && ch.x,
+    y: ch && ch.y,
     width,
     height,
-    text: ch.text,
-    checked: !!ch.checked,
+    text: ch && ch.text,
+    checked: !!(ch && ch.checked),
     bg:     el ? (el.style.backgroundColor || (csNode ? csNode.backgroundColor : '')) : '',
     border: el ? (el.style.borderColor     || (csNode ? csNode.borderColor     : '')) : '',
     color:  textEl ? (textEl.style.color   || (csText ? csText.color           : '')) : '',
     fontSize: textEl ? (textEl.style.fontSize || (csText ? csText.fontSize : '')) : '',
-    textHtml: (function(){ try{ return sanitizeHtml(textEl ? textEl.innerHTML : (ch.textHtml || '')); }catch(_e){ return ch.textHtml || ''; } })()
+    textHtml: safeSanitize(textEl ? textEl.innerHTML : (ch && ch.textHtml))
   };
-
-  return {
-    version: 3,
-    nextId: state.nextId || 1,
-    viewport: { zoom: state.zoom || 1, origin: state.origin || {x:0,y:0} },
-    nodes: processedNodes,
-    groups: processedGroups,
-    textboxes: processedTextboxes,
-    checklists: processedChecklists,
-    wires: (state.wires || []).map(w => ({ id:w.id, from:w.from, to:w.to })),
-    timelines: processedTimelines
-  };
-
-}
-);
-
-  // Wires (endpoints + control points)
-  const processedWires = (state.wires || []).map(w => ({
+});
+const processedWires = (state.wires || []).map(w => ({
     fromId: getIdForEl(w.fromEl),
     toId:   getIdForEl(w.toEl),
     c1: { x: (w.c1 && w.c1.x) || 0, y: (w.c1 && w.c1.y) || 0 },
     c2: { x: (w.c2 && w.c2.x) || 0, y: (w.c2 && w.c2.y) || 0 }
   })).filter(w => w.fromId && w.toId);
 
-  return {
+  return  {
     version: '4.8',
     timestamp: new Date().toISOString(),
     hasBase64Files: true,
@@ -5515,9 +5670,21 @@ function createTwitterNode(originalUrl, at){
         <option value="'Courier New', Courier, monospace">Courier New</option>
         <option value="Menlo, Monaco, Consolas, 'Courier New', monospace">Menlo</option>
         <option value="Verdana, Geneva, Tahoma, sans-serif">Verdana</option>
-        <option value="'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">Noto Sans</option>
-        <option value="'Noto Serif', Georgia, 'Times New Roman', Times, serif">Noto Serif</option>
-      </select>
+   <option value="'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">Noto Sans</option>
+   <option value="'Noto Serif', Georgia, 'Times New Roman', Times, serif">Noto Serif</option>
+   
+<!-- Chinese fonts from your system -->
+  <option value="'SimSun-ExtB', 'SimSun', '宋体', serif">    宋体  </option>
+  <option value="'FangSong', '仿宋', 'STFangsong', serif">    仿宋   </option>
+  <option value="'Microsoft YaHei', '微软雅黑', 'PingFang SC', 'Noto Sans SC', sans-serif">    微软雅黑  </option>
+  <option value="'NSimSun', '新宋体', serif">    新宋体  </option>
+  <option value="'KaiTi', '楷体', 'STKaiti', serif">    楷体   </option>
+  <option value="'DengXian', '等线', sans-serif">    等线   </option>
+  <option value="'SimHei', '黑体', 'Heiti SC', 'PingFang SC', sans-serif">    黑体   </option>
+  <option value="'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', sans-serif">    Noto Sans SC  </option>
+
+</select>
+
 
       <input id="tbFontSize" class="ftb-number" type="number" min="8" max="200" step="1" value="16" title="Font size (px)" />
       <span class="ftb-unit">px</span>
@@ -8184,7 +8351,8 @@ window.openTimestampMenu = function(x,y, tl, markEl){
           var cs=el?getComputedStyle(el):null;
           var line=el?el.querySelector('.timeline-line'):null;
           var ls=line?getComputedStyle(line):null;
-          return {
+          const firstTsEl = (tl && tl.timestamps && tl.timestamps[0] && tl.timestamps[0].el) ? tl.timestamps[0].el : null;
+return {
             id: tl.id||(el&&el.dataset.id)||null,
             x: _num(tl.x!=null?tl.x:(el&&el.style.left)), y: _num(tl.y!=null?tl.y:(el&&el.style.top)),
             w: _num(tl.w!=null?tl.w:(el&&el.style.width)), h: _num(tl.h!=null?tl.h:(el&&el.style.height)),
@@ -8198,7 +8366,8 @@ window.openTimestampMenu = function(x,y, tl, markEl){
             markShape: tl.markShape||'circle',
             timestamps: (tl.timestamps||[]).map(function(m){
               var mel=m.el||null;
-              return {
+              const firstTsEl = (tl && tl.timestamps && tl.timestamps[0] && tl.timestamps[0].el) ? tl.timestamps[0].el : null;
+return {
                 x:_num(m.x!=null?m.x:(mel&&mel.style.left)), y:_num(m.y!=null?m.y:(mel&&mel.style.top)),
                 size:_num(m.size!=null?m.size:(mel&&mel.offsetWidth))||24,
                 linkedGroupId: m.linkedGroupId||((mel&&mel.dataset)&&mel.dataset.linkedGroupId)||null
