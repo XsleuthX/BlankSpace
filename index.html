@@ -2011,6 +2011,9 @@ body.retro #tbCtxMenu{
     <button data-action="upload-pdf">Upload Document…</button>
     <hr/>
     <button data-action="add-google-map">Add Google Map</button>
+    <button data-action="add-whiteboard">Add White Board</button>
+    <button data-action="add-calendar">Add Calendar</button>
+    <button data-action="add-lightbox">Add Lightbox</button>
     <hr/>
     <button data-action="create-group">Create Group</button>
     <button data-action="create-textbox">Create Text Box</button>
@@ -3061,6 +3064,19 @@ function openGroupMenu(x, y, group){
         if(act==='upload-video') document.getElementById('fileVideo').click();
         if(act==='upload-pdf') document.getElementById('filePDF').click();
         if(act==='add-google-map') openMapModal();
+        if (act==='add-whiteboard') {
+        const n = createWebsiteNode('https://drawnix.com/', canvasContextPoint);
+        // Optional friendly title:
+        if (n && n.el) { n.title = 'White Board'; n.el.querySelector('.title').textContent = n.title; }
+}
+        if (act==='add-calendar') {
+        const n = createWebsiteNode('https://xsleuthx.github.io/Colorful-Calendar/', canvasContextPoint);
+        if (n && n.el) { n.title = 'Calendar'; n.el.querySelector('.title').textContent = n.title; }
+}
+        if (act==='add-lightbox') {
+        const n = createWebsiteNode('https://xsleuthx.github.io/Lightbox/', canvasContextPoint);
+        if (n && n.el) { n.title = 'Lightbox'; n.el.querySelector('.title').textContent = n.title; }
+}
         if(act==='create-group') createGroup(canvasContextPoint);
         if(act==='create-textbox') createFloatingTextbox(canvasContextPoint);
         if(act==='create-timeline-h'){ window.createTimeline({direction:'h', at: canvasContextPoint}); }
