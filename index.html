@@ -2014,6 +2014,7 @@ body.retro #tbCtxMenu{
     <button data-action="add-whiteboard">Add White Board</button>
     <button data-action="add-calendar">Add Calendar</button>
     <button data-action="add-lightbox">Add Lightbox</button>
+    <button data-action="add-shotlist-builder">Add Shotlist Builder</button>
     <hr/>
     <button data-action="create-group">Create Group</button>
     <button data-action="create-textbox">Create Text Box</button>
@@ -3076,6 +3077,10 @@ function openGroupMenu(x, y, group){
         if (act==='add-lightbox') {
         const n = createWebsiteNode('https://xsleuthx.github.io/Lightbox/', canvasContextPoint);
         if (n && n.el) { n.title = 'Lightbox'; n.el.querySelector('.title').textContent = n.title; }
+}
+        if (act==='add-shotlist-builder') {
+        const n = createWebsiteNode('https://xsleuthx.github.io/Shotlist-Builder/', canvasContextPoint);
+        if (n && n.el) { n.title = 'Shotlist Builder'; n.el.querySelector('.title').textContent = n.title; }
 }
         if(act==='create-group') createGroup(canvasContextPoint);
         if(act==='create-textbox') createFloatingTextbox(canvasContextPoint);
