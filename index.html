@@ -9199,667 +9199,405 @@ return {
 })();
 </script>
 
-<style id="templates-modal-css">
-  .tpl-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:9999; }
-  .tpl-modal{ width:min(960px,92vw); max-height:80vh; background:#0f172a; color:#e5e7eb; border:1px solid #334155; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.5); overflow:hidden; display:flex; flex-direction:column; }
-  .tpl-header{ padding:14px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #1f2937; }
-  .tpl-title{ font-size:16px; font-weight:600; flex:1; }
-  .tpl-search{ flex:2; }
-  .tpl-search input{ width:100%; padding:8px 10px; border-radius:10px; border:1px solid #334155; background:#0b1220; color:#e5e7eb; }
-  .tpl-body{ padding:16px; overflow:auto; }
-  .tpl-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:12px; }
-  .tpl-card{ border:1px solid #334155; border-radius:12px; background:#0b1220; overflow:hidden; display:flex; flex-direction:column; }
-  .tpl-thumb{ height:120px; background:#111827; display:flex; align-items:center; justify-content:center; font-size:12px; opacity:.7; }
-  .tpl-info{ padding:10px; display:flex; flex-direction:column; gap:6px; }
-  .tpl-name{ font-weight:600; }
-  .tpl-meta{ font-size:12px; color:#a1a1aa; }
-  .tpl-actions{ display:flex; gap:8px; margin-top:8px; }
-  .tpl-btn{ padding:6px 10px; border-radius:10px; border:1px solid #334155; background:#1f2937; color:#e5e7eb; cursor:pointer; }
-  .tpl-btn:hover{ filter:brightness(1.1); }
-  .tpl-footer{ padding:12px 16px; border-top:1px solid #1f2937; display:flex; gap:8px; justify-content:flex-end; }
-  .tpl-close{ padding:8px 12px; border-radius:10px; border:1px solid #334155; background:#111827; color:#e5e7eb; cursor:pointer; }
-  .tpl-overlay.show{ display:flex; }
+<!-- === Templates Modal (single, scoped, structured) === -->
+<style id="tplModalStyles">
+  /* Scope everything under #tplOverlay to avoid style collisions */
+  #tplOverlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.55);
+    backdrop-filter: blur(8px) saturate(140%);
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
+    display:none; z-index:9999;
+  }
+  #tplOverlay.show{ display:block; }
 
-  .tpl-layout{ display:grid; grid-template-columns: 220px 1fr; gap:16px; height: 100%; }
-  .tpl-sidebar{ border-right:1px solid #1f2937; padding:8px 0 8px 8px; overflow:auto; }
-  .tpl-sidehdr{ font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:#9ca3af; padding:0 8px 8px; }
-  .tpl-tree ul{ list-style:none; margin:0; padding-left:12px; }
-  .tpl-tree .node{ display:flex; align-items:center; gap:6px; padding:6px 8px; border-radius:8px; cursor:pointer; user-select:none; }
-  .tpl-tree .node:hover{ background:#0b1220; }
-  .tpl-tree .node.active{ background:#0b1220; border:1px solid #334155; }
-  .tpl-tree .caret{ font-size:12px; opacity:.8; width:14px; text-align:center; }
-  .tpl-tree .label{ flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .tpl-main{ overflow:auto; }
-    </style>
+  #tplOverlay .tpl-modal{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:min(1200px, 92vw); height:min(720px, 88vh);
+    background:var(--panel); color:var(--text);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:16px; box-shadow:0 22px 60px rgba(0,0,0,.55);
+    display:grid; grid-template-rows:auto 1fr;
+  }
 
-<div id="tplOverlay" class="tpl-overlay" aria-modal="true" role="dialog">
-  <div class="tpl-modal">
+  #tplOverlay .tpl-header{
+    display:flex; gap:10px; align-items:center; padding:12px 14px;
+    border-bottom:1px solid rgba(255,255,255,.12);
+  }
+  #tplSearch{
+    flex:1; height:40px; border-radius:12px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.06); color:var(--text);
+    padding:0 12px; outline:none;
+  }
+  #tplClose{
+    border-radius:10px; border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.08); color:var(--text); padding:8px 12px;
+    cursor:pointer;
+  }
+
+  #tplOverlay .tpl-body{
+    display:grid; grid-template-columns:260px 1fr; min-height:0;
+  }
+
+  /* Folder tree panel */
+  #tplTreePane{
+    border-right:1px solid rgba(255,255,255,.10);
+    padding:10px; overflow:auto;
+  }
+  .tpl-tree .folder-row{
+    display:flex; align-items:center; gap:8px; padding:6px 8px;
+    border-radius:8px; cursor:pointer; user-select:none;
+  }
+  .tpl-tree .folder-row:hover{ background:rgba(255,255,255,.06); }
+  .tpl-tree .folder-row.active{
+    outline:2px solid var(--accent); outline-offset:2px;
+    background:rgba(255,255,255,.08);
+  }
+  .tpl-tree .caret{
+    display:inline-block; width:14px; text-align:center; opacity:.9;
+    transform:rotate(0deg); transition:transform .15s ease;
+  }
+  .tpl-tree .is-open>.folder-row .caret{ transform:rotate(90deg); }
+  .tpl-tree .count{
+    margin-left:auto; opacity:.8; font-size:12px;
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16);
+    padding:2px 8px; border-radius:999px;
+  }
+  .tpl-tree ul{ margin:0; padding-left:16px; list-style:none; }
+  .tpl-tree li{ margin:2px 0; }
+  .tpl-tree .recent-icon{ font-size:12px; opacity:.8; }
+
+  /* Grid */
+  #tplGridPane{ padding:10px; overflow:auto; }
+  #tplGrid{
+    display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:12px;
+  }
+  .tpl-card{
+    display:grid; grid-template-rows:auto 1fr auto; gap:8px;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10);
+    border-radius:14px; padding:10px;
+  }
+  .tpl-thumb{
+    height:140px; border-radius:10px; background:rgba(0,0,0,.4); display:grid; place-items:center; overflow:hidden;
+  }
+  .tpl-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .tpl-name{ font-weight:700; }
+  .tpl-meta{ font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tpl-actions{ display:flex; gap:8px; }
+  .tpl-btn{
+    flex:1 1 0; padding:8px 10px; border-radius:10px;
+    border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08);
+    color:var(--text); cursor:pointer;
+  }
+  .tpl-btn:hover{ filter:brightness(1.08); }
+
+  @media (max-width: 780px){
+    #tplOverlay .tpl-body{ grid-template-columns: 1fr; }
+    #tplTreePane{ display:none; }
+  }
+</style>
+
+<div id="tplOverlay" aria-hidden="true">
+  <div class="tpl-modal" role="dialog" aria-modal="true">
     <div class="tpl-header">
-      <div class="tpl-title">Templates</div>
-      <div class="tpl-search"><input id="tplSearch" type="search" placeholder="Search templates..."></div>
-      <button id="tplClose" class="tpl-close" aria-label="Close">Close</button>
+      <input id="tplSearch" type="search" placeholder="Search templates…"/>
+      <button id="tplClose">Close</button>
     </div>
     <div class="tpl-body">
-      <div class="tpl-layout">
-        <aside class="tpl-sidebar">
-          <div class="tpl-sidehdr">Folders</div>
-          <nav id="tplTree" class="tpl-tree" aria-label="Template folders"></nav>
-        </aside>
-        <section class="tpl-main">
-          <div id="tplGrid" class="tpl-grid"></div>
-        </section>
-      </div>
-    </div>
-    <div class="tpl-footer">
-      <button id="tplReload" class="tpl-btn">Reload list</button>
+      <aside id="tplTreePane">
+        <div class="tpl-tree" id="tplTree" aria-label="Folders"></div>
+      </aside>
+      <section id="tplGridPane">
+        <div id="tplGrid"></div>
+      </section>
     </div>
   </div>
 </div>
 
-<script id="templates-modal-logic">
+<script id="tplModalScript">
 (()=>{
 
-  const overlay = document.getElementById('tplOverlay');
-  const grid = document.getElementById('tplGrid');
-  const searchEl = document.getElementById('tplSearch');
+  // ---------- Small helpers ----------
+  const $ = (s, r=document)=>r.querySelector(s);
+  const grid = $('#tplGrid');
+  const treeEl = $('#tplTree');
+  const searchEl = $('#tplSearch');
+  const overlay = $('#tplOverlay');
 
-  // Manifest is a JSON file in your repo root listing available template files.
-  // Example templates.json (place in the same folder as your HTML):
-  // [
-  //   {"name":"Mood Starter","file":"templates/mood-starter.json","thumbnail":"thumbs/mood-starter.png","tags":["photos","warm"]},
-  //   {"name":"Wireframe UX","file":"templates/wireframe.json"},
-  //   {"name":"Story Board","file":"templates/story.json","tags":["story","frames"]}
-  // ]
-  const MANIFEST_URLS = [
-    'templates.json',                   // root
-    'templates/templates.json',        // nested
-    'boards.json'                      // alternate name
-  ];
+  function openModal(){ overlay.classList.add('show'); searchEl?.focus(); }
+  function closeModal(){ overlay.classList.remove('show'); }
 
-  // --- Utility fetch with graceful errors ---
+  $('#tplClose')?.addEventListener('click', closeModal);
+  overlay?.addEventListener('click', (e)=>{ if(e.target===overlay) closeModal(); });
+  document.getElementById('btnTemplates')?.addEventListener('click', openModal);
+
+  // ---------- Discovery (GitHub → manifest fallback) ----------
+  const MANIFEST_URLS = ['templates.json','templates/templates.json','boards.json'];
+
   async function fetchJSON(url){
     const res = await fetch(url, {cache:'no-store'});
     if(!res.ok) throw new Error('HTTP '+res.status+' for '+url);
-    return await res.json();
+    return res.json();
   }
 
-  // Try to detect GitHub repo owner/repo from GitHub Pages URL,
-  // or use window.BlankspaceRepoOwner/BlankspaceRepoName overrides if provided.
   function detectGhRepo(){
     try{
-      const owner = window.BlankspaceRepoOwner || (location.hostname.endsWith('github.io') ? location.hostname.split('.')[0] : null);
-      const pathname = location.pathname.replace(/^\/+/,''); // e.g. 'BlankSpace/'
-      const repo = window.BlankspaceRepoName || (pathname ? pathname.split('/')[0] : null);
-      if(owner && repo) return {owner, repo};
-    }catch(_){}
-    return null;
+      if(!location.hostname.endsWith('github.io')) return null;
+      const owner = location.hostname.split('.')[0];                  // xsleuthx
+      const repo  = location.pathname.replace(/^\/+/,'').split('/')[0] || null; // BlankSpace
+      return (owner && repo) ? {owner, repo} : null;
+    }catch(_){ return null; }
   }
 
-  async function tryGitHubTreeScan(branch){
-    const repo = detectGhRepo();
-    if(!repo) throw new Error('Not on GitHub Pages, or repo not detected.');
+  async function scanGithub(branch){
+    const repo = detectGhRepo(); if(!repo) throw new Error('Not GitHub Pages');
     const {owner, repo:reponame} = repo;
     const api = `https://api.github.com/repos/${owner}/${reponame}/git/trees/${branch}?recursive=1`;
-    const res = await fetch(api, {headers: {'Accept':'application/vnd.github+json'}, cache:'no-store'});
-    if(!res.ok) throw new Error('GitHub API: '+res.status);
+    const res = await fetch(api, {headers:{'Accept':'application/vnd.github+json'}, cache:'no-store'});
+    if(!res.ok) throw new Error('GitHub API '+res.status);
     const data = await res.json();
-    if(!data || !data.tree) throw new Error('Unexpected tree payload');
-    // Collect all *.json under templates/
-    const list = data.tree
-      .filter(n => n.type === 'blob' && /^templates\/.+\.json$/i.test(n.path))
-      .map(n => {
+    const list = (data.tree||[])
+      .filter(n => n.type==='blob' && /^templates\/.+\.json$/i.test(n.path))
+      .map(n=>{
         const file = n.path;
-        const name = file.split('/').pop().replace(/\.json$/i,'');
-        // Heuristic thumbnail guesses
-        const guess1 = file.replace(/\.json$/i, '.png'); // same path, png
-        const parts = file.split('/'); // templates/sub/f.json -> templates/sub/f.png
-        const base = parts.pop().replace(/\.json$/i,'');
-        const dir  = parts.join('/');
-        const guess2 = dir ? `${dir}/${base}.jpg` : `${base}.jpg`;
-        const guess3 = file.replace(/^templates\//,'templates/thumbs/').replace(/\.json$/i, '.png');
-        return { name, file, thumbnail: guess1, folder: parts.slice(1).join('/') };
+        const parts = file.split('/');
+        const base  = parts.pop().replace(/\.json$/i,'');
+        const folder= parts.slice(1).join('/');           // omit "templates"
+        const name  = base.replace(/[-_]/g,' ').replace(/\s+/g,' ').trim();
+        const thumbGuess = file.replace(/\.json$/i,'.png');
+        return { name, file, folder, thumbnail: thumbGuess };
       });
     return list;
   }
 
-  async function listTemplatesDynamically(){
-    // 1) Try GitHub API on 'main', then 'master'
-    try{
-      return await tryGitHubTreeScan('main');
-    }catch(_e1){
-      try{ return await tryGitHubTreeScan('master'); }catch(_e2){ /* fallthrough */ }
-    }
-    // 2) Fall back to local manifest files if present
-    for (const u of MANIFEST_URLS){
+  async function listTemplates(){
+    try{ return await scanGithub('main'); }catch(_){}
+    try{ return await scanGithub('master'); }catch(_){}
+    for(const u of MANIFEST_URLS){
       try{
         const arr = await fetchJSON(u);
-        if (Array.isArray(arr) && arr.length) return arr;
+        if (Array.isArray(arr) && arr.length){
+          return arr
+            .filter(t => (t.file||'').endsWith('.json'))
+            .map(t=>{
+              const file = t.file;
+              const folder = (t.folder||t.dir||file.split('/').slice(1,-1).join('/')).replace(/^templates\/?/,'');
+              const name = t.name || file.split('/').pop().replace(/\.json$/,'');
+              const thumbnail = t.thumbnail || file.replace(/\.json$/i,'.png');
+              return { ...t, name, file, folder, thumbnail };
+            });
+        }
       }catch(_){}
     }
-    // 3) Nothing found
     return [];
   }
 
-  async function loadManifest(){
-    try{
-      allTemplates = await listTemplatesDynamically();
-      // Ensure each entry has file path and name
-      allTemplates = allTemplates
-        .filter(t => t && (t.file||'').endsWith('.json'))
-        .map(t => {
-          const name = t.name || (t.file||'').split('/').pop().replace(/\.json$/i,'');
-          const folder = getFolderPath(t);
-          // Best-effort thumbnail guessing if not provided
-          let thumbnail = t.thumbnail || (t.file||'').replace(/\.json$/i, '.png');
-          return { ...t, name, thumbnail, folder };
-        });
-      const tree = buildFolderTree(allTemplates);
-      renderTree(tree);
-      renderTemplates();
-      return true;
-    }catch(e){
-      console.warn('loadManifest failed', e);
-      allTemplates = [];
-      renderTree(buildFolderTree(allTemplates));
-      renderTemplates();
-      return false;
-    }
-  }
-
-
-
+  // ---------- Folder tree + search ----------
   let allTemplates = [];
+  let selected = '';                         // '' = All
+  const expanded = new Set(['']);            // track open nodes
+  const RECENT_KEY = 'tpl_recent_v1';        // recent storage
 
-  // --- Folder tree state ---
-  let selectedFolder = ''; // '' = All
-  function getFolderPath(t){
+  function rememberRecent(file){
     try{
-      const explicit = (t.folder||t.dir||'').trim();
-      const fromFile = (t.file||'').split('/').slice(0,-1).join('/');
-      const p = (explicit || fromFile);
-      return (p || '').replace(/^\.?\//,'');
-    }catch(_){ return ''; }
+      const now = Date.now();
+      const r = JSON.parse(localStorage.getItem(RECENT_KEY)||'[]')
+        .filter(x => x.file !== file);
+      r.unshift({file, ts: now});
+      localStorage.setItem(RECENT_KEY, JSON.stringify(r.slice(0,30)));
+    }catch(_){}
   }
-  function buildFolderTree(list){
-    const root = { name:'All', path:'', children:new Map(), count:0 };
-    for (const t of list){
-      const p = getFolderPath(t);
-      const parts = p ? p.split('/').filter(Boolean) : [];
+  function getRecent(){
+    try{
+      const r = JSON.parse(localStorage.getItem(RECENT_KEY)||'[]');
+      const files = new Set(r.map(x=>x.file));
+      return allTemplates.filter(t=>files.has(t.file));
+    }catch(_){ return []; }
+  }
+
+  function getFolderPath(t){
+    const p = (t.folder||'').trim();        // paths inside templates/ without leading slash
+    return p.replace(/^\.?\/*/,'').replace(/^templates\/?/,'');
+  }
+
+  function buildTree(list){
+    const root = {name:'All templates', path:'', children:new Map(), count:0};
+    for(const t of list){
+      const parts = getFolderPath(t).split('/').filter(Boolean);
       let node = root; node.count++;
       let curPath = '';
-      for (const part of parts){
-        curPath = curPath ? curPath + '/' + part : part;
-        if (!node.children.has(part)){
-          node.children.set(part, { name:part, path:curPath, children:new Map(), count:0 });
+      for(const part of parts){
+        curPath = curPath ? `${curPath}/${part}` : part;
+        if(!node.children.has(part)){
+          node.children.set(part, {name:part, path:curPath, children:new Map(), count:0});
         }
         node = node.children.get(part); node.count++;
       }
     }
     return root;
   }
-  function renderTree(root){
-    const el = document.getElementById('tplTree');
-    if (!el) return;
-    function nodeToUL(node){
-      const ul = document.createElement('ul');
-      for (const [name, child] of node.children){
+
+  function renderTree(){
+    const root = buildTree(allTemplates);
+    treeEl.innerHTML = '';
+
+    // Recent bucket
+    const recent = getRecent();
+    if (recent.length){
+      const r = document.createElement('div');
+      r.className = 'folder-row' + (selected==='__recent__' ? ' active' : '');
+      r.dataset.path='__recent__';
+      r.innerHTML = `<span class="recent-icon">★</span><span>Recent</span><span class="count">${recent.length}</span>`;
+      r.onclick = ()=>{ selected='__recent__'; renderTree(); renderGrid(); };
+      treeEl.appendChild(r);
+    }
+
+    // All
+    const allRow = document.createElement('div');
+    allRow.className = 'folder-row' + (selected==='' ? ' active' : '');
+    allRow.dataset.path='';
+    allRow.innerHTML = `<span class="caret">•</span><span>All templates</span><span class="count">${root.count}</span>`;
+    allRow.onclick = ()=>{ selected=''; renderTree(); renderGrid(); };
+    treeEl.appendChild(allRow);
+
+    // Recursive UL
+    const ul = document.createElement('ul');
+    function draw(node){
+      for(const [name, child] of node.children){
         const li = document.createElement('li');
         const row = document.createElement('div');
-        row.className = 'node' + (selectedFolder===child.path ? ' active' : '');
-        row.dataset.path = child.path;
-        const caret = document.createElement('span'); caret.className='caret'; caret.textContent='▸';
-        const label = document.createElement('span'); label.className='label'; label.textContent = name + ' (' + child.count + ')';
-        row.appendChild(caret); row.appendChild(label);
-        row.addEventListener('click', (e)=>{
-          e.stopPropagation();
-          selectedFolder = (selectedFolder===child.path) ? '' : child.path; // toggle select / All
-          renderTree(root);
-          renderTemplates();
-        });
+        row.className = 'folder-row' + (selected===child.path ? ' active':'');
+        row.innerHTML = `<span class="caret">▸</span><span>${name}</span><span class="count">${child.count}</span>`;
         li.appendChild(row);
-        if (child.children && child.children.size){
-          li.appendChild(nodeToUL(child));
+
+        row.onclick = (e)=>{
+          e.stopPropagation();
+          // toggle expand on caret, select on label area
+          if(expanded.has(child.path)) expanded.delete(child.path);
+          else expanded.add(child.path);
+          selected = child.path;
+          renderTree(); renderGrid();
+        };
+
+        // children
+        const hasKids = child.children && child.children.size;
+        if (hasKids){
+          const sub = document.createElement('ul');
+          if(expanded.has(child.path)){
+            li.classList.add('is-open');
+            sub.style.display = 'block';
+          }else{
+            sub.style.display = 'none';
+          }
+          li.appendChild(sub);
+          draw({children: child.children});
         }
         ul.appendChild(li);
       }
-      return ul;
     }
-    el.innerHTML = '';
-    // Top "All" item
-    const allRow = document.createElement('div');
-    allRow.className = 'node' + (selectedFolder==='' ? ' active' : '');
-    allRow.dataset.path = '';
-    const allCaret = document.createElement('span'); allCaret.className='caret'; allCaret.textContent='•';
-    const allLabel = document.createElement('span'); allLabel.className='label'; allLabel.textContent = 'All templates';
-    allRow.appendChild(allCaret); allRow.appendChild(allLabel);
-    allRow.addEventListener('click', ()=>{ selectedFolder=''; renderTree(root); renderTemplates(); });
-    el.appendChild(allRow);
-    el.appendChild(nodeToUL(root));
+    draw(root);
+    treeEl.appendChild(ul);
   }
 
-
-  function openModal(){
-    overlay.classList.add('show');
-    searchEl?.focus();
-  }
-  function closeModal(){
-    overlay.classList.remove('show');
-  }
-
-  function matchQuery(tpl, q){
-    if (!q) return true;
-    const hay = (tpl.name||'') + ' ' + (tpl.tags||[]).join(' ');
+  function matchQuery(t, q){
+    if(!q) return true;
+    const hay = `${t.name||''} ${(t.tags||[]).join(' ')} ${t.file||''}`;
     return hay.toLowerCase().includes(q.toLowerCase());
   }
 
-  function renderTemplates(){
+  function renderGrid(){
     grid.innerHTML = '';
-    const q = searchEl?.value?.trim() || '';
-    const list = allTemplates.filter(t=>{
-      if (!matchQuery(t,q)) return false;
-      const p = getFolderPath(t);
-      return !selectedFolder || (p === selectedFolder) || (p.startsWith(selectedFolder + '/'));
-    });
-    if (!list.length){
+    const q = (searchEl?.value||'').trim();
+    let list = allTemplates.filter(t=>matchQuery(t,q));
+
+    if (selected==='__recent__'){
+      const rset = new Set(getRecent().map(x=>x.file));
+      list = list.filter(t=>rset.has(t.file));
+    } else if (selected){
+      list = list.filter(t=>{
+        const p = getFolderPath(t);
+        return p===selected || p.startsWith(selected + '/');
+      });
+    }
+
+    if(!list.length){
       const div = document.createElement('div');
-      div.style.opacity = .75;
-      div.textContent = 'No templates found. Add a templates.json to your repo root.';
+      div.style.opacity = '.75';
+      div.textContent = 'No templates found.';
       grid.appendChild(div);
       return;
     }
-    for (const t of list){
+
+    for(const t of list){
       const card = document.createElement('div'); card.className='tpl-card';
 
       const thumb = document.createElement('div'); thumb.className='tpl-thumb';
       if (t.thumbnail){
         const img = document.createElement('img');
         img.src = t.thumbnail; img.alt = t.name || 'Template';
-        img.style.maxWidth='100%'; img.style.maxHeight='100%';
-        thumb.innerHTML = ''; thumb.appendChild(img);
+        thumb.appendChild(img);
       }else{
         thumb.textContent = 'No preview';
       }
 
-      const info = document.createElement('div'); info.className='tpl-info';
       const name = document.createElement('div'); name.className='tpl-name'; name.textContent = t.name || t.file;
-      const meta = document.createElement('div'); meta.className='tpl-meta';
-      meta.textContent = (t.tags && t.tags.length) ? ('#'+t.tags.join(' #')) : (t.file||'');
-      const actions = document.createElement('div'); actions.className='tpl-actions';
+      const meta = document.createElement('div'); meta.className='tpl-meta'; meta.textContent = t.folder ? `templates/${t.folder}` : 'templates';
 
+      const actions = document.createElement('div'); actions.className='tpl-actions';
       const loadBtn = document.createElement('button'); loadBtn.className='tpl-btn'; loadBtn.textContent='Load';
-      loadBtn.addEventListener('click', async ()=>{
+      loadBtn.onclick = async ()=>{
         try{
           const data = await fetchJSON(t.file);
           if (typeof loadBoardData === 'function') loadBoardData(data);
+          rememberRecent(t.file);
           closeModal();
-        }catch(e){
-          alert('Failed to load '+ (t.file||'template') +': '+ e.message);
-        }
-      });
+        }catch(e){ alert('Failed to load '+t.file+': '+e.message); }
+      };
 
       const linkBtn = document.createElement('button'); linkBtn.className='tpl-btn'; linkBtn.textContent='Share link';
-      linkBtn.addEventListener('click', async ()=>{
+      linkBtn.onclick = async ()=>{
         const u = new URL(location.href);
         u.searchParams.set('src', t.file);
         try{ await navigator.clipboard.writeText(u.toString()); alert('Link copied!'); }
         catch(e){ prompt('Copy link:', u.toString()); }
-      });
+      };
 
       actions.appendChild(loadBtn);
       actions.appendChild(linkBtn);
 
-      info.appendChild(name); info.appendChild(meta); info.appendChild(actions);
-      card.appendChild(thumb); card.appendChild(info);
+      card.appendChild(thumb);
+      card.appendChild(name);
+      card.appendChild(meta);
+      card.appendChild(actions);
       grid.appendChild(card);
     }
-  };
+  }
 
-  // Wire controls
-  document.getElementById('btnTemplates')?.addEventListener('click', async ()=>{
-    await loadManifest();
-    openModal();
-  });
-  document.getElementById('tplClose')?.addEventListener('click', closeModal);
-  document.getElementById('tplReload')?.addEventListener('click', async ()=>{
-    await loadManifest(); renderTemplates();
-  });
-  document.getElementById('tplOverlay')?.addEventListener('click', (e)=>{ if (e.target.id==='tplOverlay') closeModal(); });
-  document.getElementById('tplSearch')?.addEventListener('input', renderTemplates);
+  searchEl?.addEventListener('input', ()=> renderGrid());
 
-  // Deep-link: ?tpl=<name> loads template by name (case-insensitive)
-  document.addEventListener('DOMContentLoaded', async ()=>{
-    const sp = new URLSearchParams(location.search);
-    const tpl = sp.get('tpl');
-    if (tpl){
-      const ok = await loadManifest();
-      const match = allTemplates.find(t=> (t.name||'').toLowerCase() === tpl.toLowerCase());
-      if (match){
-        try{ const data = await fetchJSON(match.file); if (typeof loadBoardData==='function') loadBoardData(data); }
-        catch(e){ console.warn('Failed to autoload tpl', e); }
-      }
+  // ---------- Boot ----------
+  (async function initTemplates(){
+    try{
+      allTemplates = await listTemplates();
+    }catch(e){
+      console.warn('Template discovery failed:', e);
+      allTemplates = [];
     }
-  });
+    renderTree(); renderGrid();
+
+    // Auto-load via ?src=… (preload a template directly)
+    try{
+      const sp = new URLSearchParams(location.search);
+      const src = sp.get('src');
+      if (src){
+        const data = await fetchJSON(src);
+        if (typeof loadBoardData === 'function') loadBoardData(data);
+      }
+    }catch(e){ console.warn('Auto-load via ?src failed:', e); }
+  })();
 
 })();
 </script>
-
-<div id="templatesModalOverlay"></div>
-<div id="templatesModal" role="dialog" aria-modal="true" aria-label="Choose a template">
-  <header>
-    <h3>Templates</h3>
-    <div class="actions">
-      <input id="tplSearch" type="search" placeholder="Search templates or folders…" />
-      <button id="tplCloseBtn">Close</button>
-    </div>
-  </header>
-  <div id="tplSplit">
-    <div id="tplTree"></div>
-    <div id="tplGrid"></div>
-  </div>
-</div>
-
-<script id="templates-tree-js">
-(()=>{
-  const $  = (s, r=document)=>r.querySelector(s);
-  const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
-  const RECENT_KEY = 'bs_recent_templates_v1';
-  const TREE_STATE_KEY = 'bs_tpl_tree_state_v1';
-
-  function saveRecent(path){
-    try{
-      const arr = JSON.parse(localStorage.getItem(RECENT_KEY)||'[]').filter(p=>p!==path);
-      arr.unshift(path);
-      localStorage.setItem(RECENT_KEY, JSON.stringify(arr.slice(0,50)));
-    }catch(_){}
-  }
-  function getRecent(){ try{ return JSON.parse(localStorage.getItem(RECENT_KEY)||'[]'); }catch(_){ return []; } }
-  function saveTreeState(obj){ try{ localStorage.setItem(TREE_STATE_KEY, JSON.stringify(obj||{})); }catch(_){ } }
-  function loadTreeState(){ try{ return JSON.parse(localStorage.getItem(TREE_STATE_KEY)||'{}'); }catch(_){ return {}; } }
-
-  // --- Discovery (reuse existing dynamic scan if available) ---
-  async function discoverTemplatesViaGithub(){
-    const owner = (window.BlankspaceRepoOwner) || (location.hostname.split('.')[0]);
-    let repo = (window.BlankspaceRepoName);
-    if (!repo){
-      const parts = location.pathname.split('/').filter(Boolean);
-      repo = parts[0] || 'BlankSpace';
-    }
-    const branches = ['main','master'];
-    for (const branch of branches){
-      try{
-        const api = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
-        const res = await fetch(api, {headers:{'Accept':'application/vnd.github+json'}});
-        if (!res.ok) throw new Error('GitHub API error');
-        const data = await res.json();
-        const files = (data.tree||[]).filter(x=>x.type==='blob' && x.path.startsWith('templates/') && x.path.endsWith('.json'));
-        if (files.length){
-          return files.map(f=>{
-            const path = f.path;
-            const name = path.split('/').pop().replace(/\.json$/,'').replace(/[-_]/g,' ').replace(/\s+/g,' ').trim();
-            const folder = path.split('/').slice(1,-1).join('/');
-            const raw = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
-            const thumb = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path.replace(/\.json$/,'.png')}`;
-            return { path, name, folder, url: raw, thumb };
-          });
-        }
-      }catch(_){}
-    }
-    throw new Error('No templates via GitHub');
-  }
-
-  async function discoverTemplatesFallback(){
-    const guesses = ['templates.json','templates/templates.json','boards.json'];
-    for (const g of guesses){
-      try{
-        const res = await fetch(g, {cache:'no-store'});
-        if (!res.ok) continue;
-        const arr = await res.json();
-        const out = [];
-        for (const t of arr){
-          const file = t.file || t.path || t.url || '';
-          if (!file) continue;
-          const path = file.startsWith('templates/') ? file : ('templates/'+file.replace(/^\.?\/*/,'').replace(/^templates\//,''));
-          const name = t.name || path.split('/').pop().replace(/\.json$/,'');
-          const folder = (t.folder||t.dir||path.split('/').slice(1,-1).join('/'));
-          const url = t.url || file;
-          const thumb = t.thumb || path.replace(/\.json$/,'.png');
-          out.push({path, name, folder, url, thumb});
-        }
-        if (out.length) return out;
-      }catch(_){}
-    }
-    return [];
-  }
-
-  async function getTemplatesIndex(){
-    if (Array.isArray(window.__TEMPLATES_INDEX__) && window.__TEMPLATES_INDEX__.length){
-      return window.__TEMPLATES_INDEX__;
-    }
-    try{
-      const viaGh = await discoverTemplatesViaGithub();
-      if (viaGh.length){ window.__TEMPLATES_INDEX__ = viaGh; return viaGh; }
-    }catch(_){}
-    const fb = await discoverTemplatesFallback();
-    window.__TEMPLATES_INDEX__ = fb;
-    return fb;
-  }
-
-  // --- Tree build ---
-  function buildTree(items){
-    const root = { name:'/', key:'', children:{}, files:[] };
-    for (const t of items){
-      const parts = (t.folder||'').split('/').filter(Boolean);
-      let cur = root;
-      for (const p of parts){
-        const key = cur.key ? (cur.key+'/'+p) : p;
-        cur.children[p] = cur.children[p] || { name:p, key, children:{}, files:[] };
-        cur = cur.children[p];
-      }
-      cur.files.push(t);
-    }
-    const counts = {};
-    function count(node){
-      let c = (node.files||[]).length;
-      for (const k of Object.keys(node.children)){
-        c += count(node.children[k]);
-      }
-      counts[node.key] = c;
-      return c;
-    }
-    count(root);
-    return {root, counts};
-  }
-
-  // --- Renderers ---
-  function renderTree(container, tree, counts, state){
-    container.innerHTML = '';
-
-    const hdr = document.createElement('div');
-    hdr.className = 'tpl-node tpl-bucket' + (state.activeKey===''?' active':'');
-    hdr.innerHTML = `<span class="tpl-caret">⏵</span><span class="tpl-name">All templates</span><span class="tpl-count">${counts['']||0}</span>`;
-    hdr.addEventListener('click', ()=> selectFolder(''));
-    container.appendChild(hdr);
-
-    const recent = getRecent();
-    const recentNode = document.createElement('div');
-    recentNode.className = 'tpl-node tpl-bucket' + (state.activeKey==='__recent'?' active':'');
-    recentNode.innerHTML = `<span class="tpl-caret">⏵</span><span class="tpl-name">Recent</span><span class="tpl-count">${recent.length}</span>`;
-    recentNode.addEventListener('click', ()=> selectFolder('__recent'));
-    container.appendChild(recentNode);
-
-    function makeFolder(node){
-      const hasKids = Object.keys(node.children).length>0;
-      const key = node.key;
-      const row = document.createElement('div');
-      row.className = 'tpl-node' + (state.expanded[key]?' expanded':'') + (state.activeKey===key?' active':'');
-      row.innerHTML = `<span class="tpl-caret">${hasKids?'⏵':'•'}</span><span class="tpl-name" title="${key||'/'}">${node.name || '/'}</span><span class="tpl-count">${counts[key]||0}</span>`;
-      row.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        if (hasKids){ state.expanded[key] = !state.expanded[key]; saveTreeState(state.expanded); row.classList.toggle('expanded', !!state.expanded[key]); }
-        selectFolder(key);
-      });
-
-      const wrap = document.createElement('div');
-      wrap.appendChild(row);
-      if (hasKids){
-        const kids = document.createElement('div');
-        kids.className = 'tpl-children';
-        if (state.expanded[key]) kids.style.display='block';
-        Object.keys(node.children).sort((a,b)=>a.localeCompare(b)).forEach(k=>{
-          kids.appendChild(makeFolder(node.children[k]));
-        });
-        wrap.appendChild(kids);
-      }
-      return wrap;
-    }
-
-    Object.keys(tree.children).sort((a,b)=>a.localeCompare(b)).forEach(k=>{
-      container.appendChild(makeFolder(tree.children[k]));
-    });
-  }
-
-  function renderGrid(container, items){
-    container.innerHTML = '';
-    if (!items.length){
-      container.innerHTML = `<div class="tpl-muted">No templates in this folder.</div>`;
-      return;
-    }
-    for (const t of items){
-      const card = document.createElement('div');
-      card.className = 'tpl-card';
-      const img = document.createElement('img');
-      img.src = t.thumb || '';
-      img.alt = '';
-      img.onerror = ()=>{ img.src = 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="340"><rect width="100%" height="100%" fill="#0b1220"/><text x="50%" y="50%" fill="#9aa5b1" dominant-baseline="middle" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto" font-size="18">No preview</text></svg>`); };
-      const title = document.createElement('div');
-      title.className = 'title';
-      title.textContent = t.name || t.path.split('/').pop().replace(/\.json$/,'');
-      const meta = document.createElement('div');
-      meta.className = 'meta';
-      meta.textContent = t.path;
-      const row = document.createElement('div');
-      row.className = 'row';
-      const btn = document.createElement('button');
-      btn.textContent = 'Load';
-      btn.addEventListener('click', ()=> applyTemplate(t).catch(err => alert('Failed to load template: '+err.message)));
-      row.appendChild(btn);
-      card.appendChild(img); card.appendChild(title); card.appendChild(meta); card.appendChild(row);
-      container.appendChild(card);
-    }
-  }
-
-  // --- State / selection ---
-  let __STATE = { expanded: loadTreeState(), activeKey:'', templates:[], filtered: null };
-
-  function listForKey(key){
-    if (key==='__recent'){
-      const recent = getRecent();
-      const map = new Map(__STATE.templates.map(t=>[t.path,t]));
-      return recent.map(p=>map.get(p)).filter(Boolean);
-    }
-    if (!key) return __STATE.templates.slice().sort((a,b)=>a.name.localeCompare(b.name));
-    return __STATE.templates.filter(t => (t.folder===key) || t.folder.startsWith(key+'/')).sort((a,b)=>a.name.localeCompare(b.name));
-  }
-
-  function selectFolder(key){
-    __STATE.activeKey = key;
-    const items = __STATE.filtered || listForKey(key);
-    renderGrid($('#tplGrid'), items);
-    // update active class in tree
-    $$('#tplTree .tpl-node').forEach(n=> n.classList.remove('active'));
-    // simple re-render keeps state correct on next open
-  }
-
-  function attachSearch(){
-    const input = $('#tplSearch');
-    if (!input) return;
-    input.addEventListener('input', ()=>{
-      const q = input.value.trim().toLowerCase();
-      if (!q){ __STATE.filtered = null; selectFolder(__STATE.activeKey); return; }
-      const all = __STATE.templates;
-      __STATE.filtered = all.filter(t => (t.name||'').toLowerCase().includes(q) || (t.path||'').toLowerCase().includes(q) || (t.folder||'').toLowerCase().includes(q));
-      renderGrid($('#tplGrid'), __STATE.filtered);
-      // expand folders containing matches
-      const expanded = __STATE.expanded || {};
-      for (const t of __STATE.filtered){
-        const parts = (t.folder||'').split('/').filter(Boolean);
-        let acc = '';
-        for (const p of parts){
-          acc = acc ? (acc + '/' + p) : p;
-          expanded[acc] = true;
-        }
-      }
-      saveTreeState(expanded);
-      __STATE.expanded = expanded;
-      const built = buildTree(__STATE.templates);
-      renderTree($('#tplTree'), built.root, built.counts, __STATE);
-    });
-  }
-
-  // --- Apply template ---
-  async function applyTemplate(t){
-    const res = await fetch(t.url, {cache:'no-store'});
-    if (!res.ok) throw new Error('HTTP '+res.status);
-    const data = await res.json();
-    saveRecent(t.path);
-    if (typeof window.loadBoardData === 'function'){ window.loadBoardData(data); return; }
-    try{ if (typeof window.clearBoard === 'function') window.clearBoard(); }catch(_){}
-    if (!window.state) window.state={nodes:[],groups:[],textboxes:[],wires:[]};
-    const nodes = Array.isArray(data.nodes)? data.nodes:[];
-    for (const n of nodes){
-      const size={w:n.w||n.width||320,h:n.h||n.height||240};
-      const at={x:n.x||0,y:n.y||0};
-      const meta=n.meta||{}; const url=n.assetUrl||n.url||n.src||''; const kind=n.kind||n.type||'image';
-      if (typeof window.createNode==='function') window.createNode(kind,url,size,at,meta);
-    }
-    const groups = Array.isArray(data.groups)? data.groups:[];
-    for (const g of groups){
-      if (typeof window.createGroup==='function'){
-        const gg=window.createGroup({x:g.x||0,y:g.y||0,w:g.w||320,h:g.h||240,title:g.title||g.name||''});
-        if (gg && gg.el && g.locked){ gg.el.classList.add('locked'); gg.el.dataset.locked='1'; }
-      }
-    }
-    const tbs = Array.isArray(data.textboxes)? data.textboxes:[];
-    for (const tbox of tbs){
-      if (typeof window.createFloatingTextbox==='function'){
-        const tb=window.createFloatingTextbox({x:tbox.left||tbox.x||0,y:tbox.top||tbox.y||0});
-        if (tb && tb.element){
-          tb.element.innerHTML=tbox.content||'';
-          tb.hasPlaceholder = !tb.element.textContent.trim();
-          tb.element.style.width=(tbox.width||'280px');
-          tb.element.style.height=(tbox.height||'160px');
-        }
-      }
-    }
-    if (data.viewport && window.state){
-      window.state.zoom = data.viewport.zoom || 1;
-      window.state.origin = data.viewport.origin || {x:0,y:0};
-      try{ if (typeof window.applyTransform==='function') window.applyTransform(); }catch(_){}
-    }
-  }
-
-  // --- Open/Close ---
-  async function openTemplatesModal(){
-    const overlay = $('#templatesModalOverlay');
-    const modal = $('#templatesModal');
-    if (!overlay || !modal) return;
-    overlay.style.display='block'; modal.style.display='block';
-    try{ __STATE.templates = await getTemplatesIndex(); }catch(_){ __STATE.templates = await discoverTemplatesFallback(); }
-    const built = buildTree(__STATE.templates);
-    renderTree($('#tplTree'), built.root, built.counts, __STATE);
-    attachSearch();
-    selectFolder(__STATE.activeKey || '');
-  }
-  function closeTemplatesModal(){ const o=$('#templatesModalOverlay'), m=$('#templatesModal'); if(o) o.style.display='none'; if(m) m.style.display='none'; }
-
-  // Bind
-  document.addEventListener('DOMContentLoaded', ()=>{
-    const btn = document.getElementById('btnTemplates');
-    if (btn && !btn.__tplBound){ btn.__tplBound=true; btn.addEventListener('click', (e)=>{ e.preventDefault(); openTemplatesModal(); }); }
-    document.getElementById('tplCloseBtn')?.addEventListener('click', closeTemplatesModal);
-    document.getElementById('templatesModalOverlay')?.addEventListener('click', closeTemplatesModal);
-  });
-})();
-</script>
+<!-- === /Templates Modal === -->
 
 </body></html>
