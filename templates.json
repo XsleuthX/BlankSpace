@@ -1,0 +1,19 @@
+[
+  {
+    "name": "Mood Starter",
+    "file": "templates/Beginner/mood-starter.json",
+    "thumbnail": "thumbs/mood-starter.png",
+    "tags": ["photos", "warm"]
+  },
+  {
+    "name": "Webtools",
+    "file": "templates/Advanced/webtools.json",
+    "tags": ["tools", "webapp"]
+  },
+  {
+    "name": "Bintan Trip 3",
+    "file": "templates/Project/Bintan Trip 3.json",
+    "thumbnail": "thumbs/story.png",
+    "tags": ["story", "frames"]
+  }
+]
