@@ -1913,6 +1913,71 @@ body.retro #tbCtxMenu{
 
 </style>
 
+
+<style id="templates-tree-css">
+/* === Templates Modal (folder tree + grid) === */
+#templatesModalOverlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(8px); z-index:10050; display:none; }
+#templatesModal{
+  position:fixed; inset:auto; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:min(1100px, 96vw); height:min(72vh, 800px);
+  background:var(--panel, #0f172a); color:var(--text, #e5e7eb); border:1px solid rgba(255,255,255,.12);
+  border-radius:18px; box-shadow:0 24px 72px rgba(0,0,0,.6); z-index:10051; display:none;
+  overflow:hidden;
+}
+#templatesModal header{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.12); background:linear-gradient(180deg, rgba(0,0,0,.25), transparent);
+}
+#templatesModal header h3{ margin:0; font:700 16px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+#templatesModal header .actions{ display:flex; gap:8px; align-items:center; }
+#tplSearch{
+  height:36px; border-radius:10px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.06);
+  color:var(--text, #e5e7eb); padding:0 12px; width: 280px;
+}
+
+#tplSplit{ display:grid; grid-template-columns: 320px 1fr; gap:0; height: calc(100% - 56px); }
+#tplTree{
+  border-right:1px solid rgba(255,255,255,.12); padding:10px; overflow:auto;
+}
+#tplGrid{
+  padding:14px; overflow:auto; display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px;
+}
+
+/* Tree styles */
+.tpl-node{ display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:10px; cursor:pointer; user-select:none; }
+.tpl-node:hover{ background: rgba(255,255,255,.06); }
+.tpl-node.active{ outline:2px solid var(--accent, #60a5fa); }
+.tpl-caret{ width:16px; height:16px; display:inline-grid; place-items:center; opacity:.8; transform: rotate(-90deg); transition: transform .16s ease; }
+.tpl-node.expanded > .tpl-caret{ transform: rotate(0deg); }
+.tpl-name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tpl-count{ font-size:12px; opacity:.8; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); padding:2px 6px; border-radius:999px; }
+
+.tpl-children{ margin-left: 18px; border-left:1px dashed rgba(255,255,255,.12); padding-left:8px; display:none; }
+.tpl-node.expanded + .tpl-children{ display:block; }
+
+/* Special buckets */
+.tpl-bucket{ font-weight:700; }
+.tpl-muted{ opacity:.75; font-size:12px; }
+
+/* Cards */
+.tpl-card{
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:12px;
+  display:grid; grid-template-rows: 140px auto auto; gap:8px; padding:10px;
+}
+.tpl-card img{ width:100%; height:140px; object-fit:cover; border-radius:8px; background:#000; }
+.tpl-card .title{ font-weight:700; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tpl-card .meta{ font-size:12px; opacity:.8; }
+.tpl-card .row{ display:flex; gap:8px; }
+.tpl-card button{ flex:1; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); color:var(--text, #e5e7eb); cursor:pointer; }
+.tpl-card button:hover{ filter:brightness(1.06) }
+
+/* Responsive */
+@media (max-width: 900px){
+  #tplSplit{ grid-template-columns: 1fr; }
+  #tplTree{ display:none; }
+}
+</style>
+
 </head>
 <body>
   <header class="topbar">
@@ -9477,4 +9542,324 @@ return {
 
 })();
 </script>
+
+<div id="templatesModalOverlay"></div>
+<div id="templatesModal" role="dialog" aria-modal="true" aria-label="Choose a template">
+  <header>
+    <h3>Templates</h3>
+    <div class="actions">
+      <input id="tplSearch" type="search" placeholder="Search templates or folders…" />
+      <button id="tplCloseBtn">Close</button>
+    </div>
+  </header>
+  <div id="tplSplit">
+    <div id="tplTree"></div>
+    <div id="tplGrid"></div>
+  </div>
+</div>
+
+<script id="templates-tree-js">
+(()=>{
+  const $  = (s, r=document)=>r.querySelector(s);
+  const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
+  const RECENT_KEY = 'bs_recent_templates_v1';
+  const TREE_STATE_KEY = 'bs_tpl_tree_state_v1';
+
+  function saveRecent(path){
+    try{
+      const arr = JSON.parse(localStorage.getItem(RECENT_KEY)||'[]').filter(p=>p!==path);
+      arr.unshift(path);
+      localStorage.setItem(RECENT_KEY, JSON.stringify(arr.slice(0,50)));
+    }catch(_){}
+  }
+  function getRecent(){ try{ return JSON.parse(localStorage.getItem(RECENT_KEY)||'[]'); }catch(_){ return []; } }
+  function saveTreeState(obj){ try{ localStorage.setItem(TREE_STATE_KEY, JSON.stringify(obj||{})); }catch(_){ } }
+  function loadTreeState(){ try{ return JSON.parse(localStorage.getItem(TREE_STATE_KEY)||'{}'); }catch(_){ return {}; } }
+
+  // --- Discovery (reuse existing dynamic scan if available) ---
+  async function discoverTemplatesViaGithub(){
+    const owner = (window.BlankspaceRepoOwner) || (location.hostname.split('.')[0]);
+    let repo = (window.BlankspaceRepoName);
+    if (!repo){
+      const parts = location.pathname.split('/').filter(Boolean);
+      repo = parts[0] || 'BlankSpace';
+    }
+    const branches = ['main','master'];
+    for (const branch of branches){
+      try{
+        const api = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+        const res = await fetch(api, {headers:{'Accept':'application/vnd.github+json'}});
+        if (!res.ok) throw new Error('GitHub API error');
+        const data = await res.json();
+        const files = (data.tree||[]).filter(x=>x.type==='blob' && x.path.startsWith('templates/') && x.path.endsWith('.json'));
+        if (files.length){
+          return files.map(f=>{
+            const path = f.path;
+            const name = path.split('/').pop().replace(/\.json$/,'').replace(/[-_]/g,' ').replace(/\s+/g,' ').trim();
+            const folder = path.split('/').slice(1,-1).join('/');
+            const raw = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
+            const thumb = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path.replace(/\.json$/,'.png')}`;
+            return { path, name, folder, url: raw, thumb };
+          });
+        }
+      }catch(_){}
+    }
+    throw new Error('No templates via GitHub');
+  }
+
+  async function discoverTemplatesFallback(){
+    const guesses = ['templates.json','templates/templates.json','boards.json'];
+    for (const g of guesses){
+      try{
+        const res = await fetch(g, {cache:'no-store'});
+        if (!res.ok) continue;
+        const arr = await res.json();
+        const out = [];
+        for (const t of arr){
+          const file = t.file || t.path || t.url || '';
+          if (!file) continue;
+          const path = file.startsWith('templates/') ? file : ('templates/'+file.replace(/^\.?\/*/,'').replace(/^templates\//,''));
+          const name = t.name || path.split('/').pop().replace(/\.json$/,'');
+          const folder = (t.folder||t.dir||path.split('/').slice(1,-1).join('/'));
+          const url = t.url || file;
+          const thumb = t.thumb || path.replace(/\.json$/,'.png');
+          out.push({path, name, folder, url, thumb});
+        }
+        if (out.length) return out;
+      }catch(_){}
+    }
+    return [];
+  }
+
+  async function getTemplatesIndex(){
+    if (Array.isArray(window.__TEMPLATES_INDEX__) && window.__TEMPLATES_INDEX__.length){
+      return window.__TEMPLATES_INDEX__;
+    }
+    try{
+      const viaGh = await discoverTemplatesViaGithub();
+      if (viaGh.length){ window.__TEMPLATES_INDEX__ = viaGh; return viaGh; }
+    }catch(_){}
+    const fb = await discoverTemplatesFallback();
+    window.__TEMPLATES_INDEX__ = fb;
+    return fb;
+  }
+
+  // --- Tree build ---
+  function buildTree(items){
+    const root = { name:'/', key:'', children:{}, files:[] };
+    for (const t of items){
+      const parts = (t.folder||'').split('/').filter(Boolean);
+      let cur = root;
+      for (const p of parts){
+        const key = cur.key ? (cur.key+'/'+p) : p;
+        cur.children[p] = cur.children[p] || { name:p, key, children:{}, files:[] };
+        cur = cur.children[p];
+      }
+      cur.files.push(t);
+    }
+    const counts = {};
+    function count(node){
+      let c = (node.files||[]).length;
+      for (const k of Object.keys(node.children)){
+        c += count(node.children[k]);
+      }
+      counts[node.key] = c;
+      return c;
+    }
+    count(root);
+    return {root, counts};
+  }
+
+  // --- Renderers ---
+  function renderTree(container, tree, counts, state){
+    container.innerHTML = '';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'tpl-node tpl-bucket' + (state.activeKey===''?' active':'');
+    hdr.innerHTML = `<span class="tpl-caret">⏵</span><span class="tpl-name">All templates</span><span class="tpl-count">${counts['']||0}</span>`;
+    hdr.addEventListener('click', ()=> selectFolder(''));
+    container.appendChild(hdr);
+
+    const recent = getRecent();
+    const recentNode = document.createElement('div');
+    recentNode.className = 'tpl-node tpl-bucket' + (state.activeKey==='__recent'?' active':'');
+    recentNode.innerHTML = `<span class="tpl-caret">⏵</span><span class="tpl-name">Recent</span><span class="tpl-count">${recent.length}</span>`;
+    recentNode.addEventListener('click', ()=> selectFolder('__recent'));
+    container.appendChild(recentNode);
+
+    function makeFolder(node){
+      const hasKids = Object.keys(node.children).length>0;
+      const key = node.key;
+      const row = document.createElement('div');
+      row.className = 'tpl-node' + (state.expanded[key]?' expanded':'') + (state.activeKey===key?' active':'');
+      row.innerHTML = `<span class="tpl-caret">${hasKids?'⏵':'•'}</span><span class="tpl-name" title="${key||'/'}">${node.name || '/'}</span><span class="tpl-count">${counts[key]||0}</span>`;
+      row.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if (hasKids){ state.expanded[key] = !state.expanded[key]; saveTreeState(state.expanded); row.classList.toggle('expanded', !!state.expanded[key]); }
+        selectFolder(key);
+      });
+
+      const wrap = document.createElement('div');
+      wrap.appendChild(row);
+      if (hasKids){
+        const kids = document.createElement('div');
+        kids.className = 'tpl-children';
+        if (state.expanded[key]) kids.style.display='block';
+        Object.keys(node.children).sort((a,b)=>a.localeCompare(b)).forEach(k=>{
+          kids.appendChild(makeFolder(node.children[k]));
+        });
+        wrap.appendChild(kids);
+      }
+      return wrap;
+    }
+
+    Object.keys(tree.children).sort((a,b)=>a.localeCompare(b)).forEach(k=>{
+      container.appendChild(makeFolder(tree.children[k]));
+    });
+  }
+
+  function renderGrid(container, items){
+    container.innerHTML = '';
+    if (!items.length){
+      container.innerHTML = `<div class="tpl-muted">No templates in this folder.</div>`;
+      return;
+    }
+    for (const t of items){
+      const card = document.createElement('div');
+      card.className = 'tpl-card';
+      const img = document.createElement('img');
+      img.src = t.thumb || '';
+      img.alt = '';
+      img.onerror = ()=>{ img.src = 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="340"><rect width="100%" height="100%" fill="#0b1220"/><text x="50%" y="50%" fill="#9aa5b1" dominant-baseline="middle" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto" font-size="18">No preview</text></svg>`); };
+      const title = document.createElement('div');
+      title.className = 'title';
+      title.textContent = t.name || t.path.split('/').pop().replace(/\.json$/,'');
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = t.path;
+      const row = document.createElement('div');
+      row.className = 'row';
+      const btn = document.createElement('button');
+      btn.textContent = 'Load';
+      btn.addEventListener('click', ()=> applyTemplate(t).catch(err => alert('Failed to load template: '+err.message)));
+      row.appendChild(btn);
+      card.appendChild(img); card.appendChild(title); card.appendChild(meta); card.appendChild(row);
+      container.appendChild(card);
+    }
+  }
+
+  // --- State / selection ---
+  let __STATE = { expanded: loadTreeState(), activeKey:'', templates:[], filtered: null };
+
+  function listForKey(key){
+    if (key==='__recent'){
+      const recent = getRecent();
+      const map = new Map(__STATE.templates.map(t=>[t.path,t]));
+      return recent.map(p=>map.get(p)).filter(Boolean);
+    }
+    if (!key) return __STATE.templates.slice().sort((a,b)=>a.name.localeCompare(b.name));
+    return __STATE.templates.filter(t => (t.folder===key) || t.folder.startsWith(key+'/')).sort((a,b)=>a.name.localeCompare(b.name));
+  }
+
+  function selectFolder(key){
+    __STATE.activeKey = key;
+    const items = __STATE.filtered || listForKey(key);
+    renderGrid($('#tplGrid'), items);
+    // update active class in tree
+    $$('#tplTree .tpl-node').forEach(n=> n.classList.remove('active'));
+    // simple re-render keeps state correct on next open
+  }
+
+  function attachSearch(){
+    const input = $('#tplSearch');
+    if (!input) return;
+    input.addEventListener('input', ()=>{
+      const q = input.value.trim().toLowerCase();
+      if (!q){ __STATE.filtered = null; selectFolder(__STATE.activeKey); return; }
+      const all = __STATE.templates;
+      __STATE.filtered = all.filter(t => (t.name||'').toLowerCase().includes(q) || (t.path||'').toLowerCase().includes(q) || (t.folder||'').toLowerCase().includes(q));
+      renderGrid($('#tplGrid'), __STATE.filtered);
+      // expand folders containing matches
+      const expanded = __STATE.expanded || {};
+      for (const t of __STATE.filtered){
+        const parts = (t.folder||'').split('/').filter(Boolean);
+        let acc = '';
+        for (const p of parts){
+          acc = acc ? (acc + '/' + p) : p;
+          expanded[acc] = true;
+        }
+      }
+      saveTreeState(expanded);
+      __STATE.expanded = expanded;
+      const built = buildTree(__STATE.templates);
+      renderTree($('#tplTree'), built.root, built.counts, __STATE);
+    });
+  }
+
+  // --- Apply template ---
+  async function applyTemplate(t){
+    const res = await fetch(t.url, {cache:'no-store'});
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    saveRecent(t.path);
+    if (typeof window.loadBoardData === 'function'){ window.loadBoardData(data); return; }
+    try{ if (typeof window.clearBoard === 'function') window.clearBoard(); }catch(_){}
+    if (!window.state) window.state={nodes:[],groups:[],textboxes:[],wires:[]};
+    const nodes = Array.isArray(data.nodes)? data.nodes:[];
+    for (const n of nodes){
+      const size={w:n.w||n.width||320,h:n.h||n.height||240};
+      const at={x:n.x||0,y:n.y||0};
+      const meta=n.meta||{}; const url=n.assetUrl||n.url||n.src||''; const kind=n.kind||n.type||'image';
+      if (typeof window.createNode==='function') window.createNode(kind,url,size,at,meta);
+    }
+    const groups = Array.isArray(data.groups)? data.groups:[];
+    for (const g of groups){
+      if (typeof window.createGroup==='function'){
+        const gg=window.createGroup({x:g.x||0,y:g.y||0,w:g.w||320,h:g.h||240,title:g.title||g.name||''});
+        if (gg && gg.el && g.locked){ gg.el.classList.add('locked'); gg.el.dataset.locked='1'; }
+      }
+    }
+    const tbs = Array.isArray(data.textboxes)? data.textboxes:[];
+    for (const tbox of tbs){
+      if (typeof window.createFloatingTextbox==='function'){
+        const tb=window.createFloatingTextbox({x:tbox.left||tbox.x||0,y:tbox.top||tbox.y||0});
+        if (tb && tb.element){
+          tb.element.innerHTML=tbox.content||'';
+          tb.hasPlaceholder = !tb.element.textContent.trim();
+          tb.element.style.width=(tbox.width||'280px');
+          tb.element.style.height=(tbox.height||'160px');
+        }
+      }
+    }
+    if (data.viewport && window.state){
+      window.state.zoom = data.viewport.zoom || 1;
+      window.state.origin = data.viewport.origin || {x:0,y:0};
+      try{ if (typeof window.applyTransform==='function') window.applyTransform(); }catch(_){}
+    }
+  }
+
+  // --- Open/Close ---
+  async function openTemplatesModal(){
+    const overlay = $('#templatesModalOverlay');
+    const modal = $('#templatesModal');
+    if (!overlay || !modal) return;
+    overlay.style.display='block'; modal.style.display='block';
+    try{ __STATE.templates = await getTemplatesIndex(); }catch(_){ __STATE.templates = await discoverTemplatesFallback(); }
+    const built = buildTree(__STATE.templates);
+    renderTree($('#tplTree'), built.root, built.counts, __STATE);
+    attachSearch();
+    selectFolder(__STATE.activeKey || '');
+  }
+  function closeTemplatesModal(){ const o=$('#templatesModalOverlay'), m=$('#templatesModal'); if(o) o.style.display='none'; if(m) m.style.display='none'; }
+
+  // Bind
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const btn = document.getElementById('btnTemplates');
+    if (btn && !btn.__tplBound){ btn.__tplBound=true; btn.addEventListener('click', (e)=>{ e.preventDefault(); openTemplatesModal(); }); }
+    document.getElementById('tplCloseBtn')?.addEventListener('click', closeTemplatesModal);
+    document.getElementById('templatesModalOverlay')?.addEventListener('click', closeTemplatesModal);
+  });
+})();
+</script>
+
 </body></html>
