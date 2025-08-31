@@ -9257,46 +9257,40 @@ return {
   function loadTreeState(){ try{ return JSON.parse(localStorage.getItem(TREE_STATE_KEY)||'{}'); }catch(_){ return {}; } }
 
   
-// --- Discovery (GitHub API + manifest fallback) ---
-  const MANIFEST_URLS = ['templates.json','templates/templates.json','boards.json'];
-
-  function detectGhRepo(){
-    const owner = (window.BlankspaceRepoOwner) || (location.hostname.endsWith('github.io') ? location.hostname.split('.')[0] : null);
+// --- Discovery (reuse existing dynamic scan if available) ---
+  async function discoverTemplatesViaGithub(){
+    const owner = (window.BlankspaceRepoOwner) || (location.hostname.split('.')[0]);
     let repo = (window.BlankspaceRepoName);
     if (!repo){
       const parts = location.pathname.split('/').filter(Boolean);
-      repo = parts[0] || null;
+      repo = parts[0] || 'BlankSpace';
     }
-    const branch = window.BlankspaceRepoBranch || 'main';
-    return (owner && repo) ? {owner, repo, branch} : null;
-  }
-
-  async function tryGitHubTreeScan(){
-    const info = detectGhRepo();
-    if (!info) throw new Error('Not a GitHub Pages host and no overrides provided.');
-    const branches = [info.branch, 'master'];
-    for (const br of branches){
-      const api = `https://api.github.com/repos/${info.owner}/${info.repo}/git/trees/${br}?recursive=1`;
-      const res = await fetch(api, {headers:{'Accept':'application/vnd.github+json'}, cache:'no-store'});
-      if (!res.ok) continue;
-      const data = await res.json();
-      const files = (data.tree||[]).filter(x=>x.type==='blob' && x.path.startsWith('templates/') && x.path.endsWith('.json'));
-      if (files.length){
-        return files.map(f=>{
-          const path = f.path;
-          const name = path.split('/').pop().replace(/\.json$/,'').replace(/[-_]/g,' ').replace(/\s+/g,' ').trim();
-          const folder = path.split('/').slice(1,-1).join('/');
-          const raw  = `https://raw.githubusercontent.com/${info.owner}/${info.repo}/${br}/${path}`;
-          const thumb= `https://raw.githubusercontent.com/${info.owner}/${info.repo}/${br}/${path.replace(/\.json$/,'.png')}`;
-          return { path, name, folder, url: raw, thumb };
-        });
-      }
+    const branches = ['main','master'];
+    for (const branch of branches){
+      try{
+        const api = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+        const res = await fetch(api, {headers:{'Accept':'application/vnd.github+json'}});
+        if (!res.ok) throw new Error('GitHub API error');
+        const data = await res.json();
+        const files = (data.tree||[]).filter(x=>x.type==='blob' && x.path.startsWith('templates/') && x.path.endsWith('.json'));
+        if (files.length){
+          return files.map(f=>{
+            const path = f.path;
+            const name = path.split('/').pop().replace(/\.json$/,'').replace(/[-_]/g,' ').replace(/\s+/g,' ').trim();
+            const folder = path.split('/').slice(1,-1).join('/');
+            const raw = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
+            const thumb = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path.replace(/\.json$/,'.png')}`;
+            return { path, name, folder, url: raw, thumb };
+          });
+        }
+      }catch(_){}
     }
     throw new Error('No templates via GitHub');
   }
 
   async function discoverTemplatesFallback(){
-    for (const g of MANIFEST_URLS){
+    const guesses = ['templates.json','templates/templates.json','boards.json'];
+    for (const g of guesses){
       try{
         const res = await fetch(g, {cache:'no-store'});
         if (!res.ok) continue;
@@ -9309,7 +9303,7 @@ return {
           const name = t.name || path.split('/').pop().replace(/\.json$/,'');
           const folder = (t.folder||t.dir||path.split('/').slice(1,-1).join('/'));
           const url = t.url || file;
-          const thumb = t.thumbnail || t.thumb || path.replace(/\.json$/,'.png');
+          const thumb = t.thumb || path.replace(/\.json$/,'.png');
           out.push({path, name, folder, url, thumb});
         }
         if (out.length) return out;
@@ -9319,10 +9313,16 @@ return {
   }
 
   async function getTemplatesIndex(){
-    let list = [];
-    try{ list = await tryGitHubTreeScan(); }catch(_){}
-    if (!list.length){ list = await discoverTemplatesFallback(); }
-    return list;
+    if (Array.isArray(window.__TEMPLATES_INDEX__) && window.__TEMPLATES_INDEX__.length){
+      return window.__TEMPLATES_INDEX__;
+    }
+    try{
+      const viaGh = await discoverTemplatesViaGithub();
+      if (viaGh.length){ window.__TEMPLATES_INDEX__ = viaGh; return viaGh; }
+    }catch(_){}
+    const fb = await discoverTemplatesFallback();
+    window.__TEMPLATES_INDEX__ = fb;
+    return fb;
   }
 
 // --- Tree build ---
