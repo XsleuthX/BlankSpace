@@ -1,0 +1,109 @@
+{
+  "version": "4.8",
+  "timestamp": "2025-08-22T08:50:31.821Z",
+  "hasBase64Files": true,
+  "viewport": {
+    "zoom": 0.7408182206817179,
+    "origin": {
+      "x": 191.35467206042972,
+      "y": 59.769111790201805
+    }
+  },
+  "nodes": [
+    {
+      "id": "n3",
+      "kind": "website",
+      "x": 919,
+      "y": 60.5,
+      "w": 534.449011653032,
+      "h": 887.4348924106323,
+      "assetUrl": "https://www.youtube.com/feed/history",
+      "textboxes": [],
+      "meta": {
+        "originalUrl": "https://www.youtube.com/feed/history",
+        "website": true,
+        "domain": "www.youtube.com"
+      },
+      "metaShown": false,
+      "title": "www.youtube.com",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    },
+    {
+      "id": "n4",
+      "kind": "youtube",
+      "x": 335.950423577272,
+      "y": 268.150141192424,
+      "w": 560,
+      "h": 315,
+      "assetUrl": "https://www.youtube.com/embed/HvnPTixZvWg",
+      "textboxes": [],
+      "meta": {
+        "videoId": "HvnPTixZvWg",
+        "platform": "youtube",
+        "embedUrl": "https://www.youtube.com/embed/HvnPTixZvWg",
+        "isShorts": false
+      },
+      "metaShown": false,
+      "title": "YouTube Video",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    },
+    {
+      "id": "n6",
+      "kind": "youtube",
+      "x": 337.6404167970734,
+      "y": 607.1658314333929,
+      "w": 560,
+      "h": 315,
+      "assetUrl": "https://www.youtube.com/embed/uT4QmcR7jaA",
+      "textboxes": [],
+      "meta": {
+        "videoId": "uT4QmcR7jaA",
+        "platform": "youtube",
+        "embedUrl": "https://www.youtube.com/embed/uT4QmcR7jaA",
+        "isShorts": false
+      },
+      "metaShown": false,
+      "title": "YouTube Video",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    }
+  ],
+  "groups": [
+    {
+      "id": "g1",
+      "x": 327.80169430908796,
+      "y": 74.55098834696798,
+      "w": 587.3966113818241,
+      "h": 875.4251680152817,
+      "color": "#3b82f6",
+      "title": "CNA"
+    }
+  ],
+  "textboxes": [
+    {
+      "id": "t7",
+      "content": "<span style=\"font-size:32px;\"></span><span style=\"font-family:'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;\"><b><span style=\"font-size:32px;\">CNA YouTube Analysis<span style=\"font-size:32px;\">​</span></span><div><span style=\"font-size:20px;\">Deep Dive Podcast<span style=\"font-size:20px;\">​</span></span></div></b></span><div><span style=\"font-size:20px;\"><span style=\"font-size:20px;\"></span></span></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "345.011px",
+      "top": "111.785px",
+      "width": "445px",
+      "height": "112px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(24, 32, 43)",
+        "borderColor": "rgba(255, 255, 255, 0.06)",
+        "color": "rgb(232, 237, 247)"
+      }
+    }
+  ],
+  "checklists": [],
+  "wires": [],
+  "nextId": 8,
+  "timelines": []
+}
