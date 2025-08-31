@@ -1924,6 +1924,9 @@ body.retro #tbCtxMenu{
       </div>
     </div>
     <div class="actions">
+      <button id="btnTemplates" title="Open templates">Choose Templates</button>
+      <button id="btnClearBoard" title="Remove all items from the board">Clear board</button>
+      <button id="btnShareToRoot" title="Export current board as board.json">Share</button>
       <button id="btnUploadImage">Upload Image</button>
       <button id="btnUploadVideo">Upload Video</button>
       <button id="btnUploadPDF">Upload Document</button>
@@ -1931,8 +1934,9 @@ body.retro #tbCtxMenu{
         <option value="dark" selected>Dark</option>
         <option value="light">Light</option>
         <option value="retro">Retro</option>
-</select>
-    </div>
+      </select>
+      
+</div>
   </header>
 
   <!-- URL Import Panel -->
@@ -2012,6 +2016,7 @@ body.retro #tbCtxMenu{
     <hr/>
     <button data-action="add-google-map">Add Google Map</button>
     <button data-action="add-whiteboard">Add White Board</button>
+    <button data-action="add-Vegas-Charts">Add Vegas Charts</button>
     <button data-action="add-calendar">Add Calendar</button>
     <button data-action="add-lightbox">Add Lightbox</button>
     <button data-action="add-shotlist-builder">Add Shotlist Builder</button>
@@ -2173,14 +2178,46 @@ body.retro #tbCtxMenu{
 
     function applyTransform(){
       board.style.transform = `translate(${state.origin.x}px, ${state.origin.y}px) scale(${state.zoom})`;
-      document.getElementById('zoomPct').textContent = `${Math.round(state.zoom*100)}%`;
+      (function(el){ if(el) el.textContent = `${Math.round(state.zoom*100)}%`; })(document.getElementById('zoomPct'));
     }
 
     function bindGlobal(){
+      // Wire up Clear board button safely (prefers existing clearBoard())
+      (function(){
+        const cb = document.getElementById('btnClearBoard');
+        if (cb) cb.addEventListener('click', ()=>{
+          if (typeof clearBoard === 'function') { 
+            clearBoard();
+          } else {
+            // Fallback: minimal clear that respects current state shape
+            try{
+              // remove nodes
+              (state.nodes || []).forEach(n=> n && n.el && n.el.remove());
+              state.nodes = [];
+              // remove textboxes
+              (state.textboxes || []).forEach(t=> t && t.element && t.element.remove());
+              state.textboxes = [];
+              // remove groups
+              (state.groups || []).forEach(g=> g && g.el && g.el.remove());
+              state.groups = [];
+              // remove wires (and DOM)
+              (state.wires || []).forEach(w=> w && w.g && w.g.remove());
+              state.wires = [];
+              // selection reset
+              if (state.selection && state.selection.clear) state.selection.clear();
+              // optional: reset zoom/origin
+              state.zoom = 1;
+              state.origin = {x:0,y:0};
+              applyTransform();
+            }catch(e){ console.warn('Fallback clearBoard failed', e); }
+          }
+        });
+      })();
+    
       console.log('Binding global events...');
       
       const themeSel = document.getElementById('theme');
-      themeSel.addEventListener('change', ()=> {
+      if (themeSel) themeSel.addEventListener('change', ()=> {
         const htmlEl = document.documentElement;
         htmlEl.classList.remove('light','retro');
         if (themeSel.value==='light') htmlEl.classList.add('light');
@@ -2188,20 +2225,10 @@ body.retro #tbCtxMenu{
       });
 
       // Upload triggers
-      document.getElementById('btnUploadImage').addEventListener('click', ()=> {
-        console.log('Upload image clicked');
-        document.getElementById('fileImage').click();
-      });
-      document.getElementById('btnUploadVideo').addEventListener('click', ()=> {
-        console.log('Upload video clicked');
-        document.getElementById('fileVideo').click();
-      });
-      document.getElementById('btnUploadPDF').addEventListener('click', ()=> {
-        console.log('Upload PDF clicked');
-        document.getElementById('filePDF').click();
-      });
-      
-      document.getElementById('fileImage').addEventListener('change', (e)=> handleFiles(e.target.files));
+      (() => { const el = document.getElementById('btnUploadImage'); if (el) el.addEventListener('click', ()=>{ console.log('Upload image clicked'); document.getElementById('fileImage').click(); }); })();
+(() => { const el = document.getElementById('btnUploadVideo'); if (el) el.addEventListener('click', ()=>{ console.log('Upload video clicked'); document.getElementById('fileVideo').click(); }); })();
+(() => { const el = document.getElementById('btnUploadPDF'); if (el) el.addEventListener('click', ()=>{ console.log('Upload PDF clicked'); document.getElementById('filePDF').click(); }); })();
+document.getElementById('fileImage').addEventListener('change', (e)=> handleFiles(e.target.files));
       document.getElementById('fileVideo').addEventListener('change', (e)=> handleFiles(e.target.files));
       document.getElementById('filePDF').addEventListener('change',  (e)=> handleFiles(e.target.files));
 
@@ -3070,6 +3097,10 @@ function openGroupMenu(x, y, group){
         // Optional friendly title:
         if (n && n.el) { n.title = 'White Board'; n.el.querySelector('.title').textContent = n.title; }
 }
+        if (act==='add-Vegas-Charts') {
+        const n = createWebsiteNode('https://vega.github.io/editor/', canvasContextPoint);
+        if (n && n.el) { n.title = 'Vegas Charts'; n.el.querySelector('.title').textContent = n.title; }
+}
         if (act==='add-calendar') {
         const n = createWebsiteNode('https://xsleuthx.github.io/Colorful-Calendar/', canvasContextPoint);
         if (n && n.el) { n.title = 'Calendar'; n.el.querySelector('.title').textContent = n.title; }
@@ -3578,7 +3609,7 @@ function duplicateChecklistNode(checklistElement) {
         iframe.loading = 'lazy';
         iframe.referrerPolicy = 'no-referrer-when-downgrade';
         if (!/instagram\.com\/.*\/embed\/?/i.test(assetUrl)) {
-        if (!/instagram\.com\/.*\/embed\/?/i.test(assetUrl)) { iframe.sandbox = 'allow-same-origin allow-scripts allow-modals allow-forms allow-popups allow-popups-to-escape-sandbox'; }
+        if (!/instagram\.com\/.*\/embed\/?/i.test(assetUrl)) { iframe.sandbox = 'allow-same-origin allow-modals allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox'; }
       }
         content.appendChild(iframe);
       }
@@ -9010,6 +9041,440 @@ return {
     }
   });
   mo.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+
+<script id="clear-board-button-handler">
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const clearBtn = document.getElementById('btnClearBoard');
+    if (clearBtn){
+      clearBtn.addEventListener('click', ()=>{
+        if (confirm('Clear the board? This will delete all nodes, groups, textboxes, checklists, timelines and wires.')){
+          try{ clearBoard(); }catch(e){ console.warn('clearBoard failed', e); }
+          try{ if (typeof applyTransform==='function') applyTransform(); }catch(_){}
+        }
+      });
+    }});
+</script>
+
+<script id="share-to-root-and-autoload">
+(()=>{
+  async function collectSnapshot(){
+    try{ if (typeof exportBoardDataWithFiles === 'function') return await exportBoardDataWithFiles(); }
+    catch(e){ console.warn('exportBoardDataWithFiles failed, using light snapshot', e); }
+    const s = window.state || {};
+    const nodes = Array.isArray(s.nodes)? s.nodes.map(n=>({id:n.id,kind:n.kind,x:n.x||0,y:n.y||0,w:n.w||n.width||320,h:n.h||n.height||200,title:n.title||'',assetUrl:n.assetUrl||n.src||'',locked:!!n.locked,meta:n.meta||{}})) : [];
+    const textboxes = Array.isArray(s.textboxes)? s.textboxes.map(t=>{
+      const el = t.element || document.querySelector('.textbox[data-id="'+t.id+'"]');
+      const html = el ? el.innerHTML : (t.content || t.html || '');
+      const left = el ? parseFloat(el.style.left||0) : (t.left||t.x||0);
+      const top  = el ? parseFloat(el.style.top||0)  : (t.top||t.y||0);
+      const width = el ? (el.style.width|| (t.width? t.width+'px':'280px')) : (t.width? t.width+'px':'280px');
+      const height= el ? (el.style.height|| (t.height? t.height+'px':'160px')): (t.height? t.height+'px':'160px');
+      return { id:t.id, content: html, left, top, width, height, style: t.style||{}, locked: !!t.locked };
+    }) : [];
+    const groups = Array.isArray(s.groups)? s.groups.map(g=>({id:g.id,x:g.x||0,y:g.y||0,w:g.w||g.width||400,h:g.h||g.height||240,title:g.title||('Group '+g.id),color:g.color||'#3b82f6',locked:!!g.locked})) : [];
+    const wires = Array.isArray(s.wires)? s.wires.map(w=>({source:w.source,target:w.target,shape:w.shape||'curve'})) : [];
+    const timelines = Array.isArray(window.timelines)? window.timelines.map(t=>({direction:t.direction||'h',x:t.x||0,y:t.y||0,w:t.w||t.length||300,h:t.h||t.thickness||6,stroke:t.stroke||'#999',fill:t.fill||'transparent'})) : [];
+    return { name:s.boardName||'Untitled', viewport:{zoom:s.zoom||1, origin:s.origin||{x:0,y:0}}, nodes, textboxes, groups, wires, timelines };
+  }
+  function applySnapshot(data){ try{ if (typeof loadBoardData === 'function') loadBoardData(data); }catch(e){ console.warn('applySnapshot failed', e); } }
+  function downloadJSON(obj, filename){
+    const json = JSON.stringify(obj);
+    const blob = new Blob([json], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename || 'board.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+  }
+  async function handleShareToRoot(){
+    const data = await collectSnapshot();
+    downloadJSON(data, 'board.json');
+    alert('Saved board.json. Upload/commit this file to your GitHub Pages repo root (same folder as index.html). When people open the app, it will auto-load that JSON.');
+  }
+  function createHiddenFileInput(){
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = '.json,application/json'; input.style.display='none';
+    document.body.appendChild(input);
+    return input;
+  }
+  function handleImportJson(){
+    const input = createHiddenFileInput();
+    input.onchange = async () => {
+      const file = input.files && input.files[0];
+      if (!file) return input.remove();
+      try{ const text = await file.text(); const data = JSON.parse(text); applySnapshot(data); }
+      catch(e){ alert('Failed to load JSON: '+ e.message); }
+      finally{ input.remove(); }
+    };
+    input.click();
+  }
+  async function autoLoad(){
+    const sp = new URLSearchParams(location.search);
+    const src = sp.get('src');
+    const tryUrls = [];
+    if (src) tryUrls.push(src);
+    tryUrls.push('tutorial.json?t=' + Date.now());
+    for (const url of tryUrls){
+      try{
+        const res = await fetch(url, {cache:'no-store'});
+        if (!res.ok) continue;
+        const data = await res.json();
+        applySnapshot(data);
+        console.log('[BlankSpace] Loaded board from', url);
+        return;
+      }catch(e){ console.warn('[BlankSpace] Failed to load', url, e); }
+    }
+  }
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.getElementById('btnShareToRoot')?.addEventListener('click', handleShareToRoot);
+    autoLoad();
+  });
+})();
+</script>
+
+<style id="templates-modal-css">
+  .tpl-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:9999; }
+  .tpl-modal{ width:min(960px,92vw); max-height:80vh; background:#0f172a; color:#e5e7eb; border:1px solid #334155; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.5); overflow:hidden; display:flex; flex-direction:column; }
+  .tpl-header{ padding:14px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #1f2937; }
+  .tpl-title{ font-size:16px; font-weight:600; flex:1; }
+  .tpl-search{ flex:2; }
+  .tpl-search input{ width:100%; padding:8px 10px; border-radius:10px; border:1px solid #334155; background:#0b1220; color:#e5e7eb; }
+  .tpl-body{ padding:16px; overflow:auto; }
+  .tpl-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:12px; }
+  .tpl-card{ border:1px solid #334155; border-radius:12px; background:#0b1220; overflow:hidden; display:flex; flex-direction:column; }
+  .tpl-thumb{ height:120px; background:#111827; display:flex; align-items:center; justify-content:center; font-size:12px; opacity:.7; }
+  .tpl-info{ padding:10px; display:flex; flex-direction:column; gap:6px; }
+  .tpl-name{ font-weight:600; }
+  .tpl-meta{ font-size:12px; color:#a1a1aa; }
+  .tpl-actions{ display:flex; gap:8px; margin-top:8px; }
+  .tpl-btn{ padding:6px 10px; border-radius:10px; border:1px solid #334155; background:#1f2937; color:#e5e7eb; cursor:pointer; }
+  .tpl-btn:hover{ filter:brightness(1.1); }
+  .tpl-footer{ padding:12px 16px; border-top:1px solid #1f2937; display:flex; gap:8px; justify-content:flex-end; }
+  .tpl-close{ padding:8px 12px; border-radius:10px; border:1px solid #334155; background:#111827; color:#e5e7eb; cursor:pointer; }
+  .tpl-overlay.show{ display:flex; }
+
+  .tpl-layout{ display:grid; grid-template-columns: 220px 1fr; gap:16px; height: 100%; }
+  .tpl-sidebar{ border-right:1px solid #1f2937; padding:8px 0 8px 8px; overflow:auto; }
+  .tpl-sidehdr{ font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:#9ca3af; padding:0 8px 8px; }
+  .tpl-tree ul{ list-style:none; margin:0; padding-left:12px; }
+  .tpl-tree .node{ display:flex; align-items:center; gap:6px; padding:6px 8px; border-radius:8px; cursor:pointer; user-select:none; }
+  .tpl-tree .node:hover{ background:#0b1220; }
+  .tpl-tree .node.active{ background:#0b1220; border:1px solid #334155; }
+  .tpl-tree .caret{ font-size:12px; opacity:.8; width:14px; text-align:center; }
+  .tpl-tree .label{ flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tpl-main{ overflow:auto; }
+    </style>
+
+<div id="tplOverlay" class="tpl-overlay" aria-modal="true" role="dialog">
+  <div class="tpl-modal">
+    <div class="tpl-header">
+      <div class="tpl-title">Templates</div>
+      <div class="tpl-search"><input id="tplSearch" type="search" placeholder="Search templates..."></div>
+      <button id="tplClose" class="tpl-close" aria-label="Close">Close</button>
+    </div>
+    <div class="tpl-body">
+      <div class="tpl-layout">
+        <aside class="tpl-sidebar">
+          <div class="tpl-sidehdr">Folders</div>
+          <nav id="tplTree" class="tpl-tree" aria-label="Template folders"></nav>
+        </aside>
+        <section class="tpl-main">
+          <div id="tplGrid" class="tpl-grid"></div>
+        </section>
+      </div>
+    </div>
+    <div class="tpl-footer">
+      <button id="tplReload" class="tpl-btn">Reload list</button>
+    </div>
+  </div>
+</div>
+
+<script id="templates-modal-logic">
+(()=>{
+
+  const overlay = document.getElementById('tplOverlay');
+  const grid = document.getElementById('tplGrid');
+  const searchEl = document.getElementById('tplSearch');
+
+  // Manifest is a JSON file in your repo root listing available template files.
+  // Example templates.json (place in the same folder as your HTML):
+  // [
+  //   {"name":"Mood Starter","file":"templates/mood-starter.json","thumbnail":"thumbs/mood-starter.png","tags":["photos","warm"]},
+  //   {"name":"Wireframe UX","file":"templates/wireframe.json"},
+  //   {"name":"Story Board","file":"templates/story.json","tags":["story","frames"]}
+  // ]
+  const MANIFEST_URLS = [
+    'templates.json',                   // root
+    'templates/templates.json',        // nested
+    'boards.json'                      // alternate name
+  ];
+
+  // --- Utility fetch with graceful errors ---
+  async function fetchJSON(url){
+    const res = await fetch(url, {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status+' for '+url);
+    return await res.json();
+  }
+
+  // Try to detect GitHub repo owner/repo from GitHub Pages URL,
+  // or use window.BlankspaceRepoOwner/BlankspaceRepoName overrides if provided.
+  function detectGhRepo(){
+    try{
+      const owner = window.BlankspaceRepoOwner || (location.hostname.endsWith('github.io') ? location.hostname.split('.')[0] : null);
+      const pathname = location.pathname.replace(/^\/+/,''); // e.g. 'BlankSpace/'
+      const repo = window.BlankspaceRepoName || (pathname ? pathname.split('/')[0] : null);
+      if(owner && repo) return {owner, repo};
+    }catch(_){}
+    return null;
+  }
+
+  async function tryGitHubTreeScan(branch){
+    const repo = detectGhRepo();
+    if(!repo) throw new Error('Not on GitHub Pages, or repo not detected.');
+    const {owner, repo:reponame} = repo;
+    const api = `https://api.github.com/repos/${owner}/${reponame}/git/trees/${branch}?recursive=1`;
+    const res = await fetch(api, {headers: {'Accept':'application/vnd.github+json'}, cache:'no-store'});
+    if(!res.ok) throw new Error('GitHub API: '+res.status);
+    const data = await res.json();
+    if(!data || !data.tree) throw new Error('Unexpected tree payload');
+    // Collect all *.json under templates/
+    const list = data.tree
+      .filter(n => n.type === 'blob' && /^templates\/.+\.json$/i.test(n.path))
+      .map(n => {
+        const file = n.path;
+        const name = file.split('/').pop().replace(/\.json$/i,'');
+        // Heuristic thumbnail guesses
+        const guess1 = file.replace(/\.json$/i, '.png'); // same path, png
+        const parts = file.split('/'); // templates/sub/f.json -> templates/sub/f.png
+        const base = parts.pop().replace(/\.json$/i,'');
+        const dir  = parts.join('/');
+        const guess2 = dir ? `${dir}/${base}.jpg` : `${base}.jpg`;
+        const guess3 = file.replace(/^templates\//,'templates/thumbs/').replace(/\.json$/i, '.png');
+        return { name, file, thumbnail: guess1, folder: parts.slice(1).join('/') };
+      });
+    return list;
+  }
+
+  async function listTemplatesDynamically(){
+    // 1) Try GitHub API on 'main', then 'master'
+    try{
+      return await tryGitHubTreeScan('main');
+    }catch(_e1){
+      try{ return await tryGitHubTreeScan('master'); }catch(_e2){ /* fallthrough */ }
+    }
+    // 2) Fall back to local manifest files if present
+    for (const u of MANIFEST_URLS){
+      try{
+        const arr = await fetchJSON(u);
+        if (Array.isArray(arr) && arr.length) return arr;
+      }catch(_){}
+    }
+    // 3) Nothing found
+    return [];
+  }
+
+  async function loadManifest(){
+    try{
+      allTemplates = await listTemplatesDynamically();
+      // Ensure each entry has file path and name
+      allTemplates = allTemplates
+        .filter(t => t && (t.file||'').endsWith('.json'))
+        .map(t => {
+          const name = t.name || (t.file||'').split('/').pop().replace(/\.json$/i,'');
+          const folder = getFolderPath(t);
+          // Best-effort thumbnail guessing if not provided
+          let thumbnail = t.thumbnail || (t.file||'').replace(/\.json$/i, '.png');
+          return { ...t, name, thumbnail, folder };
+        });
+      const tree = buildFolderTree(allTemplates);
+      renderTree(tree);
+      renderTemplates();
+      return true;
+    }catch(e){
+      console.warn('loadManifest failed', e);
+      allTemplates = [];
+      renderTree(buildFolderTree(allTemplates));
+      renderTemplates();
+      return false;
+    }
+  }
+
+
+
+  let allTemplates = [];
+
+  // --- Folder tree state ---
+  let selectedFolder = ''; // '' = All
+  function getFolderPath(t){
+    try{
+      const explicit = (t.folder||t.dir||'').trim();
+      const fromFile = (t.file||'').split('/').slice(0,-1).join('/');
+      const p = (explicit || fromFile);
+      return (p || '').replace(/^\.?\//,'');
+    }catch(_){ return ''; }
+  }
+  function buildFolderTree(list){
+    const root = { name:'All', path:'', children:new Map(), count:0 };
+    for (const t of list){
+      const p = getFolderPath(t);
+      const parts = p ? p.split('/').filter(Boolean) : [];
+      let node = root; node.count++;
+      let curPath = '';
+      for (const part of parts){
+        curPath = curPath ? curPath + '/' + part : part;
+        if (!node.children.has(part)){
+          node.children.set(part, { name:part, path:curPath, children:new Map(), count:0 });
+        }
+        node = node.children.get(part); node.count++;
+      }
+    }
+    return root;
+  }
+  function renderTree(root){
+    const el = document.getElementById('tplTree');
+    if (!el) return;
+    function nodeToUL(node){
+      const ul = document.createElement('ul');
+      for (const [name, child] of node.children){
+        const li = document.createElement('li');
+        const row = document.createElement('div');
+        row.className = 'node' + (selectedFolder===child.path ? ' active' : '');
+        row.dataset.path = child.path;
+        const caret = document.createElement('span'); caret.className='caret'; caret.textContent='▸';
+        const label = document.createElement('span'); label.className='label'; label.textContent = name + ' (' + child.count + ')';
+        row.appendChild(caret); row.appendChild(label);
+        row.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          selectedFolder = (selectedFolder===child.path) ? '' : child.path; // toggle select / All
+          renderTree(root);
+          renderTemplates();
+        });
+        li.appendChild(row);
+        if (child.children && child.children.size){
+          li.appendChild(nodeToUL(child));
+        }
+        ul.appendChild(li);
+      }
+      return ul;
+    }
+    el.innerHTML = '';
+    // Top "All" item
+    const allRow = document.createElement('div');
+    allRow.className = 'node' + (selectedFolder==='' ? ' active' : '');
+    allRow.dataset.path = '';
+    const allCaret = document.createElement('span'); allCaret.className='caret'; allCaret.textContent='•';
+    const allLabel = document.createElement('span'); allLabel.className='label'; allLabel.textContent = 'All templates';
+    allRow.appendChild(allCaret); allRow.appendChild(allLabel);
+    allRow.addEventListener('click', ()=>{ selectedFolder=''; renderTree(root); renderTemplates(); });
+    el.appendChild(allRow);
+    el.appendChild(nodeToUL(root));
+  }
+
+
+  function openModal(){
+    overlay.classList.add('show');
+    searchEl?.focus();
+  }
+  function closeModal(){
+    overlay.classList.remove('show');
+  }
+
+  function matchQuery(tpl, q){
+    if (!q) return true;
+    const hay = (tpl.name||'') + ' ' + (tpl.tags||[]).join(' ');
+    return hay.toLowerCase().includes(q.toLowerCase());
+  }
+
+  function renderTemplates(){
+    grid.innerHTML = '';
+    const q = searchEl?.value?.trim() || '';
+    const list = allTemplates.filter(t=>{
+      if (!matchQuery(t,q)) return false;
+      const p = getFolderPath(t);
+      return !selectedFolder || (p === selectedFolder) || (p.startsWith(selectedFolder + '/'));
+    });
+    if (!list.length){
+      const div = document.createElement('div');
+      div.style.opacity = .75;
+      div.textContent = 'No templates found. Add a templates.json to your repo root.';
+      grid.appendChild(div);
+      return;
+    }
+    for (const t of list){
+      const card = document.createElement('div'); card.className='tpl-card';
+
+      const thumb = document.createElement('div'); thumb.className='tpl-thumb';
+      if (t.thumbnail){
+        const img = document.createElement('img');
+        img.src = t.thumbnail; img.alt = t.name || 'Template';
+        img.style.maxWidth='100%'; img.style.maxHeight='100%';
+        thumb.innerHTML = ''; thumb.appendChild(img);
+      }else{
+        thumb.textContent = 'No preview';
+      }
+
+      const info = document.createElement('div'); info.className='tpl-info';
+      const name = document.createElement('div'); name.className='tpl-name'; name.textContent = t.name || t.file;
+      const meta = document.createElement('div'); meta.className='tpl-meta';
+      meta.textContent = (t.tags && t.tags.length) ? ('#'+t.tags.join(' #')) : (t.file||'');
+      const actions = document.createElement('div'); actions.className='tpl-actions';
+
+      const loadBtn = document.createElement('button'); loadBtn.className='tpl-btn'; loadBtn.textContent='Load';
+      loadBtn.addEventListener('click', async ()=>{
+        try{
+          const data = await fetchJSON(t.file);
+          if (typeof loadBoardData === 'function') loadBoardData(data);
+          closeModal();
+        }catch(e){
+          alert('Failed to load '+ (t.file||'template') +': '+ e.message);
+        }
+      });
+
+      const linkBtn = document.createElement('button'); linkBtn.className='tpl-btn'; linkBtn.textContent='Share link';
+      linkBtn.addEventListener('click', async ()=>{
+        const u = new URL(location.href);
+        u.searchParams.set('src', t.file);
+        try{ await navigator.clipboard.writeText(u.toString()); alert('Link copied!'); }
+        catch(e){ prompt('Copy link:', u.toString()); }
+      });
+
+      actions.appendChild(loadBtn);
+      actions.appendChild(linkBtn);
+
+      info.appendChild(name); info.appendChild(meta); info.appendChild(actions);
+      card.appendChild(thumb); card.appendChild(info);
+      grid.appendChild(card);
+    }
+  };
+
+  // Wire controls
+  document.getElementById('btnTemplates')?.addEventListener('click', async ()=>{
+    await loadManifest();
+    openModal();
+  });
+  document.getElementById('tplClose')?.addEventListener('click', closeModal);
+  document.getElementById('tplReload')?.addEventListener('click', async ()=>{
+    await loadManifest(); renderTemplates();
+  });
+  document.getElementById('tplOverlay')?.addEventListener('click', (e)=>{ if (e.target.id==='tplOverlay') closeModal(); });
+  document.getElementById('tplSearch')?.addEventListener('input', renderTemplates);
+
+  // Deep-link: ?tpl=<name> loads template by name (case-insensitive)
+  document.addEventListener('DOMContentLoaded', async ()=>{
+    const sp = new URLSearchParams(location.search);
+    const tpl = sp.get('tpl');
+    if (tpl){
+      const ok = await loadManifest();
+      const match = allTemplates.find(t=> (t.name||'').toLowerCase() === tpl.toLowerCase());
+      if (match){
+        try{ const data = await fetchJSON(match.file); if (typeof loadBoardData==='function') loadBoardData(data); }
+        catch(e){ console.warn('Failed to autoload tpl', e); }
+      }
+    }
+  });
+
 })();
 </script>
 </body></html>
