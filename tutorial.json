@@ -1,36 +1,77 @@
 {
   "version": "4.8",
-  "timestamp": "2025-08-31T08:20:39.652Z",
+  "timestamp": "2025-09-21T05:40:41.171Z",
   "hasBase64Files": true,
   "viewport": {
     "zoom": 1,
     "origin": {
-      "x": 0,
-      "y": 0
+      "x": -4,
+      "y": -1
     }
   },
   "nodes": [],
   "groups": [
     {
       "id": "g2",
-      "x": 173,
-      "y": 152,
-      "w": 406,
-      "h": 738,
+      "x": 505,
+      "y": 100,
+      "w": 331,
+      "h": 448,
       "color": "#3b82f6",
-      "title": "Tutorial"
+      "title": "Getting Started"
+    },
+    {
+      "id": "g10",
+      "x": 900,
+      "y": 104,
+      "w": 728,
+      "h": 663,
+      "color": "#3b82f6",
+      "title": "Showcase"
     }
   ],
   "textboxes": [
     {
-      "id": "t3",
-      "content": "<span style=\"font-size:45px;\">Getting Started<span style=\"font-size:45px;\">​</span></span>",
+      "id": "t6",
+      "content": "<span style=\"font-size:17px;\"><span style=\"font-size:18px;\"><span style=\"font-size:24px;\">1. Choose A Template<span style=\"font-size:19px;\">​<span style=\"font-size:20px;\">​<span style=\"font-size:21px;\">​<span style=\"font-size:22px;\">​<span style=\"font-size:21px;\">​<span style=\"font-size:22px;\">​<span style=\"font-size:23px;\">​<span style=\"font-size:24px;\">​</span></span></span></span></span></span></span></span></span><span style=\"font-size:19px;\"><span style=\"font-size:20px;\"><span style=\"font-size:21px;\"><span style=\"font-size:22px;\"><span style=\"font-size:21px;\"><span style=\"font-size:22px;\"><span style=\"font-size:23px;\"><span style=\"font-size:24px;\"></span></span></span></span></span></span></span></span></span></span>",
       "hasPlaceholder": false,
       "hasActualContent": true,
-      "left": "226px",
-      "top": "211px",
-      "width": "543px",
-      "height": "609px",
+      "left": "527px",
+      "top": "138px",
+      "width": "271px",
+      "height": "69px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(24, 32, 43)",
+        "borderColor": "rgba(255, 255, 255, 0.06)",
+        "color": "rgb(232, 237, 247)"
+      }
+    },
+    {
+      "id": "t7",
+      "content": "<span style=\"font-size:17px;\"><span style=\"font-size:18px;\"><span style=\"font-size:24px;\">2. Access Tools Menu by right click<span style=\"font-size:19px;\">​<span style=\"font-size:20px;\">​<span style=\"font-size:21px;\">​<span style=\"font-size:22px;\">​<span style=\"font-size:21px;\">​<span style=\"font-size:22px;\">​<span style=\"font-size:23px;\">​<span style=\"font-size:24px;\">​</span></span></span></span></span></span></span></span></span><span style=\"font-size:19px;\"><span style=\"font-size:20px;\"><span style=\"font-size:21px;\"><span style=\"font-size:22px;\"><span style=\"font-size:21px;\"><span style=\"font-size:22px;\"><span style=\"font-size:23px;\"><span style=\"font-size:24px;\"></span></span></span></span></span></span></span></span></span></span>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "530px",
+      "top": "237px",
+      "width": "270px",
+      "height": "103px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(24, 32, 43)",
+        "borderColor": "rgba(255, 255, 255, 0.06)",
+        "color": "rgb(232, 237, 247)"
+      }
+    },
+    {
+      "id": "t9",
+      "content": "<span style=\"font-size:17px;\"><span style=\"font-size:18px;\"><span style=\"font-size:24px;\">2. Save / Export your workspace into a JSON file<span style=\"font-size:19px;\">​<span style=\"font-size:20px;\">​<span style=\"font-size:21px;\">​<span style=\"font-size:22px;\">​<span style=\"font-size:21px;\">​<span style=\"font-size:22px;\">​<span style=\"font-size:23px;\">​<span style=\"font-size:24px;\">​</span></span></span></span></span></span></span></span></span><span style=\"font-size:19px;\"><span style=\"font-size:20px;\"><span style=\"font-size:21px;\"><span style=\"font-size:22px;\"><span style=\"font-size:21px;\"><span style=\"font-size:22px;\"><span style=\"font-size:23px;\"><span style=\"font-size:24px;\"></span></span></span></span></span></span></span></span></span></span>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "531px",
+      "top": "364px",
+      "width": "271px",
+      "height": "145px",
       "bgAlpha": 1,
       "style": {
         "background": "rgb(24, 32, 43)",
@@ -41,6 +82,6 @@
   ],
   "checklists": [],
   "wires": [],
-  "nextId": 4,
+  "nextId": 11,
   "timelines": []
 }
