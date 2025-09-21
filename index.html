@@ -570,11 +570,40 @@ html.retro #theme {
     
     .marquee{position:absolute; border:5px dashed var(--accent); background:rgba(255,255,255,.1); pointer-events:none; z-index:2000}
 
+:root { --menu-gap: 2px; }
+.menu{ display:flex; flex-direction:column; row-gap: var(--menu-gap); }
+.menu button{ margin:0; }                 /* rely on row-gap for spacing */
+.menu .submenu-wrap{ display:block; }
+/* Dropdown style: inline (not absolute) */
+.menu .submenu{
+  display:none;                           /* closed by default */
+  margin-top: 6px;                        /* little breathing room under the header */
+  padding: 6px 4px;
+  display: none;
+  flex-direction: column;
+  row-gap: var(--menu-gap);
+  border-top: 1px solid rgba(255,255,255,.12);  /* subtle divider */
+}
+.menu .submenu-wrap.open > .submenu{ display:flex; }
+/* Optional: header affordance */
+.menu .has-submenu{
+  display:block;
+  width:100%;
+  text-align:left;
+  border-radius:8px;
+}
+.menu .has-submenu:hover{ background: rgba(255,255,255,.06); }
+.menu .submenu-wrap.open > .has-submenu{
+  outline: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+}
+
     .menu{position:absolute; display:none; flex-direction:column; background:var(--panel); border:1px var(--panel-border); border-radius:10px; padding:6px; z-index:2000; }
     .menu.open{display:flex}
     .menu button{background:transparent; border:none; text-align:left; padding:8px 12px; border-radius:8px}
     .menu button:hover{background:rgba(255,255,255,.06)}
     .menu hr{border:none; border-top:1px solid rgba(255,255,255,.08); margin:6px 0}
+
 
     .scale-bar{
       position:fixed; left:12px; bottom:12px; display:flex; align-items:center; gap:10px; z-index:1500;
@@ -2073,27 +2102,45 @@ body.retro #tbCtxMenu{
     </div>
   </div>
 
-  <!-- Context menus -->
   <menu id="canvasMenu" class="menu">
-    <button data-action="upload-image">Upload Image…</button>
-    <button data-action="upload-video">Upload Video…</button>
-    <button data-action="upload-pdf">Upload Document…</button>
-    <hr/>
-    <button data-action="add-google-map">Add Google Map</button>
-    <button data-action="add-whiteboard">Add White Board</button>
-    <button data-action="add-Vegas-Charts">Add Vegas Charts</button>
-    <button data-action="add-calendar">Add Calendar</button>
-    <button data-action="add-lightbox">Add Lightbox</button>
-    <button data-action="add-shotlist-builder">Add Shotlist Builder</button>
-    <button data-action="add-transcriber">Add Transcriber Editor</button>
-    <hr/>
-    <button data-action="create-group">Create Group</button>
-    <button data-action="create-textbox">Create Text Box</button>
-    <button data-action="add-checknode">Create Checklist</button>
-    <hr/>
-    <button data-action="create-timeline-h">Create Timeline — Horizontal</button>
-    <button data-action="create-timeline-v">Create Timeline — Vertical</button>
+    <!-- Upload -->
+    <div class="submenu-wrap">
+      <button type="button" class="has-submenu">Upload ▾</button>
+      <div class="submenu">
+        <button data-action="upload-image">Upload Image…</button>
+        <button data-action="upload-video">Upload Video…</button>
+        <button data-action="upload-pdf">Upload Document…</button>
+      </div>
+    </div>
+  
+    <!-- Add -->
+    <div class="submenu-wrap">
+      <button type="button" class="has-submenu">Add ▾</button>
+      <div class="submenu">
+        <button data-action="add-google-map">Add Google Map</button>
+        <button data-action="add-whiteboard">Add White Board</button>
+        <button data-action="add-Vegas-Charts">Add Vegas Charts</button>
+        <button data-action="add-calendar">Add Calendar</button>
+        <button data-action="add-lightbox">Add Lightbox</button>
+        <button data-action="add-shotlist-builder">Add Shotlist Builder</button>
+        <button data-action="add-transcriber">Add Transcriber Editor</button>
+      </div>
+    </div>
+  
+    <!-- Create -->
+    <div class="submenu-wrap">
+      <button type="button" class="has-submenu">Create ▾</button>
+      <div class="submenu">
+        <button data-action="create-group">Create Group</button>
+        <button data-action="create-textbox">Create Text Box</button>
+        <button data-action="add-checknode">Create Checklist</button>
+        <hr/>
+        <button data-action="create-timeline-h">Create Timeline — Horizontal</button>
+        <button data-action="create-timeline-v">Create Timeline — Vertical</button>
+      </div>
+    </div>
   </menu>
+  
 
   <menu id="nodeMenu" class="menu">
     <button data-action="open">Open / Play</button>
@@ -6211,6 +6258,58 @@ function downloadDataUrl(dataUrl, filename){
 <div class="row swatch" id="tbSwatches"></div>
 </div>
 
+<script>
+  (function(){
+    const menu = document.getElementById('canvasMenu');
+    if (!menu) return;
+  
+    // A) Toggle dropdown on header click; close others
+    menu.addEventListener('click', (e)=>{
+      const header = e.target.closest('.has-submenu');
+      if (!header || !menu.contains(header)) return;
+      e.preventDefault(); e.stopPropagation();
+      const wrap = header.closest('.submenu-wrap');
+      const isOpen = wrap.classList.contains('open');
+      // close all
+      menu.querySelectorAll('.submenu-wrap.open').forEach(w => w.classList.remove('open'));
+      // (re)open this one if it wasn't open
+      if (!isOpen) wrap.classList.add('open');
+    });
+  
+    // B) When opening the canvas menu, start with dropdowns closed (keeps your old behavior)
+    const origOpen = window.openCanvasMenu;
+    window.openCanvasMenu = function(x,y){
+      if (typeof closeMenus==='function') closeMenus();
+      menu.style.left = x + 'px';
+      menu.style.top  = y + 'px';
+      menu.classList.add('open');
+      // reset dropdowns
+      menu.querySelectorAll('.submenu-wrap.open').forEach(w => w.classList.remove('open'));
+      if (typeof origOpen === 'function') { try { origOpen.apply(this, arguments); } catch(_){} }
+    };
+  
+    // C) After any action, close all menus (lets your handler run first)
+    menu.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button[data-action]');
+      if (!btn || !menu.contains(btn)) return;
+      setTimeout(()=> (typeof closeMenus==='function' ? closeMenus() : menu.classList.remove('open')), 0);
+    });
+  
+    // D) Outside click / Esc to close (bubble-phase; respects your existing closer too)
+    document.addEventListener('click', (e)=>{
+      if (!menu.classList.contains('open')) return;
+      if (e.target.closest('.menu')) return;
+      (typeof closeMenus==='function') ? closeMenus() : menu.classList.remove('open');
+    }, false);
+  
+    document.addEventListener('keydown', (e)=>{
+      if (e.key === 'Escape'){
+        (typeof closeMenus==='function') ? closeMenus() : menu.classList.remove('open');
+      }
+    });
+  })();
+  </script>
+  
 
 <script id="tb-ctx-js">
 (function(){
