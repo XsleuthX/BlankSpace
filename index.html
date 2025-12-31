@@ -2124,6 +2124,9 @@ body.retro #tbCtxMenu{
         <button data-action="add-lightbox">Add Lightbox</button>
         <button data-action="add-shotlist-builder">Add Shotlist Builder</button>
         <button data-action="add-transcriber">Add Transcriber Editor</button>
+        <button data-action="add-Timecode-Calculator">Add Timecode Calculator</button>
+        <button data-action="add-AutoClip_Web">Add AutoClip</button>
+        <button data-action="add-YouTube-Beat-Builder">Add YouTube Beat Builder</button>
       </div>
     </div>
   
@@ -3233,6 +3236,18 @@ function openGroupMenu(x, y, group){
         if (act==='add-transcriber') {
         const n = createWebsiteNode('https://xsleuthx.github.io/Transcriber/', canvasContextPoint);
         if (n && n.el) { n.title = 'Transcriber Editor'; n.el.querySelector('.title').textContent = n.title; }
+}
+        if (act==='add-Timecode-Calculator') {
+        const n = createWebsiteNode('https://xsleuthx.github.io/Timecode-Calculator/', canvasContextPoint);
+        if (n && n.el) { n.title = 'Timecode Calculator'; n.el.querySelector('.title').textContent = n.title; }
+}
+        if (act==='add-AutoClip_Web') {
+        const n = createWebsiteNode('https://xsleuthx.github.io/AutoClip_Web/', canvasContextPoint);
+        if (n && n.el) { n.title = 'AutoClip'; n.el.querySelector('.title').textContent = n.title; }
+}
+        if (act==='add-YouTube-Beat-Builder') {
+        const n = createWebsiteNode('https://xsleuthx.github.io/YouTube-Beat-Builder/', canvasContextPoint);
+        if (n && n.el) { n.title = 'YouTube Beat Builder'; n.el.querySelector('.title').textContent = n.title; }
 }
         if(act==='create-group') createGroup(canvasContextPoint);
         if(act==='create-textbox') createFloatingTextbox(canvasContextPoint);
