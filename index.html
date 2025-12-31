@@ -2481,21 +2481,32 @@ document.addEventListener('mousedown', (e)=>{
   if (!m && typeof closeMenus==='function') closeMenus();
 }, true);
 // Delete key
-      window.addEventListener('keydown', (e)=>{
-        const active = document.activeElement;
-        if(active && active.classList && active.classList.contains('textbox')) return;
-        if(active && active.tagName === 'INPUT') return;
-        if(e.key==='Delete' || e.key==='Backspace'){
-          const ids = Array.from(state.selection);
-          ids.forEach(id=>{
-            const n = getNodeById(id); if(n) { n.el.remove(); state.nodes = state.nodes.filter(x=>x!==n); }
-            const g = getGroupById(id); if(g) { g.el.remove(); state.groups = state.groups.filter(x=>x!==g); }
-            const t = getTextboxById(id); if(t) { t.element.remove(); state.textboxes = state.textboxes.filter(x=>x!==t); }
-            const el = getElement(id); if(el && el.classList && el.classList.contains('checknode')){ if(typeof deleteChecklistNode==='function') deleteChecklistNode(el);}
-          });
-          clearSelection();
-        }
-      });
+  window.addEventListener('keydown', (e) => {
+  const t = e.target;
+  const tag = (t && t.tagName) ? t.tagName.toLowerCase() : '';
+  const active = document.activeElement;
+  const inEditable =
+    (t && (t.isContentEditable || t.closest?.('[contenteditable="true"]'))) ||
+    /^(input|textarea|select)$/i.test(tag) ||
+    (active && (active.isContentEditable || /^(input|textarea|select)$/i.test(active.tagName)));
+
+  if (inEditable) return; // don't treat as canvas delete while editing
+
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    const ids = Array.from(state.selection || []);
+    ids.forEach(id => {
+      const n = getNodeById(id); if (n) { n.el.remove(); state.nodes = state.nodes.filter(x => x !== n); }
+      const g = getGroupById(id); if (g) { g.el.remove(); state.groups = state.groups.filter(x => x !== g); }
+      const tbox = getTextboxById(id); if (tbox) { tbox.element.remove(); state.textboxes = state.textboxes.filter(x => x !== tbox); }
+      const el = getElement(id);
+      if (el && el.classList && el.classList.contains('checknode')) {
+        if (typeof deleteChecklistNode === 'function') deleteChecklistNode(el);
+      }
+    });
+    clearSelection();
+  }
+}, true); // capture is fine; the inEditable early-return keeps things safe
+
 
       window.addEventListener('resize', applyTransform);
     }
