@@ -2,25 +2,25 @@
   {
     "name": "Mood Board",
     "file": "templates/Project/mood-board.json",
-    "thumbnail": "thumbs/mood-board.png",
+    "thumbnail": "templates/Project/mood-board.png",
     "tags": ["photos", "warm"]
   },
   {
     "name": "Webtools",
     "file": "templates/Tools/webtools.json",
-    "thumbnail": "",
+    "thumbnail": "templates/Project/",
     "tags": ["tools", "webapp"]
   },
   {
     "name": "Demo",
     "file": "templates/Project/Demo.json",
-    "thumbnail": "thumbs/Demo.png",
+    "thumbnail": "templates/Project/Demo.png",
     "tags": ["demo", "idea"]
   }
   {
     "name": "Video Outline",
     "file": "templates/Project/video-outline.json",
-    "thumbnail": "thumbs/video-outline.png",
+    "thumbnail": "templates/Project/video-outline.png",
     "tags": ["outline", "concept"]
   }
 ]
