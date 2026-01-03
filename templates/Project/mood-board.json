@@ -1,48 +1,48 @@
 {
   "version": "4.8",
-  "timestamp": "2025-08-22T08:50:31.821Z",
+  "timestamp": "2026-01-03T06:32:19.736Z",
   "hasBase64Files": true,
   "viewport": {
     "zoom": 0.7408182206817179,
     "origin": {
-      "x": 191.35467206042972,
-      "y": 59.769111790201805
+      "x": 100.35467206042972,
+      "y": 64.7691117902018
     }
   },
   "nodes": [
     {
-      "id": "n3",
+      "id": "n13",
       "kind": "website",
-      "x": 919,
-      "y": 60.5,
-      "w": 534.449011653032,
-      "h": 887.4348924106323,
-      "assetUrl": "https://www.youtube.com/feed/history",
+      "x": 956.5711373668139,
+      "y": 75.22883030402973,
+      "w": 1168.5114544682488,
+      "h": 888.8697848212646,
+      "assetUrl": "https://film-grab.com/2023/12/06/oppenheimer/",
       "textboxes": [],
       "meta": {
-        "originalUrl": "https://www.youtube.com/feed/history",
+        "originalUrl": "https://film-grab.com/2023/12/06/oppenheimer/",
         "website": true,
-        "domain": "www.youtube.com"
+        "domain": "film-grab.com"
       },
       "metaShown": false,
-      "title": "www.youtube.com",
+      "title": "film-grab.com",
       "locked": false,
       "isFileNode": false,
       "hasBase64Data": false
     },
     {
-      "id": "n4",
+      "id": "n14",
       "kind": "youtube",
-      "x": 335.950423577272,
-      "y": 268.150141192424,
+      "x": 345.08509753488454,
+      "y": 260.15948694194213,
       "w": 560,
       "h": 315,
-      "assetUrl": "https://www.youtube.com/embed/HvnPTixZvWg",
+      "assetUrl": "https://www.youtube.com/embed/uYPbbksJxIg",
       "textboxes": [],
       "meta": {
-        "videoId": "HvnPTixZvWg",
+        "videoId": "uYPbbksJxIg",
         "platform": "youtube",
-        "embedUrl": "https://www.youtube.com/embed/HvnPTixZvWg",
+        "embedUrl": "https://www.youtube.com/embed/uYPbbksJxIg",
         "isShorts": false
       },
       "metaShown": false,
@@ -52,18 +52,18 @@
       "hasBase64Data": false
     },
     {
-      "id": "n6",
+      "id": "n15",
       "kind": "youtube",
-      "x": 337.6404167970734,
-      "y": 607.1658314333929,
+      "x": 349.13467395761256,
+      "y": 598.9740476435189,
       "w": 560,
       "h": 315,
-      "assetUrl": "https://www.youtube.com/embed/uT4QmcR7jaA",
+      "assetUrl": "https://www.youtube.com/embed/bK6ldnjE3Y0",
       "textboxes": [],
       "meta": {
-        "videoId": "uT4QmcR7jaA",
+        "videoId": "bK6ldnjE3Y0",
         "platform": "youtube",
-        "embedUrl": "https://www.youtube.com/embed/uT4QmcR7jaA",
+        "embedUrl": "https://www.youtube.com/embed/bK6ldnjE3Y0",
         "isShorts": false
       },
       "metaShown": false,
@@ -78,16 +78,16 @@
       "id": "g1",
       "x": 327.80169430908796,
       "y": 74.55098834696798,
-      "w": 587.3966113818241,
-      "h": 875.4251680152817,
+      "w": 604.9447758803121,
+      "h": 887.5738972834657,
       "color": "#3b82f6",
-      "title": "CNA"
+      "title": "Oppenheimer Mood Board"
     }
   ],
   "textboxes": [
     {
       "id": "t7",
-      "content": "<span style=\"font-size:32px;\"></span><span style=\"font-family:'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;\"><b><span style=\"font-size:32px;\">CNA YouTube Analysis<span style=\"font-size:32px;\">​</span></span><div><span style=\"font-size:20px;\">Deep Dive Podcast<span style=\"font-size:20px;\">​</span></span></div></b></span><div><span style=\"font-size:20px;\"><span style=\"font-size:20px;\"></span></span></div>",
+      "content": "<span style=\"font-size:32px;\"></span><span style=\"font-family:'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;\"><b><span style=\"font-size:32px;\">Oppenheimer<span style=\"font-size:32px;\">​</span></span><div><span style=\"font-size:20px;\">Mood Board<span style=\"font-size:20px;\">​</span></span></div></b></span><div><span style=\"font-size:20px;\"><span style=\"font-size:20px;\"></span></span></div>",
       "hasPlaceholder": false,
       "hasActualContent": true,
       "left": "345.011px",
@@ -104,6 +104,6 @@
   ],
   "checklists": [],
   "wires": [],
-  "nextId": 8,
+  "nextId": 16,
   "timelines": []
 }
