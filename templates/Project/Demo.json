@@ -1,12 +1,12 @@
 {
   "version": "4.8",
-  "timestamp": "2025-12-31T16:16:20.165Z",
+  "timestamp": "2026-01-03T07:36:57.032Z",
   "hasBase64Files": true,
   "viewport": {
-    "zoom": 0.44932896411722245,
+    "zoom": 0.3328710836980803,
     "origin": {
-      "x": 756.3770863512268,
-      "y": 18.782378382954732
+      "x": 585.3133492656001,
+      "y": 22.799188613361423
     }
   },
   "nodes": [
@@ -15,8 +15,8 @@
       "kind": "website",
       "x": -245.0967985677287,
       "y": 694.2952841504618,
-      "w": 1459.4975773853928,
-      "h": 815.1282466570314,
+      "w": 1465.4975773853928,
+      "h": 818.1282466570314,
       "assetUrl": "https://xsleuthx.github.io/Transcriber/",
       "textboxes": [],
       "meta": {
@@ -66,6 +66,92 @@
       },
       "metaShown": false,
       "title": "Timecode Calculator",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    },
+    {
+      "id": "n71",
+      "kind": "website",
+      "x": 1359.061749311883,
+      "y": 1536.7748051181948,
+      "w": 532.5203186008872,
+      "h": 813.7454826780292,
+      "assetUrl": "https://www.instagram.com/p/DSbXHCFiHtW/embed",
+      "textboxes": [],
+      "meta": {
+        "platform": "instagram",
+        "type": "p",
+        "shortcode": "DSbXHCFiHtW",
+        "embedUrl": "https://www.instagram.com/p/DSbXHCFiHtW/embed",
+        "originalUrl": "https://www.instagram.com/reel/DSbXHCFiHtW/",
+        "ar": 0.8
+      },
+      "metaShown": false,
+      "title": "Instagram Post",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    },
+    {
+      "id": "n72",
+      "kind": "website",
+      "x": -1526.3157529405016,
+      "y": 1545.5102352243994,
+      "w": 1248.4310495971945,
+      "h": 786.6547529837566,
+      "assetUrl": "https://docs.google.com/document/d/1_0UtRdhKG2s-JNR3hLgZVtU_NMH7VXYqchstaj5pkQo/edit?usp=sharing",
+      "textboxes": [],
+      "meta": {
+        "originalUrl": "https://docs.google.com/document/d/1_0UtRdhKG2s-JNR3hLgZVtU_NMH7VXYqchstaj5pkQo/edit?usp=sharing",
+        "website": true,
+        "domain": "docs.google.com"
+      },
+      "metaShown": false,
+      "title": "docs.google.com",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    },
+    {
+      "id": "n73",
+      "kind": "website",
+      "x": -232.02852322327396,
+      "y": 1554.0335726051865,
+      "w": 1440.9557874058291,
+      "h": 780.2688152078895,
+      "assetUrl": "https://docs.google.com/document/d/1NH8C3R7YyEYEQDCuGPGtvFit3yDbs5mTxGN923gWdag/edit?tab=t.0",
+      "textboxes": [],
+      "meta": {
+        "originalUrl": "https://docs.google.com/document/d/1NH8C3R7YyEYEQDCuGPGtvFit3yDbs5mTxGN923gWdag/edit?tab=t.0",
+        "website": true,
+        "domain": "docs.google.com"
+      },
+      "metaShown": false,
+      "title": "docs.google.com",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    },
+    {
+      "id": "n74",
+      "kind": "website",
+      "x": 1971.0581575915778,
+      "y": 1534.4483612837341,
+      "w": 538.9999999999998,
+      "h": 821.9999999999993,
+      "assetUrl": "https://www.instagram.com/p/DRUcgiPk4B7/embed",
+      "textboxes": [],
+      "meta": {
+        "platform": "instagram",
+        "type": "p",
+        "shortcode": "DRUcgiPk4B7",
+        "embedUrl": "https://www.instagram.com/p/DRUcgiPk4B7/embed",
+        "originalUrl": "https://www.instagram.com/reel/DRUcgiPk4B7/?hl=en",
+        "ar": 0.8
+      },
+      "metaShown": false,
+      "title": "Instagram Post",
       "locked": false,
       "isFileNode": false,
       "hasBase64Data": false
@@ -161,8 +247,8 @@
       "content": "<font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">从视频稿直接计算</span></b></span></font><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\"><span style=\"font-size:100px;\">所有Timecode</span></span></b></span></font></div><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\"><span style=\"font-size:100px;\">In 和 Out Points​</span></span></b></span></font><span style=\"font-size: 55px;\">​</span><span style=\"font-size: 36px;\"><span style=\"font-family:'KaiTi', '楷体', 'STKaiti', serif;\"><span style=\"font-family:'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;\"><b><div style=\"text-align: left;\"></div></b></span></span></span><span style=\"font-size:36px;\"><span style=\"font-family:'KaiTi', '楷体', 'STKaiti', serif;\"><span style=\"font-family:'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;\"><b><div style=\"text-align: left;\"></div></b></span><div style=\"text-align: center;\"></div></span><div style=\"text-align: center;\"></div></span><div></div></div>",
       "hasPlaceholder": false,
       "hasActualContent": true,
-      "left": "-1392.88px",
-      "top": "877.059px",
+      "left": "-1353.92px",
+      "top": "850.208px",
       "width": "906px",
       "height": "488px",
       "bgAlpha": 0.9,
@@ -177,8 +263,8 @@
       "content": "<font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">实时修改</span></b></span></font><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">视频SRT字幕</span></b></span></font><br></div><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">和Timecode</span></b></span></font></div>",
       "hasPlaceholder": false,
       "hasActualContent": true,
-      "left": "11.9303px",
-      "top": "871.549px",
+      "left": "25.1998px",
+      "top": "856.434px",
       "width": "906px",
       "height": "491px",
       "bgAlpha": 0.9,
@@ -193,8 +279,8 @@
       "content": "<font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">用截屏图片</span></b></span></font><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">逐帧设计</span></b></span></font><br></div><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">拍摄Shotlist</span></b></span></font></div>",
       "hasPlaceholder": false,
       "hasActualContent": true,
-      "left": "1499.57px",
-      "top": "871.016px",
+      "left": "1523.81px",
+      "top": "866.001px",
       "width": "906px",
       "height": "491px",
       "bgAlpha": 0.9,
@@ -213,9 +299,9 @@
       "top": "162.434px",
       "width": "862px",
       "height": "191px",
-      "bgAlpha": 0.1,
+      "bgAlpha": 0.9,
       "style": {
-        "background": "rgba(255, 255, 255, 0.1)",
+        "background": "rgba(255, 255, 255, 0.9)",
         "borderColor": "rgba(255, 255, 255, 0.35)",
         "color": "rgb(14, 19, 47)"
       }
@@ -309,6 +395,6 @@
     }
   ],
   "wires": [],
-  "nextId": 57,
+  "nextId": 75,
   "timelines": []
 }
