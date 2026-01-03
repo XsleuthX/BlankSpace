@@ -1,0 +1,717 @@
+{
+  "version": "4.8",
+  "timestamp": "2025-10-26T05:09:38.693Z",
+  "hasBase64Files": true,
+  "viewport": {
+    "zoom": 0.7408182206817173,
+    "origin": {
+      "x": -92.57360779878036,
+      "y": -343.2175123942735
+    }
+  },
+  "nodes": [],
+  "groups": [
+    {
+      "id": "g16",
+      "x": 492,
+      "y": 116,
+      "w": 454,
+      "h": 584,
+      "color": "#3b82f6",
+      "title": "01"
+    },
+    {
+      "id": "g21",
+      "x": 1662.7268235445244,
+      "y": 119.12913932047626,
+      "w": 290.8818497136584,
+      "h": 538.546057988139,
+      "color": "#3b82f6",
+      "title": "03"
+    },
+    {
+      "id": "g30",
+      "x": 1000.4611697270135,
+      "y": 117.22140275816017,
+      "w": 611.9114978812984,
+      "h": 729.6827199465797,
+      "color": "#3b82f6",
+      "title": "02"
+    },
+    {
+      "id": "g46",
+      "x": 1972.782605802905,
+      "y": 117.11232485235054,
+      "w": 339.7379600400652,
+      "h": 540.9888635044592,
+      "color": "#3b82f6",
+      "title": "04"
+    },
+    {
+      "id": "g50",
+      "x": 507.1993822333579,
+      "y": 875.0177185689225,
+      "w": 1801.94548231321,
+      "h": 713.9067570725638,
+      "color": "#3b82f6",
+      "title": "大纲",
+      "locked": false
+    },
+    {
+      "id": "g68",
+      "x": 2349.331196084766,
+      "y": 117.58417337247522,
+      "w": 302.94078978029086,
+      "h": 532.2543544171198,
+      "color": "#3b82f6",
+      "title": "05"
+    }
+  ],
+  "textboxes": [
+    {
+      "id": "t17",
+      "content": "<span style=\"font-size:24px;\">Chang Cheng<div>长城美华</div></span><div></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "697.443px",
+      "top": "529.915px",
+      "width": "221px",
+      "height": "106px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(251, 191, 36)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t18",
+      "content": "Gourmetz",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1404.71px",
+      "top": "238.557px",
+      "width": "162px",
+      "height": "56px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(255, 255, 255)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t19",
+      "content": "Wilmar",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1404.71px",
+      "top": "333.107px",
+      "width": "162px",
+      "height": "56px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(255, 255, 255)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t20",
+      "content": "<span style=\"font-size:36px;\">中央厨房<div>- 食材</div><div>- 制作过程</div><div>- 价格</div><div>- 卫生安全</div></span><div></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "529px",
+      "top": "149px",
+      "width": "298px",
+      "height": "309px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(251, 191, 36)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t22",
+      "content": "<span style=\"font-size: 36px;\">学校</span><div></div><div>- 2022 pilot program at Yusof Ishak Secondary School</div><div><br></div><div>Chang Cheng</div><div>- Dazhong Primary, Kranji Primary, Pioneer Primary, Qifa Primary and West View Primary</div><div><br></div><div>Gourmetz</div><div>-&nbsp;CHIJ (Kellock), Radin Mas Primary, River Valley Primary, and Blangah Rise Primary School</div><div><br></div><div>Wilmar Distribution</div><div>-&nbsp;Casuarina Primary, Chongzheng Primary, Northoaks Primary and Outram Secondary’s Sengkang campus</div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1025.06px",
+      "top": "235.727px",
+      "width": "362px",
+      "height": "566px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(255, 255, 255)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t31",
+      "content": "<span style=\"font-size:24px;\">Central Kitchen Model<span style=\"font-size:24px;\">​</span></span>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1032.45px",
+      "top": "142.221px",
+      "width": "281px",
+      "height": "72px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(255, 255, 255)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t32",
+      "content": "Chang Cheng",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1407.93px",
+      "top": "421.328px",
+      "width": "162px",
+      "height": "56px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(255, 255, 255)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t45",
+      "content": "<span style=\"font-size:24px;\">食堂小贩</span><div><span style=\"font-size:24px;\">张太</span></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1702.4px",
+      "top": "148.221px",
+      "width": "171px",
+      "height": "104px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(251, 191, 36)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t47",
+      "content": "<span style=\"font-size:24px;\">食堂小贩</span><div><span style=\"font-size:24px;\">Rayner Tan</span></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "2015.54px",
+      "top": "145.015px",
+      "width": "171px",
+      "height": "104px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(251, 191, 36)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t48",
+      "content": "<span style=\"font-size:24px;\"><span style=\"font-size:20px;\">Show and Tell: </span></span><div><span style=\"font-size:24px;\"><span style=\"font-size:20px;\">What is the actual cost </span></span><span style=\"font-size: 20px;\">of running a canteen stall?</span><div></div></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "2017.52px",
+      "top": "278.911px",
+      "width": "206px",
+      "height": "175px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(255, 255, 255)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t49",
+      "content": "<span style=\"font-size:24px;\"><span style=\"font-size:20px;\">Interview: </span></span><div><span style=\"font-size: 20px;\">What canteen culture will be missing?</span></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1693.09px",
+      "top": "284.254px",
+      "width": "206px",
+      "height": "175px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(255, 255, 255)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t51",
+      "content": "<div></div><span style=\"font-size:15px;\"><div></div><span style=\"font-size:16px;\"><div>Tour around central kitchen</div><div>- Host</div></span></span><div><span style=\"font-size:15px;\"><span style=\"font-size:15px;\"><span style=\"font-size:16px;\"><span style=\"font-size:16px;\"></span></span></span></span><div></div></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1268.27px",
+      "top": "1363.1px",
+      "width": "146px",
+      "height": "111px",
+      "bgAlpha": 0.8,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.8)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t57",
+      "content": "<div><span style=\"font-size: 16px;\">Bento Lunch Box arrive onto the canteen table</span></div><span style=\"font-size:16px;\">- Host</span>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "673.625px",
+      "top": "912.507px",
+      "width": "234px",
+      "height": "122px",
+      "bgAlpha": 0.8,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.8)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t58",
+      "content": "<span style=\"font-size:16px;\">Ending Statement:<div><br></div><div><div>How will students and parents conceive this model, how will they accept this model?</div><div><br><div><div>- 长城, COO</div></div></div></div><div>- 拭目以待？</div><span style=\"font-size:16px;\">​</span></span><div><div><div></div></div></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1961.68px",
+      "top": "1227.88px",
+      "width": "276px",
+      "height": "257px",
+      "bgAlpha": 0.8,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.8)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t69",
+      "content": "<span style=\"font-size: 24px;\">Expert</span>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "2384.74px",
+      "top": "145.879px",
+      "width": "171px",
+      "height": "104px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(251, 191, 36)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t70",
+      "content": "<span style=\"font-size: 20px;\">Interview:</span><div><div></div></div><div><span style=\"font-size: 20px;\">Balance between</span></div><div><span style=\"font-size: 20px;\">canteen stall and central kitchen</span></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "2381.78px",
+      "top": "281.424px",
+      "width": "206px",
+      "height": "175px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(255, 255, 255)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t71",
+      "content": "<span style=\"font-size: 16px;\">Canteen Model in School? Subsidize?</span><div><span style=\"font-size: 16px;\">Price Caps removal?\nOther incentives?\n</span><div><span style=\"font-size: 16px;\">- </span><span style=\"font-size: 16px;\">Host </span></div></div><div><span style=\"font-size: 16px;\"><br></span></div><div><span style=\"font-size: 16px;\">MOE statements?<br></span></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1618.44px",
+      "top": "1229.87px",
+      "width": "230px",
+      "height": "243px",
+      "bgAlpha": 0.8,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.8)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t72",
+      "content": "<span style=\"font-size:16px;\">Core Controvery:\n- 为什么学校食堂难做？</span>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1050.69px",
+      "top": "1045.02px",
+      "width": "241px",
+      "height": "103px",
+      "bgAlpha": 0.8,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.8)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t73",
+      "content": "<div>- 食材安全</div><div>- 食物价格</div>Interview: <div>长城美华 COO</div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1437.23px",
+      "top": "1029.51px",
+      "width": "191px",
+      "height": "140px",
+      "bgAlpha": 0.8,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.8)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t74",
+      "content": "<span style=\"font-size: 16px;\">Explain different catering models In School Canteen</span><div><span style=\"font-size: 16px;\"><br></span></div><div><span style=\"font-size: 16px;\">Challenges ahead?\n</span><div><span style=\"font-size: 16px;\">- </span><span style=\"font-size: 16px;\">Host </span></div></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1778.54px",
+      "top": "1006.1px",
+      "width": "261px",
+      "height": "178px",
+      "bgAlpha": 0.8,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.8)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t76",
+      "content": "<div><span style=\"font-size:16px;\">So why canteen stalls are not working?</span></div><span style=\"font-size:16px;\">- Host</span>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "674.231px",
+      "top": "1051.85px",
+      "width": "234px",
+      "height": "122px",
+      "bgAlpha": 0.8,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.8)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t77",
+      "content": "<div></div><span style=\"font-size:15px;\"><div></div><span style=\"font-size:16px;\"><div>Why do you become Canteen 小贩？</div><div><br></div><div>What is the ACTUAL cost of running a canteen stall?</div><div><br></div><div>Interview</div><div>- 小贩B</div></span></span><div><div></div></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "556.887px",
+      "top": "1234.74px",
+      "width": "220px",
+      "height": "261px",
+      "bgAlpha": 0.8,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.8)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t78",
+      "content": "<div></div><span style=\"font-size:15px;\"><div></div><span style=\"font-size:16px;\"><div>How many years?</div><div><br></div><div>What do you think about central kitchen?</div><div><br></div><div>What makes it worth while to sustain a canteen stall vendor?</div><div><br></div><div>Interview</div><div>- 小贩A</div></span></span><div><div></div></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "899.514px",
+      "top": "1237.49px",
+      "width": "244px",
+      "height": "316px",
+      "bgAlpha": 0.8,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.8)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t79",
+      "content": "<div></div><span style=\"font-size:15px;\"><div></div><span style=\"font-size:16px;\"><div>Does Central Kitchen provide a solution?</div></span></span><div><span style=\"font-size:15px;\"><span style=\"font-size:15px;\"><span style=\"font-size:16px;\"><span style=\"font-size:16px;\"></span></span></span></span><div></div></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1264.4px",
+      "top": "1232.42px",
+      "width": "160px",
+      "height": "121px",
+      "bgAlpha": 0.8,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.8)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    }
+  ],
+  "checklists": [
+    {
+      "id": "c17603287605751jg9160sg",
+      "x": 531,
+      "y": 527,
+      "w": 147,
+      "h": 44,
+      "width": 147,
+      "height": 44,
+      "text": "采访COO",
+      "textHtml": "采访COO",
+      "checked": false,
+      "bg": "rgb(255, 255, 255)",
+      "border": "rgba(0, 0, 0, 0.15)",
+      "color": "rgb(14, 19, 47)",
+      "fontSize": "14px",
+      "textStyle": {
+        "fontFamily": "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+        "fontWeight": "400",
+        "lineHeight": "21px",
+        "letterSpacing": "normal",
+        "textAlign": "start"
+      }
+    },
+    {
+      "id": "c1760328765350hby58xe0v",
+      "x": 532,
+      "y": 584,
+      "w": 143,
+      "h": 43,
+      "width": 143,
+      "height": 43,
+      "text": "拍摄APP",
+      "textHtml": "拍摄APP",
+      "checked": false,
+      "bg": "rgb(255, 255, 255)",
+      "border": "rgba(0, 0, 0, 0.15)",
+      "color": "rgb(14, 19, 47)",
+      "fontSize": "14px",
+      "textStyle": {
+        "fontFamily": "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+        "fontWeight": "400",
+        "lineHeight": "21px",
+        "letterSpacing": "normal",
+        "textAlign": "start"
+      }
+    },
+    {
+      "id": "c1760328778563h9w01hmdh",
+      "x": 529,
+      "y": 472,
+      "w": 151,
+      "h": 41,
+      "width": 151,
+      "height": 41,
+      "text": "拍摄厨房",
+      "textHtml": "拍摄厨房",
+      "checked": false,
+      "bg": "rgb(255, 255, 255)",
+      "border": "rgba(0, 0, 0, 0.15)",
+      "color": "rgb(14, 19, 47)",
+      "fontSize": "14px",
+      "textStyle": {
+        "fontFamily": "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+        "fontWeight": "400",
+        "lineHeight": "21px",
+        "letterSpacing": "normal",
+        "textAlign": "start"
+      }
+    },
+    {
+      "id": "c1760411519396i8f4ta0gp",
+      "x": 1692.1660152032684,
+      "y": 486.7381075014712,
+      "w": 179,
+      "h": 41,
+      "width": 179,
+      "height": 41,
+      "text": "拍摄Interview",
+      "textHtml": "拍摄Interview",
+      "checked": false,
+      "bg": "rgb(255, 255, 255)",
+      "border": "rgba(0, 0, 0, 0.15)",
+      "color": "rgb(14, 19, 47)",
+      "fontSize": "14px",
+      "textStyle": {
+        "fontFamily": "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+        "fontWeight": "400",
+        "lineHeight": "21px",
+        "letterSpacing": "normal",
+        "textAlign": "start"
+      }
+    },
+    {
+      "id": "c1760411549276tta2h7dhj",
+      "x": 2016.1660152032684,
+      "y": 485.7381075014712,
+      "w": 179,
+      "h": 41,
+      "width": 179,
+      "height": 41,
+      "text": "拍摄Interview",
+      "textHtml": "拍摄Interview",
+      "checked": false,
+      "bg": "rgb(255, 255, 255)",
+      "border": "rgba(0, 0, 0, 0.15)",
+      "color": "rgb(14, 19, 47)",
+      "fontSize": "14px",
+      "textStyle": {
+        "fontFamily": "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+        "fontWeight": "400",
+        "lineHeight": "21px",
+        "letterSpacing": "normal",
+        "textAlign": "start"
+      }
+    },
+    {
+      "id": "c1760411554308t3hanijj4",
+      "x": 2016.1660152032684,
+      "y": 540.7381075014712,
+      "w": 179,
+      "h": 41,
+      "width": 179,
+      "height": 41,
+      "text": "拍摄买菜",
+      "textHtml": "拍摄买菜",
+      "checked": false,
+      "bg": "rgb(255, 255, 255)",
+      "border": "rgba(0, 0, 0, 0.15)",
+      "color": "rgb(14, 19, 47)",
+      "fontSize": "14px",
+      "textStyle": {
+        "fontFamily": "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+        "fontWeight": "400",
+        "lineHeight": "21px",
+        "letterSpacing": "normal",
+        "textAlign": "start"
+      }
+    },
+    {
+      "id": "c1760413247231qebhu1wga",
+      "x": 1692.1660152032684,
+      "y": 539.7381075014712,
+      "w": 179,
+      "h": 41,
+      "width": 179,
+      "height": 41,
+      "text": "拍摄做菜",
+      "textHtml": "拍摄做菜",
+      "checked": false,
+      "bg": "rgb(255, 255, 255)",
+      "border": "rgba(0, 0, 0, 0.15)",
+      "color": "rgb(14, 19, 47)",
+      "fontSize": "14px",
+      "textStyle": {
+        "fontFamily": "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+        "fontWeight": "400",
+        "lineHeight": "21px",
+        "letterSpacing": "normal",
+        "textAlign": "start"
+      }
+    },
+    {
+      "id": "c17604137577794sq75ddex",
+      "x": 2380.166015203268,
+      "y": 486.7381075014712,
+      "w": 179,
+      "h": 41,
+      "width": 179,
+      "height": 41,
+      "text": "拍摄Interview",
+      "textHtml": "拍摄Interview",
+      "checked": false,
+      "bg": "rgb(255, 255, 255)",
+      "border": "rgba(0, 0, 0, 0.15)",
+      "color": "rgb(14, 19, 47)",
+      "fontSize": "14px",
+      "textStyle": {
+        "fontFamily": "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+        "fontWeight": "400",
+        "lineHeight": "21px",
+        "letterSpacing": "normal",
+        "textAlign": "start"
+      }
+    }
+  ],
+  "wires": [],
+  "nextId": 141,
+  "timelines": [
+    {
+      "id": 17,
+      "x": 584.2797760823623,
+      "y": 1195.7020188650324,
+      "w": 1647.0052781620054,
+      "h": 6,
+      "direction": "h",
+      "stroke": "#3e77ea",
+      "strokeWidth": 6,
+      "fill": "rgba(255,122,244,1)",
+      "border": "transparent",
+      "pattern": "solid",
+      "markRadius": 12,
+      "markShape": "circle",
+      "timestamps": [
+        {
+          "x": 22.8343,
+          "y": -9,
+          "size": 24,
+          "linkedGroupId": null
+        },
+        {
+          "x": 180.229,
+          "y": -9,
+          "size": 24,
+          "linkedGroupId": null
+        },
+        {
+          "x": 370.582,
+          "y": -9,
+          "size": 24,
+          "linkedGroupId": null
+        },
+        {
+          "x": 545.483,
+          "y": -9,
+          "size": 24,
+          "linkedGroupId": null
+        },
+        {
+          "x": 736.886,
+          "y": -9,
+          "size": 24,
+          "linkedGroupId": null
+        },
+        {
+          "x": 933.577,
+          "y": -9,
+          "size": 24,
+          "linkedGroupId": null
+        },
+        {
+          "x": 1101.21,
+          "y": -9,
+          "size": 24,
+          "linkedGroupId": null
+        },
+        {
+          "x": 1306.58,
+          "y": -9,
+          "size": 24,
+          "linkedGroupId": null
+        },
+        {
+          "x": 1525.64,
+          "y": -9,
+          "size": 24,
+          "linkedGroupId": null
+        }
+      ]
+    }
+  ]
+}
