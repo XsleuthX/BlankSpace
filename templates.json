@@ -17,4 +17,10 @@
     "thumbnail": "thumbs/Demo.png",
     "tags": ["demo", "idea"]
   }
+  {
+    "name": "Video Outline",
+    "file": "templates/Project/video-outline.json",
+    "thumbnail": "thumbs/video-outline.png",
+    "tags": ["outline", "concept"]
+  }
 ]
