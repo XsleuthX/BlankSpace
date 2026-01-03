@@ -8,7 +8,7 @@
   {
     "name": "Webtools",
     "file": "templates/Tools/webtools.json",
-    "thumbnail": "thumbs/webtools.png",
+    "thumbnail": "",
     "tags": ["tools", "webapp"]
   },
   {
