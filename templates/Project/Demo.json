@@ -1,0 +1,314 @@
+{
+  "version": "4.8",
+  "timestamp": "2025-12-31T16:16:20.165Z",
+  "hasBase64Files": true,
+  "viewport": {
+    "zoom": 0.44932896411722245,
+    "origin": {
+      "x": 756.3770863512268,
+      "y": 18.782378382954732
+    }
+  },
+  "nodes": [
+    {
+      "id": "n22",
+      "kind": "website",
+      "x": -245.0967985677287,
+      "y": 694.2952841504618,
+      "w": 1459.4975773853928,
+      "h": 815.1282466570314,
+      "assetUrl": "https://xsleuthx.github.io/Transcriber/",
+      "textboxes": [],
+      "meta": {
+        "originalUrl": "https://xsleuthx.github.io/Transcriber/",
+        "website": true,
+        "domain": "xsleuthx.github.io"
+      },
+      "metaShown": false,
+      "title": "Transcriber Editor",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    },
+    {
+      "id": "n23",
+      "kind": "website",
+      "x": 1261.571029242168,
+      "y": 693.8698870056953,
+      "w": 1350.7469845396918,
+      "h": 822.4791619114596,
+      "assetUrl": "https://xsleuthx.github.io/Shotlist-Builder/",
+      "textboxes": [],
+      "meta": {
+        "originalUrl": "https://xsleuthx.github.io/Shotlist-Builder/",
+        "website": true,
+        "domain": "xsleuthx.github.io"
+      },
+      "metaShown": false,
+      "title": "Shotlist Builder",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    },
+    {
+      "id": "n39",
+      "kind": "website",
+      "x": -1528.9291832143565,
+      "y": 690.8245302780778,
+      "w": 1249.559267555478,
+      "h": 822.5540928492466,
+      "assetUrl": "https://xsleuthx.github.io/Timecode-Calculator/",
+      "textboxes": [],
+      "meta": {
+        "originalUrl": "https://xsleuthx.github.io/Timecode-Calculator/",
+        "website": true,
+        "domain": "xsleuthx.github.io"
+      },
+      "metaShown": false,
+      "title": "Timecode Calculator",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    }
+  ],
+  "groups": [
+    {
+      "id": "g17",
+      "x": 174.7399344617583,
+      "y": 166.65201310764834,
+      "w": 436.31744693295224,
+      "h": 260.89865792823446,
+      "color": "#3b82f6",
+      "title": "01"
+    },
+    {
+      "id": "g53",
+      "x": 3203.936902960935,
+      "y": 128.9782271692289,
+      "w": 691.8802869901899,
+      "h": 368.15736826112425,
+      "color": "#3b82f6",
+      "title": "02"
+    }
+  ],
+  "textboxes": [
+    {
+      "id": "t16",
+      "content": "<span style=\"font-size:24px;\"><span style=\"font-size:35px;\">Q<span style=\"font-size:24px;\">:<span style=\"font-size:35px;\">​</span><span style=\"font-size:24px;\">​</span></span><span style=\"font-size:35px;\"></span></span> 我们的视频制作流程</span><div style=\"text-align: center;\"><span style=\"font-size:24px;\">有哪些瓶颈？<span style=\"font-size:24px;\">​</span></span></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "236px",
+      "top": "127px",
+      "width": "322px",
+      "height": "133px",
+      "bgAlpha": 0.91,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.91)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(0, 0, 0)"
+      }
+    },
+    {
+      "id": "t18",
+      "content": "<span style=\"font-size: 24px;\">视频稿</span><br><div><span style=\"font-size: 24px;\">会不会写太长？</span><span style=\"font-size: 30px;\">​</span><span style=\"font-size: 28px;\">​<span style=\"font-size:24px;\">​​</span></span><div><span style=\"font-size:30px;\"><span style=\"font-size:30px;\"></span></span></div></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "43.0385px",
+      "top": "274.467px",
+      "width": "221px",
+      "height": "120px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(139, 92, 246)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(255, 255, 255)"
+      }
+    },
+    {
+      "id": "t19",
+      "content": "<span style=\"font-size: 24px;\">Transcription需</span><span style=\"font-size: 24px;\">要</span><div><span style=\"font-size: 24px;\">source timecode?</span><span style=\"font-size: 30px;\">​</span><span style=\"font-size: 28px;\">​<span style=\"font-size:24px;\">​​</span></span></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "275.571px",
+      "top": "276.043px",
+      "width": "242px",
+      "height": "115px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(139, 92, 246)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(255, 255, 255)"
+      }
+    },
+    {
+      "id": "t20",
+      "content": "<div><span style=\"font-size: 24px;\">拍摄之前怎么准备Shotlist?</span><span style=\"font-size: 30px;\">​</span><span style=\"font-size: 28px;\">​<span style=\"font-size:24px;\">​​</span></span></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "532.368px",
+      "top": "276.722px",
+      "width": "249px",
+      "height": "113px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(139, 92, 246)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(255, 255, 255)"
+      }
+    },
+    {
+      "id": "t25",
+      "content": "<font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">从视频稿直接计算</span></b></span></font><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\"><span style=\"font-size:100px;\">所有Timecode</span></span></b></span></font></div><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\"><span style=\"font-size:100px;\">In 和 Out Points​</span></span></b></span></font><span style=\"font-size: 55px;\">​</span><span style=\"font-size: 36px;\"><span style=\"font-family:'KaiTi', '楷体', 'STKaiti', serif;\"><span style=\"font-family:'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;\"><b><div style=\"text-align: left;\"></div></b></span></span></span><span style=\"font-size:36px;\"><span style=\"font-family:'KaiTi', '楷体', 'STKaiti', serif;\"><span style=\"font-family:'Noto Sans', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;\"><b><div style=\"text-align: left;\"></div></b></span><div style=\"text-align: center;\"></div></span><div style=\"text-align: center;\"></div></span><div></div></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "-1392.88px",
+      "top": "877.059px",
+      "width": "906px",
+      "height": "488px",
+      "bgAlpha": 0.9,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.9)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t26",
+      "content": "<font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">实时修改</span></b></span></font><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">视频SRT字幕</span></b></span></font><br></div><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">和Timecode</span></b></span></font></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "11.9303px",
+      "top": "871.549px",
+      "width": "906px",
+      "height": "491px",
+      "bgAlpha": 0.9,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.9)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t27",
+      "content": "<font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">用截屏图片</span></b></span></font><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">逐帧设计</span></b></span></font><br></div><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">拍摄Shotlist</span></b></span></font></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "1499.57px",
+      "top": "871.016px",
+      "width": "906px",
+      "height": "491px",
+      "bgAlpha": 0.9,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.9)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t54",
+      "content": "<span style=\"font-size:64px;\"><span style=\"font-size:80px;\"><span style=\"font-size:100px;\"><span style=\"font-size:80px;\"><span style=\"font-size:100px;\"><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\"><span style=\"font-size:80px;\">​Q:我们还有哪些痛点？</span></span></span><span style=\"font-size:80px;\">​</span></span><span style=\"font-size:100px;\"><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\"></span></span><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\"></span><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\">​</span><span style=\"font-size:64px;\">​</span><span style=\"font-size:80px;\">​</span><span style=\"font-size:100px;\">​</span></span><span style=\"font-size:80px;\"></span></span><span style=\"font-size:64px;\"></span></span><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\"></span><div style=\"text-align: center;\"><span style=\"font-size:35px;\"><span style=\"font-size:35px;\"></span></span></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "3128.59px",
+      "top": "162.434px",
+      "width": "862px",
+      "height": "191px",
+      "bgAlpha": 0.1,
+      "style": {
+        "background": "rgba(255, 255, 255, 0.1)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t56",
+      "content": "<span style=\"font-size:32px;\">组内意见收集<span style=\"font-size:32px;\">​</span></span>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "3422.56px",
+      "top": "388.902px",
+      "width": "249px",
+      "height": "79px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(251, 191, 36)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    }
+  ],
+  "checklists": [
+    {
+      "id": "c1767196754715ikd2xi9ll",
+      "x": 3475.4017417068726,
+      "y": 524.66942664166,
+      "w": 138,
+      "h": 46,
+      "width": 138,
+      "height": 46,
+      "text": "AI Assist",
+      "textHtml": "AI Assist",
+      "checked": true,
+      "bg": "rgb(255, 255, 255)",
+      "border": "rgba(0, 0, 0, 0.15)",
+      "color": "rgb(14, 19, 47)",
+      "fontSize": "14px",
+      "textStyle": {
+        "fontFamily": "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+        "fontWeight": "400",
+        "lineHeight": "21px",
+        "letterSpacing": "normal",
+        "textAlign": "start"
+      }
+    },
+    {
+      "id": "c1767196783514mmdwrgp09",
+      "x": 3254.1285632387608,
+      "y": 526.1802599119908,
+      "w": 146,
+      "h": 45,
+      "width": 146,
+      "height": 45,
+      "text": "Web Based",
+      "textHtml": "Web Based",
+      "checked": true,
+      "bg": "rgb(255, 255, 255)",
+      "border": "rgba(0, 0, 0, 0.15)",
+      "color": "rgb(14, 19, 47)",
+      "fontSize": "14px",
+      "textStyle": {
+        "fontFamily": "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+        "fontWeight": "400",
+        "lineHeight": "21px",
+        "letterSpacing": "normal",
+        "textAlign": "start"
+      }
+    },
+    {
+      "id": "c176719679993894zc5rccj",
+      "x": 3670.3803053184947,
+      "y": 527.3271683810833,
+      "w": 214,
+      "h": 45,
+      "width": 214,
+      "height": 45,
+      "text": "Modular Framework",
+      "textHtml": "Modular Framework",
+      "checked": true,
+      "bg": "rgb(255, 255, 255)",
+      "border": "rgba(0, 0, 0, 0.15)",
+      "color": "rgb(14, 19, 47)",
+      "fontSize": "14px",
+      "textStyle": {
+        "fontFamily": "system-ui, -apple-system, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif",
+        "fontWeight": "400",
+        "lineHeight": "21px",
+        "letterSpacing": "normal",
+        "textAlign": "start"
+      }
+    }
+  ],
+  "wires": [],
+  "nextId": 57,
+  "timelines": []
+}
