@@ -1,19 +1,20 @@
 [
   {
-    "name": "Mood Starter",
-    "file": "templates/Beginner/mood-starter.json",
-    "thumbnail": "thumbs/mood-starter.png",
+    "name": "Mood Board",
+    "file": "templates/Project/mood-board.json",
+    "thumbnail": "thumbs/mood-board.png",
     "tags": ["photos", "warm"]
   },
   {
     "name": "Webtools",
-    "file": "templates/Advanced/webtools.json",
+    "file": "templates/Tools/webtools.json",
+    "thumbnail": "thumbs/webtools.png",
     "tags": ["tools", "webapp"]
   },
   {
-    "name": "Bintan Trip 3",
-    "file": "templates/Project/Bintan Trip 3.json",
-    "thumbnail": "thumbs/story.png",
-    "tags": ["story", "frames"]
+    "name": "Demo",
+    "file": "templates/Project/Demo.json",
+    "thumbnail": "thumbs/Demo.png",
+    "tags": ["demo", "idea"]
   }
 ]
