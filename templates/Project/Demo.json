@@ -1,12 +1,12 @@
 {
   "version": "4.8",
-  "timestamp": "2026-01-03T07:36:57.032Z",
+  "timestamp": "2026-01-04T12:44:00.711Z",
   "hasBase64Files": true,
   "viewport": {
-    "zoom": 0.3328710836980803,
+    "zoom": 1.8221188003905155,
     "origin": {
-      "x": 585.3133492656001,
-      "y": 22.799188613361423
+      "x": 501.9379928198414,
+      "y": 100.94709003929094
     }
   },
   "nodes": [
@@ -155,6 +155,87 @@
       "locked": false,
       "isFileNode": false,
       "hasBase64Data": false
+    },
+    {
+      "id": "n93",
+      "kind": "website",
+      "x": 1339.7995577745935,
+      "y": 2518.2206913493865,
+      "w": 1196.1597237195217,
+      "h": 843.324150606966,
+      "assetUrl": "https://docs.google.com/document/d/1ghWeqdrBm0l5rBEH_I2kJLMAHML8OeAHfZz2bNjDjdI/edit?usp=sharing",
+      "textboxes": [],
+      "meta": {
+        "originalUrl": "https://docs.google.com/document/d/1ghWeqdrBm0l5rBEH_I2kJLMAHML8OeAHfZz2bNjDjdI/edit?usp=sharing",
+        "website": true,
+        "domain": "docs.google.com"
+      },
+      "metaShown": false,
+      "title": "docs.google.com",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    },
+    {
+      "id": "n96",
+      "kind": "website",
+      "x": 4173.508114440296,
+      "y": 701.3536362830097,
+      "w": 1765.117091826506,
+      "h": 931.3129309657429,
+      "assetUrl": "https://docs.google.com/document/d/1P0nC9u7ZMQvbPmrJl9OCdzBuoqDDrxtjycBWCOxorZY/edit?usp=sharing",
+      "textboxes": [],
+      "meta": {
+        "originalUrl": "https://docs.google.com/document/d/1P0nC9u7ZMQvbPmrJl9OCdzBuoqDDrxtjycBWCOxorZY/edit?usp=sharing",
+        "website": true,
+        "domain": "docs.google.com"
+      },
+      "metaShown": false,
+      "title": "docs.google.com",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    },
+    {
+      "id": "n97",
+      "kind": "youtube",
+      "x": 3186.366203583072,
+      "y": 695.6421039361107,
+      "w": 936.1920495133313,
+      "h": 555.6163433575528,
+      "assetUrl": "https://www.youtube.com/embed/x-XdOaZPhBw",
+      "textboxes": [],
+      "meta": {
+        "videoId": "x-XdOaZPhBw",
+        "platform": "youtube",
+        "embedUrl": "https://www.youtube.com/embed/x-XdOaZPhBw",
+        "isShorts": false
+      },
+      "metaShown": false,
+      "title": "YouTube Video",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    },
+    {
+      "id": "n99",
+      "kind": "website",
+      "x": 3172.408117944677,
+      "y": 1692.4832151770477,
+      "w": 2774.196899785597,
+      "h": 600.7214317733166,
+      "assetUrl": "https://xsleuthx.github.io/YouTube-Beat-Builder/",
+      "textboxes": [],
+      "meta": {
+        "originalUrl": "https://xsleuthx.github.io/YouTube-Beat-Builder/",
+        "website": true,
+        "domain": "xsleuthx.github.io"
+      },
+      "metaShown": false,
+      "title": "YouTube Beat Builder",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
     }
   ],
   "groups": [
@@ -180,7 +261,7 @@
   "textboxes": [
     {
       "id": "t16",
-      "content": "<span style=\"font-size:24px;\"><span style=\"font-size:35px;\">Q<span style=\"font-size:24px;\">:<span style=\"font-size:35px;\">​</span><span style=\"font-size:24px;\">​</span></span><span style=\"font-size:35px;\"></span></span> 我们的视频制作流程</span><div style=\"text-align: center;\"><span style=\"font-size:24px;\">有哪些瓶颈？<span style=\"font-size:24px;\">​</span></span></div>",
+      "content": "<span style=\"font-size:24px;\"><span style=\"font-size:35px;\">Q<span style=\"font-size:24px;\">:<span style=\"font-size:35px;\">​</span><span style=\"font-size:24px;\">​</span></span><span style=\"font-size:35px;\"></span></span> 我的视频制作流程</span><div style=\"text-align: center;\"><span style=\"font-size:24px;\">有哪些瓶颈？<span style=\"font-size:24px;\">​</span></span></div>",
       "hasPlaceholder": false,
       "hasActualContent": true,
       "left": "236px",
@@ -279,8 +360,8 @@
       "content": "<font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">用截屏图片</span></b></span></font><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">逐帧设计</span></b></span></font><br></div><div style=\"text-align: center;\"><font face=\"Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif\"><span style=\"font-size: 36px;\"><b><span style=\"font-size:100px;\">拍摄Shotlist</span></b></span></font></div>",
       "hasPlaceholder": false,
       "hasActualContent": true,
-      "left": "1523.81px",
-      "top": "866.001px",
+      "left": "1513.59px",
+      "top": "868.028px",
       "width": "906px",
       "height": "491px",
       "bgAlpha": 0.9,
@@ -292,7 +373,7 @@
     },
     {
       "id": "t54",
-      "content": "<span style=\"font-size:64px;\"><span style=\"font-size:80px;\"><span style=\"font-size:100px;\"><span style=\"font-size:80px;\"><span style=\"font-size:100px;\"><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\"><span style=\"font-size:80px;\">​Q:我们还有哪些痛点？</span></span></span><span style=\"font-size:80px;\">​</span></span><span style=\"font-size:100px;\"><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\"></span></span><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\"></span><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\">​</span><span style=\"font-size:64px;\">​</span><span style=\"font-size:80px;\">​</span><span style=\"font-size:100px;\">​</span></span><span style=\"font-size:80px;\"></span></span><span style=\"font-size:64px;\"></span></span><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\"></span><div style=\"text-align: center;\"><span style=\"font-size:35px;\"><span style=\"font-size:35px;\"></span></span></div>",
+      "content": "<span style=\"font-size:64px;\"><span style=\"font-size:80px;\"><span style=\"font-size:100px;\"><span style=\"font-size:80px;\"><span style=\"font-size:100px;\"><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\"><span style=\"font-size:80px;\">​Q:AI可以写视频稿？</span></span></span><span style=\"font-size:80px;\">​</span></span><span style=\"font-size:100px;\"><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\"></span></span><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\"></span><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\">​</span><span style=\"font-size:64px;\">​</span><span style=\"font-size:80px;\">​</span><span style=\"font-size:100px;\">​</span></span><span style=\"font-size:80px;\"></span></span><span style=\"font-size:64px;\"></span></span><span style=\"font-size: 35px; text-align: center; font-family: &quot;Noto Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;\"></span><div style=\"text-align: center;\"><span style=\"font-size:35px;\"><span style=\"font-size:35px;\"></span></span></div>",
       "hasPlaceholder": false,
       "hasActualContent": true,
       "left": "3128.59px",
@@ -308,13 +389,13 @@
     },
     {
       "id": "t56",
-      "content": "<span style=\"font-size:32px;\">组内意见收集<span style=\"font-size:32px;\">​</span></span>",
+      "content": "<span style=\"font-size:32px;\"><b><span style=\"font-size:20px;\"><span style=\"font-size:35px;\">*把好视频，拆解成视频稿<span style=\"font-size:32px;\">​</span><span style=\"font-size:20px;\">​</span><span style=\"font-size:35px;\">​</span></span><span style=\"font-size:20px;\"></span></span><span style=\"font-size:32px;\"></span></b></span>",
       "hasPlaceholder": false,
       "hasActualContent": true,
-      "left": "3422.56px",
-      "top": "388.902px",
-      "width": "249px",
-      "height": "79px",
+      "left": "3291.45px",
+      "top": "379.514px",
+      "width": "504px",
+      "height": "89px",
       "bgAlpha": 1,
       "style": {
         "background": "rgb(251, 191, 36)",
@@ -395,6 +476,6 @@
     }
   ],
   "wires": [],
-  "nextId": 75,
+  "nextId": 100,
   "timelines": []
 }
