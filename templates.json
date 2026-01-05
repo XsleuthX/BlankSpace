@@ -6,17 +6,11 @@
     "tags": ["photos", "warm"]
   },
   {
-    "name": "Webtools",
-    "file": "templates/Tools/webtools.json",
-    "thumbnail": "templates/Project/",
-    "tags": ["tools", "webapp"]
-  },
-  {
     "name": "Demo",
     "file": "templates/Project/Demo.json",
     "thumbnail": "templates/Project/Demo.png",
     "tags": ["demo", "idea"]
-  }
+  },
   {
     "name": "Video Outline",
     "file": "templates/Project/video-outline.json",
