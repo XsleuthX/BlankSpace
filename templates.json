@@ -16,5 +16,11 @@
     "file": "templates/Project/video-outline.json",
     "thumbnail": "templates/Project/video-outline.png",
     "tags": ["outline", "concept"]
+  },
+  {
+    "name": "Dual Sub Mapper",
+    "file": "templates/Project/Demo_DualSubMapper.json",
+    "thumbnail": "templates/Project/Demo_DualSubMapper.png",
+    "tags": ["SRT", "Subtitle"]
   }
 ]
