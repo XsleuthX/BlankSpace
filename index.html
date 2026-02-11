@@ -2125,6 +2125,7 @@ body.retro #tbCtxMenu{
         <button data-action="add-shotlist-builder">Add Shotlist Builder</button>
         <button data-action="add-transcriber">Add Transcriber Editor</button>
         <button data-action="add-Timecode-Calculator">Add Timecode Calculator</button>
+        <button data-action="add-SRT_DualSubMapper">Add SRT Dual Sub Mapper</button>
         <button data-action="add-AutoClip_Web">Add AutoClip</button>
         <button data-action="add-YouTube-Beat-Builder">Add YouTube Beat Builder</button>
       </div>
@@ -3251,6 +3252,10 @@ function openGroupMenu(x, y, group){
         if (act==='add-Timecode-Calculator') {
         const n = createWebsiteNode('https://xsleuthx.github.io/Timecode-Calculator/', canvasContextPoint);
         if (n && n.el) { n.title = 'Timecode Calculator'; n.el.querySelector('.title').textContent = n.title; }
+}
+        if (act==='add-SRT_DualSubMapper') {
+        const n = createWebsiteNode('https://xsleuthx.github.io/SRT_DualSubMapper/', canvasContextPoint);
+        if (n && n.el) { n.title = 'SRT Dual Sub Mapper'; n.el.querySelector('.title').textContent = n.title; }
 }
         if (act==='add-AutoClip_Web') {
         const n = createWebsiteNode('https://xsleuthx.github.io/AutoClip_Web/', canvasContextPoint);
