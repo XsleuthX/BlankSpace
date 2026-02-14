@@ -1,0 +1,89 @@
+{
+  "version": "4.8",
+  "timestamp": "2026-02-14T08:00:08.059Z",
+  "hasBase64Files": true,
+  "viewport": {
+    "zoom": 0.8187307530779817,
+    "origin": {
+      "x": 142.9208812810948,
+      "y": 23.29010228736928
+    }
+  },
+  "nodes": [
+    {
+      "id": "n16",
+      "kind": "website",
+      "x": 433,
+      "y": 90,
+      "w": 1303.4456144255441,
+      "h": 1604.1997135705867,
+      "assetUrl": "https://xsleuthx.github.io/SRT_DualSubMapper/",
+      "textboxes": [],
+      "meta": {
+        "originalUrl": "https://xsleuthx.github.io/SRT_DualSubMapper/",
+        "website": true,
+        "domain": "xsleuthx.github.io"
+      },
+      "metaShown": false,
+      "title": "xsleuthx.github.io",
+      "locked": false,
+      "isFileNode": false,
+      "hasBase64Data": false
+    }
+  ],
+  "groups": [],
+  "textboxes": [
+    {
+      "id": "t17",
+      "content": "<span style=\"font-size:48px;\">Step 1: Upload SRT 文件<span style=\"font-size:48px;\">​</span></span>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "103.426px",
+      "top": "338.738px",
+      "width": "379px",
+      "height": "179px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(255, 255, 255)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t18",
+      "content": "<span style=\"font-size:48px;\">Step 2: 复制粘贴<span style=\"font-size:48px;\">​</span></span><div><span style=\"font-size:48px;\"><span style=\"font-size:48px;\">翻译文字</span></span></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "72.5877px",
+      "top": "713.497px",
+      "width": "416px",
+      "height": "184px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(255, 255, 255)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    },
+    {
+      "id": "t19",
+      "content": "<span style=\"font-size:48px;\">Step 3: 点击<span style=\"font-size:48px;\">​</span></span><div><span style=\"font-size:48px;\"><span style=\"font-size:48px;\">Build Mapping</span></span></div><div><span style=\"font-size:48px;\"><span style=\"font-size:48px;\">开始配对中英文字幕</span></span></div>",
+      "hasPlaceholder": false,
+      "hasActualContent": true,
+      "left": "7.48953px",
+      "top": "1016.42px",
+      "width": "492px",
+      "height": "255px",
+      "bgAlpha": 1,
+      "style": {
+        "background": "rgb(255, 255, 255)",
+        "borderColor": "rgba(255, 255, 255, 0.35)",
+        "color": "rgb(14, 19, 47)"
+      }
+    }
+  ],
+  "checklists": [],
+  "wires": [],
+  "nextId": 20,
+  "timelines": []
+}
