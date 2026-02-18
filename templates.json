@@ -20,7 +20,7 @@
   {
     "name": "Dual Sub Mapper",
     "file": "templates/Project/Demo_DualSubMapper.json",
-    "thumbnail": "templates/Project/Demo_DualSubMapper2.png",
+    "thumbnail": "templates/Project/Demo_DualSubMapper.png",
     "tags": ["SRT", "Subtitle"]
   }
 ]
